@@ -15,7 +15,7 @@ non so come scriverlo qui, lo spiegherò dal vivo
 può abilitare "debugbit" per vedere step by step come il programma auto-scopre le caselle, premendo un tasto a caso e poi invio per continuare
 
 cosa fa int main
-int main esegue le variabili ed è lo "scheletro" del programma, le decisioni vengono prese da int main, ma gli altri componenti come la stampa, l'input etc sono altrove
+int main esegue le variabili ed è lo "scheletro" del programma, le decisioni vengono prese da int main, ma gli altri componenti come la stampa, l'input etc sono altrove. se però la prima casella selezionata è una bomba allora riposiziona la bomba
 
 ho scelto il modo "quadrato" per auto-scoprire la tavola perchè mi sembrava il più semplice ed effettivo
 

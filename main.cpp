@@ -10,9 +10,16 @@ using namespace std;
  * 20 = covered with flag
  */
 int main() {
-	int board[width][height];
-	initBoard(board);
-	displayBoard(board);
+	int win, x, y;
+	do {
+		int board[width][height];
+		initBoard(board);
+		displayBoard(board);
+		win = userInput(&x, &y, board);
+		if (win != 0) {
+			expandBoard(x, y, board);
+		}
+	} while (win != 0);
 }
 
 void initBoard(int board[width][height]) {
@@ -41,7 +48,7 @@ void initBoard(int board[width][height]) {
 	}
 }
 
-void displayBoard(int board[height][width]) {
+void displayBoard(int board[width][height]) {
 	for (int i = 0; i < width; i++) {
 		for (int j = 0; j < height; j++) {
 			cout << "|";
@@ -59,5 +66,39 @@ void displayBoard(int board[height][width]) {
 			}
 		}
 		cout << "|" << endl;
+	}
+}
+
+int userInput(int* x, int* y, int board[width][height]) {
+	do {
+		do {
+			cout << "Insert horizontal tile location: ";
+			cin >> *x;
+		} while (*x < 0 || *x > width);
+		do {
+			cout << "Insert vertical tile location: ";
+			cin >> *y;
+		} while (*y < 0 || *y > height);
+	} while (board[*x][*y] != 10 && board[*x][*y] != 9);
+	if (board[*x][*y] == 9) {
+		return 1;
+	}
+	return 0;
+}
+
+void expandBoard(int x, int y, int board[width][height]) {
+	int count = 0;
+	for (int i = -1; i < 1; i++) {
+		for (int j = -1; j < 1; j++) {
+			if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height && (x != 0 && y != 0)) { // check for out of bounds and skip calculation for the center point
+				if (board[x + i][y + j] == 9) {
+					count++;
+				}
+			}
+		}
+	}
+	board[x][y] = count;
+	if (count == 0) {
+		// TODO
 	}
 }

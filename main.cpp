@@ -11,7 +11,7 @@ using namespace std;
  * 19 = mine with flag
  * 20 = covered with flag
  */
-const int devBit = 1;
+const int devBit = 0;
 const int debugBit = 0;
 
 int main() {
@@ -210,9 +210,7 @@ int calcAdjacent(int x, int y, int board[width][height], int mode) {
 }
 void expandBoard(int x, int y, int board[width][height]) {	
 	int flag, count = 1, adjacent;
-	if (debugBit == 1) {
-		char asdf[5];
-	}
+	char asdf[3];
 	do {
 		flag = 0;
 		for (int i = -count; i <= count; i++) {

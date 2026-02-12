@@ -1,4 +1,4 @@
-minesweeper
+minesweeper assignment
 
 you sweep mines
 

@@ -49,8 +49,8 @@ void initBoard(int board[width][height]) {
 }
 
 void printBoard(int board[width][height]) {
-	for (int i = 0; i < width; i++) {
-		for (int j = 0; j < height; j++) {
+	for (int j = 0; j < width; j++) {
+		for (int i = 0; i < height; i++) {
 			cout << "|";
 			if (board[i][j] == 10 || (devBit != 1 == board[i][j] == 9)) {
 				cout << "⬜";
@@ -65,7 +65,7 @@ void printBoard(int board[width][height]) {
 				cout << "🏁";
 			}
 			else {
-				cout << board[i][j];
+				cout << board[i][j] << " ";
 			}
 		}
 		cout << "|" << endl;
@@ -91,9 +91,9 @@ int userInput(int* x, int* y, int board[width][height]) {
 
 void expandBoard(int x, int y, int board[width][height]) {
 	int count = 0;
-	for (int i = -1; i < 1; i++) {
-		for (int j = -1; j < 1; j++) {
-			if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height && (x + i != 0 && y + j != 0)) { // check for out of bounds and skip calculation for the center point
+	for (int i = -1; i < 2; i++) {
+		for (int j = -1; j < 2; j++) {
+			if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height && (x + i != x || y + j != x)) { // check for out of bounds and skip calculation for the center point
 				if (board[x + i][y + j] == 9) {
 					count++;
 				}
@@ -102,6 +102,6 @@ void expandBoard(int x, int y, int board[width][height]) {
 	}
 	board[x][y] = count;
 	if (count == 0) {
-		// TODO
+		
 	}
 }

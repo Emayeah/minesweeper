@@ -9,17 +9,18 @@ using namespace std;
  * 10 = covered
  * 20 = covered with flag
  */
+const int devBit = 1;
 int main() {
 	int win, x, y;
+	int board[width][height];
+	initBoard(board);
 	do {
-		int board[width][height];
-		initBoard(board);
-		displayBoard(board);
+		printBoard(board);
 		win = userInput(&x, &y, board);
-		if (win != 0) {
+		if (win == 0) {
 			expandBoard(x, y, board);
 		}
-	} while (win != 0);
+	} while (win == 0);
 }
 
 void initBoard(int board[width][height]) {
@@ -29,10 +30,9 @@ void initBoard(int board[width][height]) {
 			board[i][j] = 10;
 		}
 	}
+	srand(time(NULL));
 	for (int i = 0; i < mineCount; i++) { // this assumes that mineCount < height * width
-		srand(time(NULL));
 		x = rand() % width;
-		srand(time(NULL));
 		y = rand() % height;
 		while (board[x][y] == 9) {
 			x++;
@@ -48,18 +48,21 @@ void initBoard(int board[width][height]) {
 	}
 }
 
-void displayBoard(int board[width][height]) {
+void printBoard(int board[width][height]) {
 	for (int i = 0; i < width; i++) {
 		for (int j = 0; j < height; j++) {
 			cout << "|";
-			if (board[i][j] == 10 || board[i][j] == 9) {
-				cout << "█"; // black box
+			if (board[i][j] == 10 || (devBit != 1 == board[i][j] == 9)) {
+				cout << "⬜";
+			}
+			else if (devBit == 1 && board[i][j] == 9) {
+				cout << "⬛";
 			}
 			else if (board[i][j] == 0) {
-				cout << " ";
+				cout << "  ";
 			}
-			else if (board[i][j] == 20) { // weird but flag looking character
-				cout << "╕";
+			else if (board[i][j] == 20) {
+				cout << "🏁";
 			}
 			else {
 				cout << board[i][j];
@@ -90,7 +93,7 @@ void expandBoard(int x, int y, int board[width][height]) {
 	int count = 0;
 	for (int i = -1; i < 1; i++) {
 		for (int j = -1; j < 1; j++) {
-			if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height && (x != 0 && y != 0)) { // check for out of bounds and skip calculation for the center point
+			if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height && (x + i != 0 && y + j != 0)) { // check for out of bounds and skip calculation for the center point
 				if (board[x + i][y + j] == 9) {
 					count++;
 				}

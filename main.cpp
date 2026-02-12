@@ -215,7 +215,7 @@ void expandBoard(int x, int y, int board[width][height]) {
 		flag = 0;
 		for (int i = -count; i <= count; i++) {
 			for (int j = -count; j <= count; j++) {
-				if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) { // check for out of bounds blah blah
+				if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height && board[x + i][y + j] != 9 && board[x + i][y + j] != 19) { // check for out of bounds blah blah
 					adjacent = calcAdjacent(x + i, y + j, board, 1);
 					if (adjacent == 1) {
 						if (board[x + i][y + j] >= 10) {

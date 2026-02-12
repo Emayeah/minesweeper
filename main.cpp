@@ -144,11 +144,20 @@ int userInput(int* x, int* y, int board[width][height]) {
 		do {
 			cout << "Insert horizontal tile location: ";
 			cin >> *x;
+			if (*x < 0 || *x > width) {
+				cout << "Invalid horizontal coordinate" << endl;
+			}
 		} while (*x < 0 || *x > width);
 		do {
 			cout << "Insert vertical tile location: ";
 			cin >> *y;
+			if (*y < 0 || *y > width) {
+				cout << "Invalid vertical coordinate" << endl;
+			}
 		} while (*y < 0 || *y > height);
+		if (board[*x][*y] != 10 && board[*x][*y] != 9 && board[*x][*y] != 20 && board[*x][*y] != 19) {
+			cout << "Invalid cell selected" << endl;
+		}
 	} while (board[*x][*y] != 10 && board[*x][*y] != 9 && board[*x][*y] != 20 && board[*x][*y] != 19);
 	temp = board[*x][*y];
 	board[*x][*y] = 11;
@@ -200,7 +209,9 @@ int calcAdjacent(int x, int y, int board[width][height], int mode) {
 }
 void expandBoard(int x, int y, int board[width][height]) {	
 	int flag, count = 1, adjacent;
-	char asdf[20];
+	if (debugBit == 1) {
+		char asdf[5];
+	}
 	do {
 		flag = 0;
 		for (int i = -count; i <= count; i++) {

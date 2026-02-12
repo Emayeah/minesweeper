@@ -1,0 +1,58 @@
+relazione
+
+le due costanti (devbit e debugbit) scopo debugging
+
+prototype.h contiene le globali costanti che determinano la larghezza, lunghezza e quantità bombe
+
+decisioni prese e perchè
+ho scelto di calcolare il modo in cui la tavola viene auto-scopre in un modo "quadrato"
+ho usato delle emoji per stampare la tavola perchè rende il gioco più giocabile, va bene il non compatibile ma se il tuo terminal emulator non è compatibile allora è il momento di cambiare terminal emulator
+
+ho deciso di rendere il programma agnostico alla quantità di bombe e dimensione, che brutto fare il hard code
+
+il metodo "quadrato":
+non so come scriverlo qui, lo spiegherò dal vivo
+può abilitare "debugbit" per vedere step by step come il programma auto-scopre le caselle, premendo un tasto a caso e poi invio per continuare
+
+cosa fa int main
+int main esegue le variabili ed è lo "scheletro" del programma, le decisioni vengono prese da int main, ma gli altri componenti come la stampa, l'input etc sono altrove
+
+ho scelto il modo "quadrato" per auto-scoprire la tavola perchè mi sembrava il più semplice ed effettivo
+
+initBoard: inizializza la tavola e sceglie dove mettere le bombe, usando 2 coordinate prese a caso per posizionare la bomba
+
+printBoard: stampa la tavola
+perchè ho voluto usare emoji? Fedora 44 includerà kmscon rimpiazzando il datato fbcon, e dopo questo è probabile che altre distribuzioni includino kmscon di default. kmscon ha il supporto per unicode ed è meglio punto rispetto a fbcon
+
+visto che la maggior parte di terminal emulator hanno il supporto per unicode e addirittura kmscon rimpiazzerà fbcon, ho optato per i caratteri unicode per rendere il gioco più giocabile e più bello. si, non sarà 100% compatibile ma preferisco avere un gioco giocabile
+
+printBoard stampa anche il numero della riga e colonna, il modo in cui stampa i numeri della colonna è "strano", i numeri sono stampati in verticale
+
+1
+0
+questo è un 10
+
+0
+7
+questo è un 7
+
+tutto questo per aggirare le limitazioni della larghezza
+il coso che stampa il numero verticale è agnostico alla grandezza del numero
+
+un emoji gialla viene usata per indicare la casella selezionata, e le bombe vengono visualizzate se si vince (o perde)
+
+userInput: valida l'input orizzontale e verticale, chiede conferma e permette di aggiungere bandiera o meno
+
+ritorna un 1 se la casella selezionata (e confermata) è una bomba, rotorna un 2 se una flag è stata posizionata o meno, altrimenti ritorna uno 0
+perchè ritorna 2? perchè niente è stato cambiato (eccetto la bandiera) quindi niente va ricalcolato. il 2 agisce come uno skippa
+
+userInput ha 2 parametri passati per riferimento, uso il return per altro, devo comunque ridare il valore di input a main quindi uso dei valori passati per riferimento
+
+calcAdjacent: calcola la quantità di bombe vicino ad una casella
+
+calcAdjacent ha pure un selettore modalità, 0 calcola le caselle, 1 calcola se c'è una casella scoperta (vuota, senza numero) e questa modalità viene utilizzata da expandBoard.
+ritorna la quantità di bombe vicino ad un posto (se modalità == 1 allora ritorna 1 se c'è una casella vuota, 0 se non c'è)
+
+expandBoard: espande la tavola tramite il modo quadrato di cui ho parlato io.
+può abilitare debugBit per capire come funziona, ho creato un foglio excel mentre stavo ragionando a come fare questa funzione, la ho in mente in un modo estremamente visivo ma non riesco a spiegarlo
+

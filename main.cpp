@@ -199,7 +199,7 @@ int calcAdjacent(int x, int y, int board[width][height], int mode) {
 	int count = 0;
 	for (int i = -1; i < 2; i++) {
 		for (int j = -1; j < 2; j++) {
-			if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height && (x + i != x || y + j != x)) { // check for out of bounds and skip calculation for the center point
+			if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) { // check for out of bounds and skip calculation for the center point
 				if (mode == 0 && board[x + i][y + j] == 9) {
 					count++;
 				}
@@ -218,10 +218,10 @@ void expandBoard(int x, int y, int board[width][height]) {
 		flag = 0;
 		for (int i = -count; i <= count; i++) {
 			for (int j = -count; j <= count; j++) {
-				if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height && board[x + i][y + j] != 9 && board[x + i][y + j] != 19) { // check for out of bounds blah blah
+				if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) { //&& board[x + i][y + j] != 9 && board[x + i][y + j] != 19) { // check for out of bounds blah blah
 					adjacent = calcAdjacent(x + i, y + j, board, 1);
 					if (adjacent == 1) {
-						if (board[x + i][y + j] >= 10) {
+						if (board[x + i][y + j] == 10 || board[x + i][y + j] == 20) {
 							flag = 1;
 						}
 						board[x + i][y + j] = calcAdjacent(x + i, y + j, board, 0);

@@ -219,7 +219,7 @@ int userInput(int* x, int* y, int board[width][height]) {
 				cout << "Invalid vertical coordinate" << endl;
 			}
 		} while (*y < 0 || *y > height);
-		if (board[*x][*y] != 10 && board[*x][*y] != 9 && board[*x][*y] != 20 && board[*x][*y] != 19) {
+		if (board[*x][*y] != 10 && board[*x][*y] != 9 && board[*x][*y] != 20 && board[*x][*y] != 19 && !(board[*x][*y] >= 1 && board[*x][*y] <= 8)) {
 			cout << "Invalid cell selected" << endl;
 		}
 	} while (board[*x][*y] != 10 && board[*x][*y] != 9 && board[*x][*y] != 20 && board[*x][*y] != 19 && !(board[*x][*y] >= 1 && board[*x][*y] <= 8));
@@ -236,7 +236,7 @@ int userInput(int* x, int* y, int board[width][height]) {
 		cout << "Are you sure you want to deflag? (y, any other for no) ";
 		cin >> flag;
 		if (flag == 'y' || flag == 'Y') {
-			flag = 'f';
+			flag = 'F';
 		}
 	}
 	else if (temp >= 1 && temp <= 8) {
@@ -251,7 +251,7 @@ int userInput(int* x, int* y, int board[width][height]) {
 	if (flag >= 97) {
 		flag -= 32;
 	}
-	if (flag == 'F') {
+	if (flag == 'F' && !(temp >= 1 && temp <= 8)) {
 		if (board[*x][*y] == 19 || board[*x][*y] == 20) {
 			board[*x][*y] -= 10;
 		}

@@ -6,25 +6,31 @@ prototype.h contiene le globali costanti che determinano la larghezza, lunghezza
 
 decisioni prese e perchè
 ho scelto di calcolare il modo in cui la tavola viene auto-scopre in un modo "quadrato"
+ho scelto il modo "quadrato" per auto-scoprire la tavola perchè mi sembrava il più semplice ed effettivo
+
 ho usato delle emoji per stampare la tavola perchè rende il gioco più giocabile, va bene il non compatibile ma se il tuo terminal emulator non è compatibile allora è il momento di cambiare terminal emulator
 
-ho deciso di rendere il programma agnostico alla quantità di bombe e dimensione, che brutto fare il hard code
+perchè stampo i colori dei numeri? per differenziare più facilmente i numeri tra di loro, quelli che giocano a minesweeper 24/7 usano i colori per identificare più velocemente il numero. non sono li a caso, sono gli stessi colori trovati nell'implementazione originale di campo minato di microsoft.
+
+letteralmente tutti i terminal emulator supportano i colori, pure fbcon. questo programma è stato sviluppato con linux in mente, non so se windows supporta questi colori ma nell'eventuale caso potrei in qualche modo fare un define o qualcosa per controllare se si trova in un ambiente senza il supporto per i colori e emoji e fare il fallback a modi più rudimentali per il display. dopotutto tutto questo è puramente grafico e cambiare l'output è questione di modificare condizioni e il contenuto nel blocco
+
+ho deciso di rendere il programma agnostico alla quantità di bombe e dimensione, che brutto fare il hard code. ho testato il programma con diverse configurazioni di dimensioni.
 
 il metodo "quadrato":
 non so come scriverlo qui, lo spiegherò dal vivo
-può abilitare "debugbit" per vedere step by step come il programma auto-scopre le caselle, premendo un tasto a caso e poi invio per continuare
+può abilitare "debugBit trovata in riga 15" per vedere step by step come il programma auto-scopre le caselle, premendo un tasto a caso e poi invio per continuare
+spiegherò sotto in un modo rudimentale come funziona (expandBoard, in fondo)
 
 cosa fa int main
-int main esegue le variabili ed è lo "scheletro" del programma, le decisioni vengono prese da int main, ma gli altri componenti come la stampa, l'input etc sono altrove. se però la prima casella selezionata è una bomba allora riposiziona la bomba
-
-ho scelto il modo "quadrato" per auto-scoprire la tavola perchè mi sembrava il più semplice ed effettivo
+int main esegue le variabili ed è lo "scheletro" del programma, le decisioni vengono prese da int main, ma gli altri componenti come la stampa, l'input etc sono altrove. se però la prima casella selezionata è una bomba allora riposiziona la bomba usando 2 coordinate casuali.
+int main fa qualcosa però, non è vero che non fa niente. controlla se l'utente ha vinto (ovvero tutte le caselle sono state scoperte)
 
 initBoard: inizializza la tavola e sceglie dove mettere le bombe, usando 2 coordinate prese a caso per posizionare la bomba
 
 printBoard: stampa la tavola
-perchè ho voluto usare emoji? Fedora 44 includerà kmscon rimpiazzando il datato fbcon, e dopo questo è probabile che altre distribuzioni includino kmscon di default. kmscon ha il supporto per unicode ed è meglio punto rispetto a fbcon
+perchè ho voluto usare emoji? Fedora 44 includerà kmscon rimpiazzando il datato fbcon, e dopo questo è probabile che altre distribuzioni includino kmscon di default. kmscon ha il supporto per unicode ed è meglio rispetto a fbcon. supporta il scrollback e font a vettori, ed essendo un componente che gira in userspace se kmscon crasha l'intero sistema non crolla.
 
-visto che la maggior parte di terminal emulator hanno il supporto per unicode e addirittura kmscon rimpiazzerà fbcon, ho optato per i caratteri unicode per rendere il gioco più giocabile e più bello. si, non sarà 100% compatibile ma preferisco avere un gioco giocabile
+visto che la maggior parte di terminal emulator hanno il supporto per unicode e kmscon rimpiazzerà fbcon, ho optato per i caratteri unicode per rendere il gioco più giocabile e più bello. si, non sarà 100% compatibile ma preferisco avere un gioco giocabile
 
 printBoard stampa anche il numero della riga e colonna, il modo in cui stampa i numeri della colonna è "strano", i numeri sono stampati in verticale
 
@@ -36,17 +42,29 @@ questo è un 10
 7
 questo è un 7
 
+1
+0
+9
+questo è un 109
+
 tutto questo per aggirare le limitazioni della larghezza
 il coso che stampa il numero verticale è agnostico alla grandezza del numero
 
-un emoji gialla viene usata per indicare la casella selezionata, e le bombe vengono visualizzate se si vince (o perde)
+un emoji gialla viene usata per indicare la casella selezionata, e le bombe vengono visualizzate se si vince (o perde) con emoji rosse. la bandiera rossa indica una bandiera, una bandiera bianca indica una bandiera posizionata in un posto scorretto (mostrato quando si perde)
 
-userInput: valida l'input orizzontale e verticale, chiede conferma e permette di aggiungere bandiera o meno
+userInput: valida l'input orizzontale e verticale, chiede conferma e permette di aggiungere bandiera o toglierla
 
 ritorna un 1 se la casella selezionata (e confermata) è una bomba, rotorna un 2 se una flag è stata posizionata o meno, altrimenti ritorna uno 0
 perchè ritorna 2? perchè niente è stato cambiato (eccetto la bandiera) quindi niente va ricalcolato. il 2 agisce come uno skippa
 
 userInput ha 2 parametri passati per riferimento, uso il return per altro, devo comunque ridare il valore di input a main quindi uso dei valori passati per riferimento
+
+userInput chiede l'input e chiede conferma (o se si vuole mettere una bandiera)
+cambia il valore della casella selezionata, printBoard viene chiamata e stampa un quadratino giallo indicando la casella selezionata
+ritorna un 0, 1, 2 in base a cosa viene selezionato
+0 se l'input è stato confermato
+1 se l'input è stato confermato ma la casella confermata era una bomba
+2 se l'input era per mettere una bandiera o se l'input non è stato confermato
 
 calcAdjacent: calcola la quantità di bombe vicino ad una casella
 
@@ -54,5 +72,20 @@ calcAdjacent ha pure un selettore modalità, 0 calcola le caselle, 1 calcola se 
 ritorna la quantità di bombe vicino ad un posto (se modalità == 1 allora ritorna 1 se c'è una casella vuota, 0 se non c'è)
 
 expandBoard: espande la tavola tramite il modo quadrato di cui ho parlato io.
-può abilitare debugBit per capire come funziona, ho creato un foglio excel mentre stavo ragionando a come fare questa funzione, la ho in mente in un modo estremamente visivo ma non riesco a spiegarlo
+può abilitare debugBit per capire come funziona, ho creato un foglio excel mentre stavo ragionando a come fare questa funzione, la ho in mente in un modo estremamente visivo ma non riesco a spiegarlo proprio bene
+
+prendiamo un punto centrale, se è uno 0 allora la procedura di expand viene inizializzata.
+in questo momento abbiamo una casella 1x1, ho un counter per espandere la regione inizializzata a 1.
+il counter determina la grandezza della regione, 1x1 + 1 = 3x3, 1+1 + 2 = 5x5 (incrementi di 2 perchè c'è bisogno di un centro)
+
+adesso ho una regione 3x3, controllo tutti i quadrati (coperti) dentro quella regione 3x3 per vedere se accanto c'è una cella scoperta che vale 0, e per controllare questo calcAdjacent viene chiamata con modalità 1. se essa ritorna 1 allora calcAdjacent viene chiamata con modalità 0 per contare la quantità di bombe accanto alla cella, e il numero di bombe viene collocato.
+se accanto alla casella non vengono trovati caselle 0 ma vengono trovate caselle scoperte che valgono 1 o 2 etc allora la casella NON viene scoperta.
+
+dopo che tutte le caselle sono state controllate, il counter viene incrementato (conta che la procedura expandBoard non controlla solo il perimetro, controlla tutti gli elementi, quindi nel primo pass controlla 3x3 (9) elementi, nel secondo pass controlla 5x5 (25) elementi. sembra tanto ma in realtà è piuttosto efficiente e implementare un metodo dove solo il nuovo perimetro viene controllato non funzionerebbe)
+
+adesso abbiamo una regione 5x5, controllo tutti i quadrati coperti dentro la regione 5x5 per vedere se accanto c'è uno zero
+adesso abbiamo una regione 7x7, controllo tutti i quadrati coperti dentro la regione 7x7...
+adesso abbiamo una regione 9x9...
+
+quando una cella viene scoperta una flag viene impostata indicando che la catena non è ancora finita. se nessuna cella viene scoperta allora la flag non viene impostata e il controllo viene ridato a main.
 

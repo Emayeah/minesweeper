@@ -190,6 +190,9 @@ int userInput(int* x, int* y, int board[width][height]) {
 	else if (flag == 'Y' && board[*x][*y] == 9) {
 		return 1;
 	}
+	else if (flag != 'Y') {
+		return 3;
+	}
 	return 0;
 }
 int calcAdjacent(int x, int y, int board[width][height], int mode) {

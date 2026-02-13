@@ -30,12 +30,14 @@ int main() {
 			do {
 				tempx = rand() % width;
 				tempy = rand() % height;
-			} while (board[tempx][tempy] != 9);
+			} while (board[tempx][tempy] == 9 && (tempx != x || tempy != y));
 			board[tempx][tempy] = 9;
 			board[x][y] = 10;
 			win = 0;
 		}
-		firstInput = 0;
+		else if (win == 0) {
+			firstInput = 0;
+		}
 		if (win == 0) {
 			adjacent = calcAdjacent(x, y, board, 0); // 0 is a mode for calcAdjacent, 0 calcs nearby bombs, 1 calcs for nearby 0s for board expansion
 			board[x][y] = adjacent;

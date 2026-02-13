@@ -390,7 +390,7 @@ void cleanup() {
 			count++;
 		}
 	} while (temp != 0);
-	cout << "\e[" << height + count + 2 << "B";
+	cout << "\e[" << height + count << "B";
 	cout << "\e[?25h" << flush;
 	disable_raw_mode();
 }

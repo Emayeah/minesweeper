@@ -66,10 +66,12 @@ ritorna un 0, 1, 2 in base a cosa viene selezionato
 1 se l'input è stato confermato ma la casella confermata era una bomba
 2 se l'input era per mettere una bandiera o se l'input non è stato confermato
 
+userInput calcola il chording, forse era meglio separare la cosa che calcola il chording ma... funziona
+
 calcAdjacent: calcola la quantità di bombe vicino ad una casella
 
-calcAdjacent ha pure un selettore modalità, 0 calcola le caselle, 1 calcola se c'è una casella scoperta (vuota, senza numero) e questa modalità viene utilizzata da expandBoard.
-ritorna la quantità di bombe vicino ad un posto (se modalità == 1 allora ritorna 1 se c'è una casella vuota, 0 se non c'è)
+calcAdjacent ha pure un selettore modalità, 0 calcola le bombe (coperte con o senza flag), 1 calcola se c'è una casella scoperta (vuota, senza numero), 2 calcola la quantità di bandiere (con o senza bombe) e 3 calcola la quantità di bombe senza flag.
+ritorna la quantità di una determinata casella vicino ad un posto (se modalità == 1 allora ritorna 1 se c'è una casella vuota, 0 se non c'è)
 
 expandBoard: espande la tavola tramite il modo quadrato di cui ho parlato io.
 può abilitare debugBit per capire come funziona, ho creato un foglio excel mentre stavo ragionando a come fare questa funzione, la ho in mente in un modo estremamente visivo ma non riesco a spiegarlo proprio bene

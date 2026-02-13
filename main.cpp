@@ -4,6 +4,7 @@
 #include "rawmode.h"
 //#include <termios.h>
 //#include <unistd.h>		// raw mode for keyboard driven selection
+#include <csignal>			// throwing sigint if ctrl-c
 using namespace std;
 /*
  * 0 = uncovered (nothing)
@@ -24,7 +25,7 @@ const int debugBit = 0;
 int main() {
 	cout << "\e[?25l";
 	enable_raw_mode();
-	/* partially google gemini aided
+	/* partially google gemini aided JUST FOR THE RAW TOGGLE MODE (aka non canonical mode)
 	 * my stance on ai for programming is very clear: it's a tool for learning.
 	 * most of the raw mode toggle function is provided by gemini,
 	 * but i always analyze ai code before pasting it.
@@ -78,15 +79,19 @@ int main() {
 			flag = 3;
 			win = 1;
 		}
-	} while (win != 1);
+	} while (win != 1 && win != 4);
 	printBoard(board, 1);
-	if (flag == 3) {
+	cleanup();
+	if (flag == 3 && win != 4) {
+
 		cout << "YOU WIN!\r" << endl;
 	}
-	else {
+	else if (flag != 4 && win != 4) {
 		cout << "YOU LOSE!!!!!!!!!!!!!!\r" << endl;
 	}
-	disable_raw_mode();
+	if (win == 4) {
+		raise(SIGINT);
+	}
 }
 
 void initBoard(int board[width][height]) {
@@ -275,6 +280,16 @@ int userInput(int* x, int* y, int board[width][height]) {
 					}
 				}
 			}
+			else if (input == '\x03') { // sigint
+				return 4;
+			}
+			else if (input == '\x1a') {
+				cleanup();
+				signal(SIGTSTP, SIG_DFL);
+				raise(SIGTSTP);
+				enable_raw_mode();
+				cout << "\e[?25l" << flush;
+			}
 			else if (input != 'f') {
 				if (board[*x][*y] != 0 && board[*x][*y] != 19 && board[*x][*y] != 20 && !(board[*x][*y] >= 1 && board[*x][*y] <= 8)) {
 					if (board[*x][*y] == 9) {
@@ -300,9 +315,10 @@ int userInput(int* x, int* y, int board[width][height]) {
 							}
 						}
 					}
+					return 0;
 				}
 			}
-			else if (input == 'f' && !(board[*x][*y] >= 1 && board[*x][*y]<= 8)) {
+			else if (input == 'f' && !(board[*x][*y] >= 1 && board[*x][*y] <= 8)) {
 				if (board[*x][*y] == 19 || board[*x][*y] == 20) {
 					board[*x][*y] -= 10;
 				}
@@ -365,3 +381,16 @@ void expandBoard(int x, int y, int board[width][height]) {
 	} while (flag == 1);
 }
 
+void cleanup() {
+	int div = 1, temp, count = 1;
+	do {
+		div *= 10;
+		temp = width / div;
+		if (temp != 0) {
+			count++;
+		}
+	} while (temp != 0);
+	cout << "\e[" << height + count + 2 << "B";
+	cout << "\e[?25h" << flush;
+	disable_raw_mode();
+}

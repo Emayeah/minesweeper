@@ -113,7 +113,34 @@ void printBoard(int board[width][height], int lose) {
 				cout << "🟨";
 			}
 			else {
-				cout << board[i][j] << " ";
+				switch (board[i][j]) { // print with colors
+					case 1:
+						cout << "\e[0;34m";
+						break;
+					case 2:
+						cout << "\e[0;32m";
+						break;
+					case 3:
+						cout << "\e[0;31m";
+						break;
+					case 4:
+						cout << "\e[0;94m";
+						break;
+					case 5:
+						cout << "\e[0;91m";
+						break;
+					case 6:
+						cout << "\e[0;36m";
+						break;
+					case 7:
+						cout << "\e[38;5;240m";
+						break;
+					case 8:
+						cout << "\e[38;5;245m";
+						break;
+				}
+				cout << board[i][j] << " " << "\e[0;0m";
+//				cout << board[i][j] << " ";
 			}
 		}
 		cout << " -- " << j << endl;

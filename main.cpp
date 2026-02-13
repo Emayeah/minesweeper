@@ -90,8 +90,8 @@ void initBoard(int board[width][height]) {
 }
 
 void printBoard(int board[width][height], int lose) {
-	for (int j = 0; j < width; j++) {
-		for (int i = 0; i < height; i++) {
+	for (int j = 0; j < height; j++) {
+		for (int i = 0; i < width; i++) {
 			if (board[i][j] == 10 || ((devBit != 1 && lose != 1) && board[i][j] == 9)) {
 				cout << "⬜";
 			}

@@ -1,28 +1,45 @@
 #include <iostream>
 #include <cstdlib>
-#include "prototype.h" // width, height and minecount are stored here!
+#include "prototype.h"	// width, height and minecount are stored here!
+#include "rawmode.h"
+//#include <termios.h>
+//#include <unistd.h>		// raw mode for keyboard driven selection
 using namespace std;
 /*
  * 0 = uncovered (nothing)
  * 1 - 8 = uncovered (bomb nearby)
  * 9 = mine
  * 10 = covered
- * 11 = ask for confirmation
+ * 11 = selection tile
  * 19 = mine with flag
  * 20 = covered with flag
+ * 21 - 28 = selection number
+ * 30 = uncovered selection
+ * 39 = selected mine with flag
+ * 40 = selected tile with flag
  */
 const int devBit = 0;
 const int debugBit = 0;
 
 int main() {
+	cout << "\e[?25l";
+	enable_raw_mode();
+	/* partially google gemini aided
+	 * my stance on ai for programming is very clear: it's a tool for learning.
+	 * most of the raw mode toggle function is provided by gemini,
+	 * but i always analyze ai code before pasting it.
+	 * vibe coding and slight llm aid are completely different things
+	 * one's for losers who are afraid of learning
+	 * the other is for people willing to learn new things.
+	 * also the actual logic and handling raw code is fully gonna be made by me
+	 */
 	int firstInput = 1;
-	int win, x, y;
+	int win, x = 0, y = 0;
 	int adjacent;
 	int board[width][height];
 	initBoard(board);
 	int flag;
 	do {
-		printBoard(board, 0);
 		win = userInput(&x, &y, board); // win == 1 that means you lose because it's the game that wins against the player lol
 		if (firstInput == 1 && win == 1) { // first input is always safe
 			srand(time(NULL));
@@ -64,11 +81,12 @@ int main() {
 	} while (win != 1);
 	printBoard(board, 1);
 	if (flag == 3) {
-		cout << "YOU WIN!" << endl;
+		cout << "YOU WIN!\r" << endl;
 	}
 	else {
-		cout << "YOU LOSE!!!!!!!!!!!!!!" << endl;
+		cout << "YOU LOSE!!!!!!!!!!!!!!\r" << endl;
 	}
+	disable_raw_mode();
 }
 
 void initBoard(int board[width][height]) {
@@ -112,6 +130,14 @@ void printBoard(int board[width][height], int lose) {
 			}
 			else if (board[i][j] == 11) {
 				cout << "🟨";
+			}
+			else if (board[i][j] == 30) {
+				cout << "⬛";
+				board[i][j] = 0;
+			}
+			else if (board[i][j] == 39 || board[i][j] == 40) {
+				cout << "🏁";
+				board[i][j] -= 20;
 			}
 			else {
 				if (board[i][j] <= 20) {
@@ -176,12 +202,12 @@ void printBoard(int board[width][height], int lose) {
 //				cout << board[i][j] << " ";
 			}
 		}
-		cout << " -- " << j << endl;
+		cout << " -- " << j << "\r" << endl;
 	}
 	for (int i = 0; i < width; i++) {
 		cout << "| ";
 	}
-	cout << endl;
+	cout << "\r" << endl;
 	int div = 1, temp, count = 1;
 	do {
 		div *= 10;
@@ -195,99 +221,98 @@ void printBoard(int board[width][height], int lose) {
 		for (int i = 0; i < width; i++) {
 			cout << (i / div) % 10 << " "; 
 		}
-		cout << endl;
+		cout << "\r" << endl;
 		div /= 10;
 	}
+	cout << "\e[" << height + count + 1 << "A";
 }
 
 int userInput(int* x, int* y, int board[width][height]) {
 	char flag;
 	int temp;
 	int validChord;
+	char input;
 	do {
 		do {
-			cout << "Insert horizontal tile location: ";
-			cin >> *x;
-			if (*x < 0 || *x > width) {
-				cout << "Invalid horizontal coordinate" << endl;
+			temp = board[*x][*y];
+			if ((board[*x][*y] > 8 || board[*x][*y] < 1) && board[*x][*y] != 0 && board[*x][*y] != 19 && board[*x][*y] != 20) {
+				board[*x][*y] = 11;
+				printBoard(board, 0);
+				board[*x][*y] = temp;
 			}
-		} while (*x < 0 || *x > width);
-		do {
-			cout << "Insert vertical tile location: ";
-			cin >> *y;
-			if (*y < 0 || *y > width) {
-				cout << "Invalid vertical coordinate" << endl;
+			else if (board[*x][*y] <= 8 && board[*x][*y] >= 1 || (board[*x][*y] == 19 || board[*x][*y] == 20)) {
+				board[*x][*y] += 20;
+				printBoard(board, 0);
 			}
-		} while (*y < 0 || *y > height);
-		if (board[*x][*y] != 10 && board[*x][*y] != 9 && board[*x][*y] != 20 && board[*x][*y] != 19 && !(board[*x][*y] >= 1 && board[*x][*y] <= 8)) {
-			cout << "Invalid cell selected" << endl;
-		}
-	} while (board[*x][*y] != 10 && board[*x][*y] != 9 && board[*x][*y] != 20 && board[*x][*y] != 19 && !(board[*x][*y] >= 1 && board[*x][*y] <= 8));
-	temp = board[*x][*y];
-	if (board[*x][*y] >= 1 && board[*x][*y] <= 8) {
-		board[*x][*y] += 20;
-		printBoard(board, 0);
-	}
-	else {
-		board[*x][*y] = 11;
-		printBoard(board, 0);
-	}
-	if (temp == 19 || temp == 20) {
-		cout << "Are you sure you want to deflag? (y, any other for no) ";
-		cin >> flag;
-		if (flag == 'y' || flag == 'Y') {
-			flag = 'F';
-		}
-	}
-	else if (temp >= 1 && temp <= 8) {
-		cout << "Are you sure you want to chord? (y, any other for no) ";
-		cin >> flag;
-	}
-	else {
-		cout << "Are you sure? (y, f for flag, any other for no) ";
-		cin >> flag;
-	}
-	board[*x][*y] = temp;	
-	if (flag >= 97) {
-		flag -= 32;
-	}
-	if (flag == 'F' && !(temp >= 1 && temp <= 8)) {
-		if (board[*x][*y] == 19 || board[*x][*y] == 20) {
-			board[*x][*y] -= 10;
-		}
-		else {
-			board[*x][*y] += 10;
-		}
-		return 2;
-	}
-	else if (flag == 'Y' && board[*x][*y] == 9) {
-		return 1;
-	}
-	else if (flag == 'Y' && temp >= 1 && temp <= 8) {
-		validChord = calcAdjacent(*x, *y, board, 2);
-		if (validChord == board[*x][*y]) {
-			validChord = calcAdjacent(*x, *y, board, 3);
-			if (validChord != 0) {
-				return 1;
+			else if (board[*x][*y] == 0) {
+				board[*x][*y] = 30;
+				printBoard(board, 0);
 			}
-			for (int i = -1; i < 2; i++) {
-				for (int j = -1; j < 2; j++) {
-					if (*x + i >= 0 && *x + i < width && *y + j >= 0 && *y + j < height) {
-						if (board[*x + i][*y + j] == 10) {
-							board[*x + i][*y + j] = calcAdjacent(*x + i, *y + j, board, 0);
-							expandBoard(*x + i, *y + j, board);
+			cin >> input;
+			if (input == '\e') {
+				cin >> input;
+				if (input == '[') {
+					cin >> input;
+					if (input == 'A') {
+						if (*y > 0) {
+							*y-=1;
 						}
-					} 
+					}
+					else if (input == 'B') {
+						if (*y < height - 1) {
+							*y+=1;
+						}
+					}
+					else if (input == 'C') {
+						if (*x < width - 1) {
+							*x+=1;
+						}
+					}
+					else if (input == 'D'){
+						if (*x > 0) {
+							*x-=1;
+						}
+					}
 				}
 			}
-		}
-		else {
-			cout << "Invalid chord! not enough flags" << endl;
-		}
-	}
-	else if (flag != 'Y') {
-		return 2;
-	}
+			else if (input != 'f') {
+				if (board[*x][*y] != 0 && board[*x][*y] != 19 && board[*x][*y] != 20 && !(board[*x][*y] >= 1 && board[*x][*y] <= 8)) {
+					if (board[*x][*y] == 9) {
+						return 1;
+					}
+					return 0;
+				}
+				else if (board[*x][*y] >= 1 && board[*x][*y] <= 8) {
+					validChord = calcAdjacent(*x, *y, board, 2);
+					if (validChord == board[*x][*y]) {
+						validChord = calcAdjacent(*x, *y, board, 3);
+						if (validChord != 0) {
+							return 1;
+						}
+						for (int i = -1; i < 2; i++) {
+							for (int j = -1; j < 2; j++) {
+								if (*x + i >= 0 && *x + i < width && *y + j >= 0 && *y + j < height) {
+									if (board[*x + i][*y + j] == 10) {
+										board[*x + i][*y + j] = calcAdjacent(*x + i, *y + j, board, 0);
+										expandBoard(*x + i, *y + j, board);
+									} 
+								}
+							}
+						}
+					}
+				}
+			}
+			else if (input == 'f' && !(board[*x][*y] >= 1 && board[*x][*y]<= 8)) {
+				if (board[*x][*y] == 19 || board[*x][*y] == 20) {
+					board[*x][*y] -= 10;
+				}
+				else {
+					board[*x][*y] += 10;
+				}
+				return 2;
+			}
+		} while (true);//(*x < 0 || *x > width);
+	} while (true); 
 	return 0;
 }
 int calcAdjacent(int x, int y, int board[width][height], int mode) {

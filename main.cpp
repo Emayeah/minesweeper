@@ -34,6 +34,7 @@ int main() {
 			board[tempx][tempy] = 9;
 			board[x][y] = 10;
 			win = 0;
+			firstInput = 0;
 		}
 		else if (win == 0) {
 			firstInput = 0;
@@ -220,7 +221,7 @@ int userInput(int* x, int* y, int board[width][height]) {
 		return 1;
 	}
 	else if (flag != 'Y') {
-		return 3;
+		return 2;
 	}
 	return 0;
 }

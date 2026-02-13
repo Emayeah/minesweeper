@@ -83,10 +83,11 @@ int main() {
 	printBoard(board, 1);
 	cleanup();
 	if (flag == 3 && win != 4) {
-
+		cout << "\e[1B";
 		cout << "YOU WIN!\r" << endl;
 	}
 	else if (flag != 4 && win != 4) {
+		cout << "\e[1B";
 		cout << "YOU LOSE!!!!!!!!!!!!!!\r" << endl;
 	}
 	if (win == 4) {

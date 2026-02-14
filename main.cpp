@@ -275,8 +275,8 @@ int userInput(int* x, int* y, int board[width][height]) {
 						}
 					}
 					else if (input == 'D'){		// left
-						if (*y > 0) {
-							*y -= 1;
+						if (*x > 0) {
+							*x -= 1;
 						}
 					}
 					else if (input == '5') {	// page up, +5 spaces

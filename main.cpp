@@ -155,13 +155,13 @@ void printBoard(int board[width][height], int lose) {
 							cout << "\e[0;32m";
 							break;
 						case 3:
-							cout << "\e[0;31m";
+							cout << "\e[38;5;196m";
 							break;
 						case 4:
-							cout << "\e[0;94m";
+							cout << "\e[38;5;18m";
 							break;
 						case 5:
-							cout << "\e[0;91m";
+							cout << "\e[38;5;88m";
 							break;
 						case 6:
 							cout << "\e[0;36m";
@@ -184,22 +184,22 @@ void printBoard(int board[width][height], int lose) {
 							cout << "\e[0;42m";
 							break;
 						case 3:
-							cout << "\e[0;41m";
+							cout << "\e[48;5;196m";
 							break;
 						case 4:
-							cout << "\e[0;104m";
+							cout << "\e[48;5;18m";
 							break;
 						case 5:
-							cout << "\e[0;101m";
+							cout << "\e[48;5;88m";
 							break;
 						case 6:
 							cout << "\e[0;46m";
 							break;
 						case 7:
-							cout << "\e[38;5;240m";
+							cout << "\e[48;5;240m";
 							break;
 						case 8:
-							cout << "\e[38;5;245m";
+							cout << "\e[48;5;245m";
 							break;
 					}
 

@@ -4,7 +4,7 @@
 #include "rawmode.h"
 //#include <termios.h>
 //#include <unistd.h>		// raw mode for keyboard driven selection
-#include <csignal>			// throwing sigint if ctrl-c
+#include <csignal>			// throwing sigint if ctrl-c, sigtstp for ctrl-z
 using namespace std;
 /*
  * 0 = uncovered (nothing)
@@ -356,7 +356,7 @@ int calcAdjacent(int x, int y, int board[width][height], int mode) {
 }
 void expandBoard(int x, int y, int board[width][height]) {	
 	int flag, count = 1, adjacent;
-	char asdf[3];
+	char asdf;
 	do {
 		flag = 0;
 		for (int i = -count; i <= count; i++) {

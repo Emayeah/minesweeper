@@ -67,8 +67,8 @@ int main() {
 		flag = 2;
 		if (win == 0) {
 			flag = 0;
-			for (int i = 0; i < height && flag != 1; i++) {
-				for (int j = 0; j < width && flag != 1; j++) {
+			for (int i = 0; i < width && flag != 1; i++) {
+				for (int j = 0; j < height && flag != 1; j++) {
 					if (board[i][j] == 10 || board[i][j] == 20) {
 						flag = 1;
 					}

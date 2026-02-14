@@ -259,24 +259,58 @@ int userInput(int* x, int* y, int board[width][height]) {
 				cin >> input;
 				if (input == '[') {
 					cin >> input;
-					if (input == 'A') {
+					if (input == 'A') {			// up
 						if (*y > 0) {
-							*y-=1;
+							*y -= 1;
 						}
 					}
-					else if (input == 'B') {
+					else if (input == 'B') {	// down
 						if (*y < height - 1) {
-							*y+=1;
+							*y += 1;
 						}
 					}
-					else if (input == 'C') {
+					else if (input == 'C') {	// right
 						if (*x < width - 1) {
-							*x+=1;
+							*x += 1;
 						}
 					}
-					else if (input == 'D'){
-						if (*x > 0) {
-							*x-=1;
+					else if (input == 'D'){		// left
+						if (*y > 0) {
+							*y -= 1;
+						}
+					}
+					else if (input == '5') {	// page up, +5 spaces
+						cin >> input; // discard extra tilde from the escape sequence (^[[5~)
+						if (*y >= 5) {
+							*y -= 5;
+						}
+						else {
+							*y = 0;
+						}
+					}
+					else if (input == '6') {	// page down, -5 spaces
+						cin >> input; // discard extra tilde from the escape sequence (^[[6~)
+						if (*y <= height - 6) {
+							*y += 5;
+						}
+						else {
+							*y = height - 1;
+						}
+					}
+					else if (input == 'H') {	// home, -5 spaces
+						if (*x >= 5) {
+							*x -= 5;
+						}
+						else {
+							*x = 0;
+						}
+					}
+					else if (input == 'F') {	// end, +5 spaces
+						if (*x <= width - 6) {
+							*x += 5;
+						}
+						else {
+							*x = width - 1;
 						}
 					}
 				}

@@ -6,9 +6,7 @@
 //#include <unistd.h>		// for sleeping
 #include <csignal>			// throwing sigint if ctrl-c, sigtstp for ctrl-z
 #include <sys/ioctl.h>		// for terminal size
-#include <thread>			// for sleep
 #include <future>			// for async
-#include <chrono>
 #include <mutex>			// race condition! i was experimenting with the async stuff but of course i got a race condition
 using namespace std;
 /*

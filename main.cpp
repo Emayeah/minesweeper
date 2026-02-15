@@ -52,12 +52,19 @@ int main() {
 	int board[width][height];
 	initBoard(board);
 	int flag;
+	int sigExit;
+	int lose = 0;
 	//wordArt();
 	std::future<void> idkman = std::async(std::launch::async, wordArt);
 	//std::thread printTitle(wordArt);	// gemini
 	//printTitle.detach();				// gemini
 	do {
-		win = userInput(&x, &y, board); // win == 1 that means you lose because it's the game that wins against the player lol
+		sigExit = 0;
+		win = userInput(&x, &y, board, lose); // win == 1 that means you lose because it's the game that wins against the player lol
+		if (win == 5) {
+			initBoard(board);
+			lose = 0;
+		}
 		if (firstInput == 1 && win == 1) { // first input is always safe
 			srand(time(NULL));
 			int tempx, tempy;
@@ -91,24 +98,43 @@ int main() {
 				}
 			}
 		}
-		if (flag == 0) {
-			flag = 3;
-			win = 1;
+		if (win == 4) {
+			sigExit = 1;
 		}
-	} while (win != 1 && win != 4);
-	printBoard(board, 1);
+		int termWidth;
+		int termHeight;
+		struct winsize w;										// gemini
+		ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);					// gemini
+		// The ioctl call returns 0 on success, -1 on error		// gemini
+		termWidth = w.ws_col;									// gemini aided
+		termHeight = w.ws_row;									// gemini aided	
+		if (flag == 0) {
+			cout << "\e[H";
+			cout << "\e[" << termHeight / 2 << "B";
+			cout << "\e[" << termWidth / 2 - 3 <<"C";
+			cout << "YOU WIN!\r" << endl;
+			cout << "\e[B";
+			cout << "\r\e[" << termWidth / 2 - 21 << "C";
+			cout << "Click titlebar for new game or ^C to exit!";
+			lose = 1;
+		}
+		else if (win == 1) {
+			printBoard(board, 1);
+			cout << "\e[H";
+			cout << "\e[" << termHeight / 2 <<"B";
+			cout << "\e[" << termWidth / 2 - 8 <<"C";
+			cout << "YOU LOSE!!!!!!!!!!!!!!!!\r" << endl;
+			cout << "\e[B";
+			cout << "\r\e[" << termWidth / 2 - 22 << "C";
+			cout << " Click titlebar for new game or ^C to exit!";
+			lose = 1;
+		}
+	} while (sigExit == 0);
 	cleanup();
-	if (flag == 3 && win != 4) {
-		cout << "\e[1B";
-		cout << "YOU WIN!\r" << endl;
-	}
-	else if (flag != 4 && win != 4) {
-		cout << "\e[1B";
-		cout << "YOU LOSE!!!!!!!!!!!!!!\r" << endl;
-	}
 	if (win == 4) {
 		raise(SIGINT);
 	}
+	exit(EXIT_SUCCESS);
 }
 
 void initBoard(int board[width][height]) {
@@ -133,7 +159,6 @@ void initBoard(int board[width][height]) {
 void printBoard(int board[width][height], int lose) {
 	int termWidth;
 	int termHeight;
-	char word[] = "minesweeper";
 	struct winsize w;										// gemini
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);					// gemini
 	// The ioctl call returns 0 on success, -1 on error		// gemini
@@ -150,11 +175,20 @@ void printBoard(int board[width][height], int lose) {
 //	cout << "\e[" << (termWidth / 2) - (11 / 2) /* 11 is the length of the word "minesweeper" */ << "C"; // hardcoded to my terminal size
 //	cout << "\e[1m\e[38;5;16mMinesweeper";
 //	cout << "\e[0;0m\e[22m\r" << endl;
-	consoleMutex.lock();									// gemini
-	cout << "\e[" << ((termHeight - 1) / 2) - (height / 2) << "B"; // move to the enter
+	consoleMutex.lock(); // gemini
+	cout << "\e[H";
+	cout << "\e[" << ((termHeight - 1) / 2) - (height / 2) - 1 << "B"; // move to the enter
+	cout << "\e[" << (termWidth / 2) - width << "C"; // move to the center, again, an emoji takes up 2 spaces!
+	for (int i = 0; i < width; i++) {
+		cout << "🟩";
+	}
+	cout << "\r\n";
 	for (int j = 0; j < height; j++) {
-		cout << "\e[" << (termWidth / 2) - (width / 2) << "C"; // move to the center
+		cout << "\e[" << (termWidth / 2) - width - 2 << "C"; // move to the center, again, an emoji takes up 2 spaces!
 		for (int i = 0; i < width; i++) {
+			if (i == 0) {
+				cout << "🟩";
+			}
 			if (board[i][j] == 10 || ((devBit != 1 && lose != 1) && board[i][j] == 9)) {
 				cout << "⬜";
 			}
@@ -249,14 +283,19 @@ void printBoard(int board[width][height], int lose) {
 //				cout << board[i][j] << " ";
 			}
 		}
+		cout << "🟩";
 		cout << "\r" << endl;
+	}
+	cout << "\e[" << (termWidth / 2) - width << "C"; // move to the center, again, an emoji takes up 2 spaces!
+	for (int i = 0; i < width; i++) {
+		cout << "🟩";
 	}
 	cout << "\e[" << height << "A";
 	cout << "\e[" << ((termHeight - 1) / 2) - (height / 2) << "A"; // move to the enter
 	consoleMutex.unlock();									// gemini
 }
 
-int userInput(int* x, int* y, int board[width][height]) {
+int userInput(int* x, int* y, int board[width][height], int lose) {
 	char flag;
 	int temp;
 	int validChord;
@@ -266,29 +305,38 @@ int userInput(int* x, int* y, int board[width][height]) {
 	int mouseValy;
 	int pressed = 1;
 	int logicTemp;
+	int termWidth;
+	int termHeight;
+	struct winsize w;										// gemini
+	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);					// gemini
+	// The ioctl call returns 0 on success, -1 on error		// gemini
+	termWidth = w.ws_col;									// gemini aided
+	termHeight = w.ws_row;									// gemini aided	
 	do {
 		do {
-			temp = board[*x][*y];
-			if ((board[*x][*y] > 8 || board[*x][*y] < 1) && board[*x][*y] != 0 && board[*x][*y] != 19 && board[*x][*y] != 20) {
-				if (pressed == 1) {
-					board[*x][*y] = 11;
-					printBoard(board, 0);
-					board[*x][*y] = temp;
+			if (lose == 0) {
+				temp = board[*x][*y];
+				if ((board[*x][*y] > 8 || board[*x][*y] < 1) && board[*x][*y] != 0 && board[*x][*y] != 19 && board[*x][*y] != 20) {
+					if (pressed == 1) {
+						board[*x][*y] = 11;
+						printBoard(board, 0);
+						board[*x][*y] = temp;
+					}
+					else if (pressed == 0) {
+						board[*x][*y] = 50;
+						printBoard(board, 0);
+						board[*x][*y] = temp;
+						pressed = 1;
+					}
 				}
-				else if (pressed == 0) {
-					board[*x][*y] = 50;
+				else if (board[*x][*y] <= 8 && board[*x][*y] >= 1 || (board[*x][*y] == 19 || board[*x][*y] == 20)) {
+					board[*x][*y] += 20;
 					printBoard(board, 0);
-					board[*x][*y] = temp;
-					pressed = 1;
 				}
-			}
-			else if (board[*x][*y] <= 8 && board[*x][*y] >= 1 || (board[*x][*y] == 19 || board[*x][*y] == 20)) {
-				board[*x][*y] += 20;
-				printBoard(board, 0);
-			}
-			else if (board[*x][*y] == 0) {
-				board[*x][*y] = 30;
-				printBoard(board, 0);
+				else if (board[*x][*y] == 0) {
+					board[*x][*y] = 30;
+					printBoard(board, 0);
+				}
 			}
 			cin >> input;
 			if (input == '\e') {
@@ -363,12 +411,14 @@ int userInput(int* x, int* y, int board[width][height]) {
 						 * m if mouse IS pressed down
 						 */
 						tempVal = getMouseVal(&pressed);
-						if (tempVal == 35) {	// left click
+						if (tempVal == 35) {	// unpressed
 							mouseValx = getMouseVal(&pressed);
 							mouseValx--;
+							mouseValx -= (termWidth / 2) - width;
 							mouseValx /= 2;		// emojis take 2 spaces horizontally
 							mouseValy = getMouseVal(&pressed);
 							mouseValy--;		// but not vertically! although there is a small offset
+							mouseValy -= termHeight / 2 - height / 2;
 							if (mouseValx >= 0 && mouseValx < width) {
 								*x = mouseValx;
 							}
@@ -377,19 +427,24 @@ int userInput(int* x, int* y, int board[width][height]) {
 							}
 							pressed = 1;
 						}
-						else if (tempVal == 0) {
+						else if (tempVal == 0) { // left click
 							mouseValx = getMouseVal(&pressed);
 							mouseValx--;
+							mouseValx -= (termWidth / 2) - width;
 							mouseValx /= 2;		// emojis take 2 spaces horizontally
 							mouseValy = getMouseVal(&pressed);
+							if (mouseValy == 0 || mouseValy == 1) {
+								return 5;
+							}
 							mouseValy--;		// but not vertically! although there is a small offset
+							mouseValy -= termHeight / 2 - height / 2;
 							if (mouseValx >= 0 && mouseValx < width) {
 								*x = mouseValx;
 							}
 							if (mouseValy >= 0 && mouseValy < height) {
 								*y = mouseValy;
 							}
-							if (pressed == 1) {
+							if (pressed == 1 && lose == 0) {
 								logicTemp = clickLogic(x, y, board, 0);
 								if (logicTemp != 3) {
 									return logicTemp;
@@ -399,28 +454,32 @@ int userInput(int* x, int* y, int board[width][height]) {
 						else if (tempVal == 2) {
 							mouseValx = getMouseVal(&pressed);
 							mouseValx--;
+							mouseValx -= (termWidth / 2) - width;
 							mouseValx /= 2;		// emojis take 2 spaces horizontally
 							mouseValy = getMouseVal(&pressed);
 							mouseValy--;		// but not vertically! although there is a small offset
+							mouseValy -= termHeight / 2 - height / 2;
 							if (mouseValx >= 0 && mouseValx < width) {
 								*x = mouseValx;
 							}
 							if (mouseValy >= 0 && mouseValy < height) {
 								*y = mouseValy;
 							}
-							if (pressed == 1) {
+							if (pressed == 1 && lose == 0) {
 								logicTemp = clickLogic(x, y, board, 1);
 								if (logicTemp != 0) {
 									return logicTemp;
 								}
 							}
 						}
-						else if (tempVal == 34 || tempVal == 32) {
+						else if (tempVal == 34 || tempVal == 32) { // pressed down and moving
 							mouseValx = getMouseVal(&pressed);
 							mouseValx--;
+							mouseValx -= (termWidth / 2) - width;
 							mouseValx /= 2;		// emojis take 2 spaces horizontally
 							mouseValy = getMouseVal(&pressed);
 							mouseValy--;		// but not vertically! although there is a small offset
+							mouseValy -= termHeight / 2 - height / 2;
 							if (mouseValx >= 0 && mouseValx < width) {
 								*x = mouseValx;
 							}
@@ -441,13 +500,13 @@ int userInput(int* x, int* y, int board[width][height]) {
 				enable_raw_mode();
 				cout << "\e[?25l" << flush;
 			}
-			else if (input != 'f') {
+			else if (input != 'f' && lose == 0) {
 				logicTemp = clickLogic(x, y, board, 0);
 				if (logicTemp != 3) {
 					return logicTemp;
 				}
 			}
-			else if (input == 'f' && !(board[*x][*y] >= 0 && board[*x][*y] <= 8)) {
+			else if (input == 'f' && !(board[*x][*y] >= 0 && board[*x][*y] <= 8) && lose == 0) {
 				logicTemp = clickLogic(x, y, board, 1);
 				if (logicTemp != 0) {
 					return logicTemp;

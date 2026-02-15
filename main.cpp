@@ -9,6 +9,7 @@
 #include <thread>			// for sleep
 #include <future>			// for async
 #include <chrono>
+#include <mutex>			// race condition! i was experimenting with the async stuff but of course i got a race condition
 using namespace std;
 /*
  * 0 = uncovered (nothing)
@@ -24,6 +25,7 @@ using namespace std;
  * 40 = selected tile with flag
  * 50 = clicked selected (orange), good ux
  */
+std::mutex consoleMutex;
 const int devBit = 0;
 const int debugBit = 0;
 
@@ -148,7 +150,10 @@ void printBoard(int board[width][height], int lose) {
 //	cout << "\e[" << (termWidth / 2) - (11 / 2) /* 11 is the length of the word "minesweeper" */ << "C"; // hardcoded to my terminal size
 //	cout << "\e[1m\e[38;5;16mMinesweeper";
 //	cout << "\e[0;0m\e[22m\r" << endl;
+	consoleMutex.lock();									// gemini
+	cout << "\e[" << ((termHeight - 1) / 2) - (height / 2) << "B"; // move to the enter
 	for (int j = 0; j < height; j++) {
+		cout << "\e[" << (termWidth / 2) - (width / 2) << "C"; // move to the center
 		for (int i = 0; i < width; i++) {
 			if (board[i][j] == 10 || ((devBit != 1 && lose != 1) && board[i][j] == 9)) {
 				cout << "⬜";
@@ -247,6 +252,8 @@ void printBoard(int board[width][height], int lose) {
 		cout << "\r" << endl;
 	}
 	cout << "\e[" << height << "A";
+	cout << "\e[" << ((termHeight - 1) / 2) - (height / 2) << "A"; // move to the enter
+	consoleMutex.unlock();									// gemini
 }
 
 int userInput(int* x, int* y, int board[width][height]) {
@@ -593,6 +600,7 @@ void wordArt() {
 		/*
 		 * just wanted to get the terminal size to adjust the logic
 		 */
+		consoleMutex.lock();									// gemini
 		cout << "\e[H";
 		cout << "\e[48;5;15m";
 		for (int i = 0; i < termWidth; i++) {
@@ -608,6 +616,7 @@ void wordArt() {
 			cout << word;
 		}
 		cout << "\e[0;0m\e[22m\r" << endl;
+		consoleMutex.unlock();									// gemini
 		if (Art < 11) {
 			word[Art] += 32;
 		}

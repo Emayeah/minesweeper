@@ -499,6 +499,7 @@ int userInput(int* x, int* y, int board[width][height], int lose) {
 				raise(SIGTSTP);
 				enable_raw_mode();
 				cout << "\e[?1049h";		// alternate screen buffer
+				cout << "\e[?1003h\e[?1006h";	// set any-event to high and sgr to high for the mouse button release
 				cout << "\e[?25l" << flush;
 			}
 			else if (input != 'f' && lose == 0) {

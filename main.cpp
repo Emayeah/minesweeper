@@ -112,8 +112,8 @@ int main() {
 			cout << "\e[" << termWidth / 2 - 3 <<"C";
 			cout << "YOU WIN!\r" << endl;
 			cout << "\e[B";
-			cout << "\r\e[" << termWidth / 2 - 21 << "C";
-			cout << "Click titlebar for new game or ^C to exit!";
+			cout << "\r\e[" << termWidth / 2 - 22 << "C";
+			cout << " Click titlebar for new game or ^C to exit!";
 			lose = 1;
 		}
 		else if (win == 1) {

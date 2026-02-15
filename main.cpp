@@ -62,6 +62,7 @@ int main() {
 		if (win == 5) {
 			initBoard(board);
 			lose = 0;
+			firstInput = 1;
 		}
 		if (firstInput == 1 && win == 1) { // first input is always safe
 			srand(time(NULL));
@@ -107,10 +108,11 @@ int main() {
 		termWidth = w.ws_col;									// gemini aided
 		termHeight = w.ws_row;									// gemini aided	
 		if (flag == 0) {
+			printBoard(board, 0);
 			cout << "\e[H";
 			cout << "\e[" << termHeight / 2 << "B";
-			cout << "\e[" << termWidth / 2 - 3 <<"C";
-			cout << "YOU WIN!\r" << endl;
+			cout << "\e[" << termWidth / 2 - 4 <<"C";
+			cout << " YOU WIN!\r" << endl;
 			cout << "\e[B";
 			cout << "\r\e[" << termWidth / 2 - 22 << "C";
 			cout << " Click titlebar for new game or ^C to exit!";
@@ -120,8 +122,8 @@ int main() {
 			printBoard(board, 1);
 			cout << "\e[H";
 			cout << "\e[" << termHeight / 2 <<"B";
-			cout << "\e[" << termWidth / 2 - 8 <<"C";
-			cout << "YOU LOSE!!!!!!!!!!!!!!!!\r" << endl;
+			cout << "\e[" << termWidth / 2 - 9 <<"C";
+			cout << " YOU LOSE!!!!!!!!!!!!!!!!\r" << endl;
 			cout << "\e[B";
 			cout << "\r\e[" << termWidth / 2 - 22 << "C";
 			cout << " Click titlebar for new game or ^C to exit!";

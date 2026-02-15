@@ -18,14 +18,19 @@ using namespace std;
  * 30 = uncovered selection
  * 39 = selected mine with flag
  * 40 = selected tile with flag
+ * 50 = clicked selected (orange), good ux
  */
 const int devBit = 0;
 const int debugBit = 0;
 
 int main() {
-	cout << "\e[?25l";
+	cout << "\e[?1049h";		// alternate screen buffer
+	cout << "\e[?1003h\e[?1006h";	// set any-event to high and sgr to high for the mouse button release
+	cout << "\e[?25l";			// set cursor to low
+	cout << "\e[H";				// set cursor to home position
 	enable_raw_mode();
-	/* partially google gemini aided JUST FOR THE RAW TOGGLE MODE (aka non canonical mode)
+	/*
+	 * partially google gemini aided JUST FOR THE RAW TOGGLE MODE (aka non canonical mode)
 	 * my stance on ai for programming is very clear: it's a tool for learning.
 	 * most of the raw mode toggle function is provided by gemini,
 	 * but i always analyze ai code before pasting it.
@@ -145,6 +150,9 @@ void printBoard(int board[width][height], int lose) {
 				cout << "🏁";
 				board[i][j] -= 20;
 			}
+			else if (board[i][j] == 50) {
+				cout << "🟧";
+			}
 			else {
 				if (board[i][j] <= 20) {
 					switch (board[i][j]) { // print with colors
@@ -238,13 +246,26 @@ int userInput(int* x, int* y, int board[width][height]) {
 	int temp;
 	int validChord;
 	char input;
+	int tempVal;
+	int mouseValx;
+	int mouseValy;
+	int pressed = 1;
+	int logicTemp;
 	do {
 		do {
 			temp = board[*x][*y];
 			if ((board[*x][*y] > 8 || board[*x][*y] < 1) && board[*x][*y] != 0 && board[*x][*y] != 19 && board[*x][*y] != 20) {
-				board[*x][*y] = 11;
-				printBoard(board, 0);
-				board[*x][*y] = temp;
+				if (pressed == 1) {
+					board[*x][*y] = 11;
+					printBoard(board, 0);
+					board[*x][*y] = temp;
+				}
+				else if (pressed == 0) {
+					board[*x][*y] = 50;
+					printBoard(board, 0);
+					board[*x][*y] = temp;
+					pressed = 1;
+				}
 			}
 			else if (board[*x][*y] <= 8 && board[*x][*y] >= 1 || (board[*x][*y] == 19 || board[*x][*y] == 20)) {
 				board[*x][*y] += 20;
@@ -313,6 +334,73 @@ int userInput(int* x, int* y, int board[width][height]) {
 							*x = width - 1;
 						}
 					}
+					else if (input == '<') {	// mouse driven controls
+						/*
+						 * format: ESC[<z;x;ym
+						 * z = 0 if left click
+						 * z = 2 if right click
+						 * x = 35 if nothing is pressed
+						 * x denotes the x coordinates (horizontal) (absolute value)
+						 * y denotes the y coordinates (vertical) also absolute
+						 * M if mouse NOT pressed down
+						 * m if mouse IS pressed down
+						 */
+						tempVal = getMouseVal(&pressed);
+						if (tempVal == 35) {	// left click
+							mouseValx = getMouseVal(&pressed);
+							mouseValx--;
+							mouseValx /= 2;		// emojis take 2 spaces horizontally
+							mouseValy = getMouseVal(&pressed);
+							mouseValy--;		// but not vertically! although there is a small offset
+							if (mouseValx >= 0 && mouseValx < width) {
+								*x = mouseValx;
+							}
+							if (mouseValy >= 0 && mouseValy < height) {
+								*y = mouseValy;
+							}
+							pressed = 1;
+						}
+						else if (tempVal == 0) {
+							if (pressed == 1) {
+								logicTemp = clickLogic(x, y, board, 0);
+								if (logicTemp != 3) {
+									return logicTemp;
+								}
+							}
+						}
+						else if (tempVal == 2) {
+							mouseValx = getMouseVal(&pressed);
+							mouseValx--;
+							mouseValx /= 2;		// emojis take 2 spaces horizontally
+							mouseValy = getMouseVal(&pressed);
+							mouseValy--;		// but not vertically! although there is a small offset
+							if (mouseValx >= 0 && mouseValx < width) {
+								*x = mouseValx;
+							}
+							if (mouseValy >= 0 && mouseValy < height) {
+								*y = mouseValy;
+							}
+							if (pressed == 1) {
+								logicTemp = clickLogic(x, y, board, 1);
+								if (logicTemp != 0) {
+									return logicTemp;
+								}
+							}
+						}
+						else if (tempVal = 34) {
+							mouseValx = getMouseVal(&pressed);
+							mouseValx--;
+							mouseValx /= 2;		// emojis take 2 spaces horizontally
+							mouseValy = getMouseVal(&pressed);
+							mouseValy--;		// but not vertically! although there is a small offset
+							if (mouseValx >= 0 && mouseValx < width) {
+								*x = mouseValx;
+							}
+							if (mouseValy >= 0 && mouseValy < height) {
+								*y = mouseValy;
+							}
+						}
+					}
 				}
 			}
 			else if (input == '\x03') { // sigint
@@ -326,41 +414,16 @@ int userInput(int* x, int* y, int board[width][height]) {
 				cout << "\e[?25l" << flush;
 			}
 			else if (input != 'f') {
-				if (board[*x][*y] != 0 && board[*x][*y] != 19 && board[*x][*y] != 20 && !(board[*x][*y] >= 1 && board[*x][*y] <= 8)) {
-					if (board[*x][*y] == 9) {
-						return 1;
-					}
-					return 0;
-				}
-				else if (board[*x][*y] >= 1 && board[*x][*y] <= 8) {
-					validChord = calcAdjacent(*x, *y, board, 2);
-					if (validChord == board[*x][*y]) {
-						validChord = calcAdjacent(*x, *y, board, 3);
-						if (validChord != 0) {
-							return 1;
-						}
-						for (int i = -1; i < 2; i++) {
-							for (int j = -1; j < 2; j++) {
-								if (*x + i >= 0 && *x + i < width && *y + j >= 0 && *y + j < height) {
-									if (board[*x + i][*y + j] == 10) {
-										board[*x + i][*y + j] = calcAdjacent(*x + i, *y + j, board, 0);
-										expandBoard(*x + i, *y + j, board);
-									} 
-								}
-							}
-						}
-					}
-					return 0;
+				logicTemp = clickLogic(x, y, board, 0);
+				if (logicTemp != 3) {
+					return logicTemp;
 				}
 			}
-			else if (input == 'f' && !(board[*x][*y] >= 1 && board[*x][*y] <= 8)) {
-				if (board[*x][*y] == 19 || board[*x][*y] == 20) {
-					board[*x][*y] -= 10;
+			else if (input == 'f' && !(board[*x][*y] >= 0 && board[*x][*y] <= 8)) {
+				logicTemp = clickLogic(x, y, board, 1);
+				if (logicTemp != 0) {
+					return logicTemp;
 				}
-				else {
-					board[*x][*y] += 10;
-				}
-				return 2;
 			}
 		} while (true);//(*x < 0 || *x > width);
 	} while (true); 
@@ -426,6 +489,76 @@ void cleanup() {
 		}
 	} while (temp != 0);
 	cout << "\e[" << height + count << "B";
-	cout << "\e[?25h" << flush;
+	cout << "\e[?1003l\e[?1006l";
+	cout << "\e[?25h";
+	cout << "\e[?1049l" << flush;
+	cout << "\e[1A" << flush;
 	disable_raw_mode();
+}
+
+int getMouseVal(int* pressed) {
+	int tempVal = 0;
+	char input;
+	do {
+		cin >> input;
+		if ((int)(input - 48) >= 0 && (int)(input - 48) <= 9) {
+			tempVal *= 10;
+			tempVal += (int)(input - 48);
+		}
+		else {
+			if (input == 'M') {
+				*pressed = 0;
+			}
+			else if (input == 'm') {
+				*pressed = 1;
+			}
+		}
+	} while ((int)(input - 48) >= 0 && (int)(input - 48) <= 9);
+	return tempVal;
+}
+int clickLogic(int* x, int* y, int board[width][height], int flag) {
+	int validChord;
+	if (flag == 0) {
+		if (board[*x][*y] != 0 && board[*x][*y] != 19 && board[*x][*y] != 20 && !(board[*x][*y] >= 1 && board[*x][*y] <= 8)) {
+			if (board[*x][*y] == 9) {
+				return 1;
+			}
+			return 0;
+		}
+		else if (board[*x][*y] >= 1 && board[*x][*y] <= 8) {
+			validChord = calcAdjacent(*x, *y, board, 2);
+			if (validChord == board[*x][*y]) {
+				validChord = calcAdjacent(*x, *y, board, 3);
+				if (validChord != 0) {
+					return 1;
+				}
+				for (int i = -1; i < 2; i++) {
+					for (int j = -1; j < 2; j++) {
+						if (*x + i >= 0 && *x + i < width && *y + j >= 0 && *y + j < height) {
+							if (board[*x + i][*y + j] == 10) {
+								board[*x + i][*y + j] = calcAdjacent(*x + i, *y + j, board, 0);
+								expandBoard(*x + i, *y + j, board);
+							} 
+						}
+					}
+				}
+			}
+		return 0;
+		}
+	}
+	else if (flag == 1 && !(board[*x][*y] >= 1 && board[*x][*y] <= 8)) {
+		if (!(board[*x][*y] >= 0 && board[*x][*y] <= 8)) {
+			if (board[*x][*y] == 19 || board[*x][*y] == 20) {
+				board[*x][*y] -= 10;
+			}
+			else {
+				board[*x][*y] += 10;
+			}
+			return 2;
+		}
+		else {
+			return 0;
+		}
+	}
+	return 3;
 }

@@ -339,7 +339,9 @@ int userInput(int* x, int* y, int board[width][height]) {
 						 * format: ESC[<z;x;ym
 						 * z = 0 if left click
 						 * z = 2 if right click
-						 * x = 35 if nothing is pressed
+						 * z = 35 if nothing is pressed
+						 * z = 34 if movement while right click is pressed
+						 * z = 23 if movement while left click is pressed
 						 * x denotes the x coordinates (horizontal) (absolute value)
 						 * y denotes the y coordinates (vertical) also absolute
 						 * M if mouse NOT pressed down
@@ -361,6 +363,17 @@ int userInput(int* x, int* y, int board[width][height]) {
 							pressed = 1;
 						}
 						else if (tempVal == 0) {
+							mouseValx = getMouseVal(&pressed);
+							mouseValx--;
+							mouseValx /= 2;		// emojis take 2 spaces horizontally
+							mouseValy = getMouseVal(&pressed);
+							mouseValy--;		// but not vertically! although there is a small offset
+							if (mouseValx >= 0 && mouseValx < width) {
+								*x = mouseValx;
+							}
+							if (mouseValy >= 0 && mouseValy < height) {
+								*y = mouseValy;
+							}
 							if (pressed == 1) {
 								logicTemp = clickLogic(x, y, board, 0);
 								if (logicTemp != 3) {
@@ -387,7 +400,7 @@ int userInput(int* x, int* y, int board[width][height]) {
 								}
 							}
 						}
-						else if (tempVal = 34) {
+						else if (tempVal == 34 || tempVal == 32) {
 							mouseValx = getMouseVal(&pressed);
 							mouseValx--;
 							mouseValx /= 2;		// emojis take 2 spaces horizontally

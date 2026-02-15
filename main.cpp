@@ -57,6 +57,14 @@ int main() {
 	//std::thread printTitle(wordArt);	// gemini
 	//printTitle.detach();				// gemini
 	do {
+		consoleMutex.lock(); // gemini
+		cout << '\r';
+		cout << "\e[H";
+		cout << "\e[48;5;15m";
+		cout << "\e[38;5;16m";
+		cout << " Settings";
+		cout << "\e[0;0m";
+		consoleMutex.unlock(); // gemini
 		sigExit = 0;
 		win = userInput(&x, &y, board, lose); // win == 1 that means you lose because it's the game that wins against the player lol
 		if (win == 5) {
@@ -109,6 +117,7 @@ int main() {
 		termHeight = w.ws_row;									// gemini aided	
 		if (flag == 0) {
 			printBoard(board, 0);
+			consoleMutex.lock(); // gemini
 			cout << "\e[H";
 			cout << "\e[" << termHeight / 2 << "B";
 			cout << "\e[" << termWidth / 2 - 4 <<"C";
@@ -117,9 +126,11 @@ int main() {
 			cout << "\r\e[" << termWidth / 2 - 22 << "C";
 			cout << " Click titlebar for new game or ^C to exit!";
 			lose = 1;
+			consoleMutex.unlock(); // gemini
 		}
 		else if (win == 1) {
 			printBoard(board, 1);
+			consoleMutex.lock(); // gemini
 			cout << "\e[H";
 			cout << "\e[" << termHeight / 2 <<"B";
 			cout << "\e[" << termWidth / 2 - 9 <<"C";
@@ -128,6 +139,7 @@ int main() {
 			cout << "\r\e[" << termWidth / 2 - 22 << "C";
 			cout << " Click titlebar for new game or ^C to exit!";
 			lose = 1;
+			consoleMutex.unlock(); // gemini
 		}
 	} while (sigExit == 0);
 	cleanup();
@@ -429,13 +441,18 @@ int userInput(int* x, int* y, int board[width][height], int lose) {
 						}
 						else if (tempVal == 0) { // left click
 							mouseValx = getMouseVal(&pressed);
+							mouseValy = getMouseVal(&pressed);
+							if (mouseValy == 0 || mouseValy == 1) {
+								if (mouseValx >= 9) {
+									return 5;
+								}
+								else {
+									// return 6; // TODO, settings menu
+								}
+							}
 							mouseValx--;
 							mouseValx -= (termWidth / 2) - width;
 							mouseValx /= 2;		// emojis take 2 spaces horizontally
-							mouseValy = getMouseVal(&pressed);
-							if (mouseValy == 0 || mouseValy == 1) {
-								return 5;
-							}
 							mouseValy--;		// but not vertically! although there is a small offset
 							mouseValy -= termHeight / 2 - height / 2;
 							if (mouseValx >= 0 && mouseValx < width) {
@@ -498,9 +515,11 @@ int userInput(int* x, int* y, int board[width][height], int lose) {
 				signal(SIGTSTP, SIG_DFL);
 				raise(SIGTSTP);
 				enable_raw_mode();
+				consoleMutex.lock(); // gemini
 				cout << "\e[?1049h";		// alternate screen buffer
 				cout << "\e[?1003h\e[?1006h";	// set any-event to high and sgr to high for the mouse button release
 				cout << "\e[?25l" << flush;
+				consoleMutex.unlock(); // gemini
 			}
 			else if (input != 'f' && lose == 0) {
 				logicTemp = clickLogic(x, y, board, 0);
@@ -569,12 +588,14 @@ void expandBoard(int x, int y, int board[width][height]) {
 }
 
 void cleanup() {
+	consoleMutex.lock(); // gemini
 	cout << "\e[" << height << "B";
 	cout << "\e[?1003l\e[?1006l";
 	cout << "\e[?25h";
 	cout << "\e[?1049l" << flush;
 	cout << "\e[1A" << flush;
 	disable_raw_mode();
+	consoleMutex.unlock(); // gemini
 }
 
 int getMouseVal(int* pressed) {
@@ -664,7 +685,9 @@ void wordArt() {
 		consoleMutex.lock();									// gemini
 		cout << "\e[H";
 		cout << "\e[48;5;15m";
-		for (int i = 0; i < termWidth; i++) {
+		cout << "\e[38;5;16m";
+		cout << " Settings";
+		for (int i = 0; i < termWidth - 9; i++) {
 			cout << " ";
 		}
 		cout << '\r';

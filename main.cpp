@@ -493,11 +493,12 @@ int userInput(int* x, int* y, int board[width][height], int lose) {
 			else if (input == '\x03') { // sigint
 				return 4;
 			}
-			else if (input == '\x1a') {
+			else if (input == '\x1a') { // sigtstp
 				cleanup();
 				signal(SIGTSTP, SIG_DFL);
 				raise(SIGTSTP);
 				enable_raw_mode();
+				cout << "\e[?1049h";		// alternate screen buffer
 				cout << "\e[?25l" << flush;
 			}
 			else if (input != 'f' && lose == 0) {

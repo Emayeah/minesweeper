@@ -1,10 +1,14 @@
 #include <iostream>
 #include <cstdlib>
-#include "prototype.h"	// width, height and minecount are stored here!
+#include "prototype.h"		// width, height and minecount are stored here!
 #include "rawmode.h"
 //#include <termios.h>
-//#include <unistd.h>		// raw mode for keyboard driven selection
+//#include <unistd.h>		// for sleeping
 #include <csignal>			// throwing sigint if ctrl-c, sigtstp for ctrl-z
+#include <sys/ioctl.h>		// for terminal size
+#include <thread>			// for sleep
+#include <future>			// for async
+#include <chrono>
 using namespace std;
 /*
  * 0 = uncovered (nothing)
@@ -28,9 +32,10 @@ int main() {
 	cout << "\e[?1003h\e[?1006h";	// set any-event to high and sgr to high for the mouse button release
 	cout << "\e[?25l";			// set cursor to low
 	cout << "\e[H";				// set cursor to home position
+	cout << "\e[B";				// one lower to not overlap titlebar
 	enable_raw_mode();
 	/*
-	 * partially google gemini aided JUST FOR THE RAW TOGGLE MODE (aka non canonical mode)
+	 * some sections that weren't covered by the teacher were partially done by google gemini
 	 * my stance on ai for programming is very clear: it's a tool for learning.
 	 * most of the raw mode toggle function is provided by gemini,
 	 * but i always analyze ai code before pasting it.
@@ -45,6 +50,10 @@ int main() {
 	int board[width][height];
 	initBoard(board);
 	int flag;
+	//wordArt();
+	std::future<void> idkman = std::async(std::launch::async, wordArt);
+	//std::thread printTitle(wordArt);	// gemini
+	//printTitle.detach();				// gemini
 	do {
 		win = userInput(&x, &y, board); // win == 1 that means you lose because it's the game that wins against the player lol
 		if (firstInput == 1 && win == 1) { // first input is always safe
@@ -120,6 +129,25 @@ void initBoard(int board[width][height]) {
 }
 
 void printBoard(int board[width][height], int lose) {
+	int termWidth;
+	int termHeight;
+	char word[] = "minesweeper";
+	struct winsize w;										// gemini
+	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);					// gemini
+	// The ioctl call returns 0 on success, -1 on error		// gemini
+	termWidth = w.ws_col;									// gemini aided
+	termHeight = w.ws_row;									// gemini aided	
+	/*
+	 * just wanted to get the terminal size to adjust the logic
+	 */
+//	cout << "\e[48;5;15m";
+//	for (int i = 0; i < termWidth; i++) {
+//		cout << " ";
+//	}
+//	cout << '\r';
+//	cout << "\e[" << (termWidth / 2) - (11 / 2) /* 11 is the length of the word "minesweeper" */ << "C"; // hardcoded to my terminal size
+//	cout << "\e[1m\e[38;5;16mMinesweeper";
+//	cout << "\e[0;0m\e[22m\r" << endl;
 	for (int j = 0; j < height; j++) {
 		for (int i = 0; i < width; i++) {
 			if (board[i][j] == 10 || ((devBit != 1 && lose != 1) && board[i][j] == 9)) {
@@ -216,29 +244,9 @@ void printBoard(int board[width][height], int lose) {
 //				cout << board[i][j] << " ";
 			}
 		}
-		cout << " -- " << j << "\r" << endl;
-	}
-	for (int i = 0; i < width; i++) {
-		cout << "| ";
-	}
-	cout << "\r" << endl;
-	int div = 1, temp, count = 1;
-	do {
-		div *= 10;
-		temp = width / div;
-		if (temp != 0) {
-			count++;
-		}
-	} while (temp != 0);
-	div /= 10;
-	for (int c = 0; c < count; c++) {
-		for (int i = 0; i < width; i++) {
-			cout << (i / div) % 10 << " "; 
-		}
 		cout << "\r" << endl;
-		div /= 10;
 	}
-	cout << "\e[" << height + count + 1 << "A";
+	cout << "\e[" << height << "A";
 }
 
 int userInput(int* x, int* y, int board[width][height]) {
@@ -493,15 +501,7 @@ void expandBoard(int x, int y, int board[width][height]) {
 }
 
 void cleanup() {
-	int div = 1, temp, count = 1;
-	do {
-		div *= 10;
-		temp = width / div;
-		if (temp != 0) {
-			count++;
-		}
-	} while (temp != 0);
-	cout << "\e[" << height + count << "B";
+	cout << "\e[" << height << "B";
 	cout << "\e[?1003l\e[?1006l";
 	cout << "\e[?25h";
 	cout << "\e[?1049l" << flush;
@@ -574,4 +574,50 @@ int clickLogic(int* x, int* y, int board[width][height], int flag) {
 		}
 	}
 	return 3;
+}
+void wordArt() {
+	char word[] = "minesweeper";
+	int Art = 0, termWidth, termHeight;
+	do {
+		if (Art < 11) {
+			word[Art] -= 32;
+		}
+		else if (Art >= 15 && Art < 26) {
+			word[10 - (Art - 15)] -= 32; 
+		}
+		struct winsize w;										// gemini
+		ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);					// gemini
+		// The ioctl call returns 0 on success, -1 on error		// gemini
+		termWidth = w.ws_col;									// gemini aided
+		termHeight = w.ws_row;									// gemini aided	
+		/*
+		 * just wanted to get the terminal size to adjust the logic
+		 */
+		cout << "\e[H";
+		cout << "\e[48;5;15m";
+		for (int i = 0; i < termWidth; i++) {
+			cout << " ";
+		}
+		cout << '\r';
+		cout << "\e[" << (termWidth / 2) - (11 / 2) /* 11 is the length of the word "minesweeper" */ << "C"; // hardcoded to my terminal size
+		cout << "\e[1m\e[38;5;16m";
+		if (Art == 11 || Art == 13 || Art == 26 || Art == 28) {
+			cout << "           "; // that's 11 spaces
+		}
+		else {
+			cout << word;
+		}
+		cout << "\e[0;0m\e[22m\r" << endl;
+		if (Art < 11) {
+			word[Art] += 32;
+		}
+		else if (Art >= 15 && Art < 26) {
+			word[10 - (Art - 15)] += 32; 
+		}
+		Art++;
+		if (Art >= 30) {
+			Art = 0;
+		}
+		sleep(1);
+	} while (true);
 }

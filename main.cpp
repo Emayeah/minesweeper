@@ -462,7 +462,9 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 						mouseValx = getMouseVal(&pressed);
 						mouseValx--;
 						mouseValy = getMouseVal(&pressed);
-						mouseValy--;
+						if (termHeight % 2 != 0) {
+							mouseValy--;
+						}
 						if (openSettings == 1) {
 							if (mouseValy - (termHeight / 2 - 13 / 2) == 2)  {
 								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
@@ -511,7 +513,9 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 						mouseValx = getMouseVal(&pressed);
 						mouseValx--;
 						mouseValy = getMouseVal(&pressed);
-						mouseValy--;
+						if (termHeight % 2 != 0) {
+							mouseValy--;
+						}
 						if ((mouseValy == 0 || mouseValy == 1) && pressed == 1) {
 							if (mouseValx >= 9) {
 								return 5;
@@ -611,7 +615,9 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 						mouseValx -= (termWidth / 2) - *width;
 						mouseValx /= 2;		// emojis take 2 spaces horizontally
 						mouseValy = getMouseVal(&pressed);
-						mouseValy--;		// but not vertically! although there is a small offset
+						if (termHeight % 2 != 0) {
+							mouseValy--;		// but not vertically! although there is a small offset
+						}
 						mouseValy -= termHeight / 2 - *height / 2;
 						if (mouseValx >= 0 && mouseValx < *width) {
 							*x = mouseValx;
@@ -632,7 +638,9 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 						mouseValx -= (termWidth / 2) - *width;
 						mouseValx /= 2;		// emojis take 2 spaces horizontally
 						mouseValy = getMouseVal(&pressed);
-						mouseValy--;		// but not vertically! although there is a small offset
+						if (termHeight % 2 != 0) {
+							mouseValy--;		// but not vertically! although there is a small offset
+						}
 						mouseValy -= termHeight / 2 - *height / 2;
 						if (mouseValx >= 0 && mouseValx < *width) {
 							*x = mouseValx;

@@ -715,14 +715,14 @@ void wordArt(int board[width][height]) {
 			word[10 - (Art - 15)] += 32; 
 		}
 		flip++;
-		flip %= 2;
+		flip %= 8;
 		if (flip == 0) {
 			Art++;
 		}
 		if (Art >= 30) {
 			Art = 0;
 		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(500));	// gemini aided
+		std::this_thread::sleep_for(std::chrono::milliseconds(125));	// gemini aided
 	} while (true);
 }
 void clearBuffer(int board[width][height]) {

@@ -1,12 +1,11 @@
-int width = 20, height = 20, mineCount = 20; // yes, global variables bad, but i need them for properly passing 2d arrays
-void initBoard(int []);
-void printBoard(int [], int);
-int userInput(int*, int*, int [], int, int);
-int calcAdjacent(int, int, int [], int);
-void expandBoard(int, int, int []);
-void cleanup();
+void initBoard(int[], int*, int*, int*);
+void printBoard(int[], int, int*, int*);
+int userInput(int*, int*, int[], int, int, int*, int*, int*);
+int calcAdjacent(int, int, int[], int, int*, int*);
+void expandBoard(int, int, int[], int*, int*);
+void cleanup(int*);
 int getMouseVal(int*);
-int clickLogic(int*, int*, int[], int);
-void wordArt(int[]);
-void clearBuffer(int[]);
-void printSettingsMenu(int);
+int clickLogic(int*, int*, int[], int, int*, int*);
+void wordArt(int[], int*, int*);
+void clearBuffer(int[], int*, int*);
+void printSettingsMenu(int, int*, int*, int*);

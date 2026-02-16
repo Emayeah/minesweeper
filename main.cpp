@@ -133,7 +133,7 @@ int main() {
 			consoleMutex.lock(); // gemini
 			cout << "\e[H";
 			cout << "\e[" << termHeight / 2 <<"B";
-			cout << "\e[" << termWidth / 2 - 9 <<"C";
+			cout << "\e[" << termWidth / 2 - 12 <<"C";
 			cout << " YOU LOSE!!!!!!!!!!!!!!!!\r" << endl;
 			cout << "\e[B";
 			cout << "\r\e[" << termWidth / 2 - 22 << "C";

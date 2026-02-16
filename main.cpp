@@ -827,7 +827,7 @@ void wordArt(int board[], int *width, int *height) {
 		cout << "\e[H";
 		cout << "\e[48;5;15m";
 		cout << "\e[38;5;16m";
-		cout << " Settings";
+		cout << "\e[9C"; // to not overlap the "settings"
 		for (int i = 0; i < termWidth - 9; i++) {
 			cout << " ";
 		}
@@ -888,6 +888,10 @@ void printSettingsMenu(int update, int *width, int *height, int *mineCount) {
 	int termHeight = w.ws_row;
 	// menu wide 36 and tall 13
 	consoleMutex.lock();
+	cout << "\e[H";
+	cout << "\e[48;5;15m";
+	cout << "\e[38;5;16m";
+	cout << " < Back   ";
 	cout << "\e[H";
 	cout << "\e[" << termHeight / 2 - 13 / 2 << "B";
 	cout << "\e[48;5;233m";

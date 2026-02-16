@@ -53,9 +53,9 @@ int main() {
 	int adjacent;
 	int *board = new int[width * height];						// straight into the heap and not the stack, i need to free the heap to change the size (gemini)
 	initBoard(board);
-	for (int i = width * height - (width * 2); i < width * height; i++) {
-		board[i] = 20;
-	}
+//	for (int i = width * height - (width * 2); i < width * height; i++) {
+//		board[i] = 20;
+//	}
 	int flag;
 	int sigExit;
 	int blockOutput = 0;
@@ -107,9 +107,9 @@ int main() {
 			do {
 				tempx = rand() % width;
 				tempy = rand() % height;
-			} while (board[tempx * width + tempy] == 9 && (tempx != x || tempy != y));
-			board[tempx * width + tempy] = 9;
-			board[x * width + y] = 10;
+			} while (board[tempy * width + tempx] == 9 && (tempx != x || tempy != y));
+			board[tempy * width + tempx] = 9;
+			board[y * width + x] = 10;
 			win = 0;
 			firstInput = 0;
 		}
@@ -118,7 +118,7 @@ int main() {
 		}
 		if (win == 0) {
 			adjacent = calcAdjacent(x, y, board, 0); // 0 is a mode for calcAdjacent, 0 calcs nearby bombs, 1 calcs for nearby 0s for board expansion
-			board[x * width + y] = adjacent;
+			board[y * width + x] = adjacent;
 			if (adjacent == 0) {
 				expandBoard(x, y, board);
 			}
@@ -128,7 +128,7 @@ int main() {
 			flag = 0;
 			for (int i = 0; i < width && flag != 1; i++) {
 				for (int j = 0; j < height && flag != 1; j++) {
-					if (board[i * width + j] == 10 || board[i * width + j] == 20) {
+					if (board[j * width + i] == 10 || board[j * width + i] == 20) {
 						flag = 1;
 					}
 				}
@@ -228,10 +228,11 @@ void printBoard(int board[], int lose) {
 		cout << "🟩";
 	}
 	cout << "\r\n";
-	for (int j = 0; j < height; j++) {
+	for (int i = 0; i < height; i++) {
 		cout << "\e[" << (termWidth / 2) - width - 2 << "C"; // move to the center, again, an emoji takes up 2 spaces!
-		for (int i = 0; i < width; i++) {
-			if (i == 0) {
+		for (int j = 0; j < width; j++) {
+			//cout << j << "|" << i << " ";
+			if (j == 0) {
 				cout << "🟩";
 			}
 			if (board[i * width + j] == 10 || ((devBit != 1 && lose != 1) && board[i * width + j] == 9)) {
@@ -359,26 +360,26 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings) {
 		termWidth = w.ws_col;										// i won't have to use gemini because i learned how to do so
 		termHeight = w.ws_row;
 		if (lose == 0) {
-			temp = board[*x * width + *y];
-			if ((board[*x * width + *y] > 8 || board[*x * width + *y] < 1) && board[*x * width + *y] != 0 && board[*x * width + *y] != 19 && board[*x * width + *y] != 20) {
+			temp = board[*y * width + *x];
+			if ((board[*y * width + *x] > 8 || board[*y * width + *x] < 1) && board[*y * width + *x] != 0 && board[*y * width + *x] != 19 && board[*y * width + *x] != 20) {
 				if (pressed == 1) {
-					board[*x * width + *y] = 11;
+					board[*y * width + *x] = 11;
 					printBoard(board, 0);
-					board[*x * width + *y] = temp;
+					board[*y * width + *x] = temp;
 				}
 				else if (pressed == 0) {
-					board[*x * width + *y] = 50;
+					board[*y * width + *x] = 50;
 					printBoard(board, 0);
-					board[*x * width + *y] = temp;
+					board[*y * width + *x] = temp;
 					pressed = 1;
 				}
 			}
-			else if (board[*x * width + *y] <= 8 && board[*x * width + *y] >= 1 || (board[*x * width + *y] == 19 || board[*x * width + *y] == 20)) {
-				board[*x * width + *y] += 20;
+			else if (board[*y * width + *x] <= 8 && board[*y * width + *x] >= 1 || (board[*y * width + *x] == 19 || board[*y * width + *x] == 20)) {
+				board[*y * width + *x] += 20;
 				printBoard(board, 0);
 			}
-			else if (board[*x * width + *y] == 0) {
-				board[*x * width + *y] = 30;
+			else if (board[*y * width + *x] == 0) {
+				board[*y * width + *x] = 30;
 				printBoard(board, 0);
 			}
 		}
@@ -617,7 +618,7 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings) {
 				return logicTemp;
 			}
 		}
-		else if (input == 'f' && !(board[*x * width + *y] >= 0 && board[*x * width + *y] <= 8) && lose == 0) {
+		else if (input == 'f' && !(board[*y * width + *x] >= 0 && board[*y * width + *x] <= 8) && lose == 0) {
 			logicTemp = clickLogic(x, y, board, 1);
 			if (logicTemp != 0) {
 				return logicTemp;
@@ -631,16 +632,16 @@ int calcAdjacent(int x, int y, int board[], int mode) {
 	for (int i = -1; i < 2; i++) {
 		for (int j = -1; j < 2; j++) {
 			if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) { // check for out of bounds
-				if (mode == 0 && (board[(x + i) * width + (y + j)] == 9 || board[(x + i) * width + (y + j)] == 19)) {
+				if (mode == 0 && (board[(y + j) * width + (x + i)] == 9 || board[(y + j) * width + (x + i)] == 19)) {
 					count++;
 				}
-				else if (mode == 1 && board[(x + i) * width + (y + j)] == 0) {
+				else if (mode == 1 && board[(y + j) * width + (x + i)] == 0) {
 					return 1; // i know, i know, jacopini... va bene che compiler optimization tolgono le altre condizioni ma questo è più semplice da leggere
 				}
-				else if (mode == 2 && (board[(x + i) * width + (y + j)] == 20 || board[(x + i) * width + (y + j)] == 19)) {
+				else if (mode == 2 && (board[(y + j) * width + (x + i)] == 20 || board[(y + j) * width + (x + i)] == 19)) {
 					count++;
 				}
-				else if (mode == 3 && board[(x + i) * width + (y + j)] == 9) {
+				else if (mode == 3 && board[(y + j) * width + (x + i)] == 9) {
 					count++;
 				}
 			}
@@ -655,14 +656,14 @@ void expandBoard(int x, int y, int board[]) {
 		flag = 0;
 		for (int i = -count; i <= count; i++) {
 			for (int j = -count; j <= count; j++) {
-				if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) { //&& board[x + i * width + y + j] != 9 && board[(x + i) * width + (y + j)] != 19) { // check for out of bounds blah blah
+				if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) { //&& board[x + i * width + y + j] != 9 && board[(y + j) * width + (x + i)] != 19) { // check for out of bounds blah blah
 					adjacent = calcAdjacent(x + i, y + j, board, 1);
 					if (adjacent == 1) {
-						if (board[(x + i) * width + (y + j)] == 10 || board[(x + i) * width + (y + j)] == 20) {
+						if (board[(y + j) * width + (x + i)] == 10 || board[(y + j) * width + (x + i)] == 20) {
 							flag = 1;
 						}
-						if (board[(x + i) * width + (y + j)] != 19) {
-							board[(x + i) * width + (y + j)] = calcAdjacent(x + i, y + j, board, 0);
+						if (board[(y + j) * width + (x + i)] != 19) {
+							board[(y + j) * width + (x + i)] = calcAdjacent(x + i, y + j, board, 0);
 						}
 					}
 				}
@@ -710,15 +711,15 @@ int getMouseVal(int* pressed) {
 int clickLogic(int* x, int* y, int board[], int flag) {
 	int validChord;
 	if (flag == 0) {
-		if (board[*x * width + *y] != 0 && board[*x * width + *y] != 19 && board[*x * width + *y] != 20 && !(board[*x * width + *y] >= 1 && board[*x * width + *y] <= 8)) {
-			if (board[*x * width + *y] == 9) {
+		if (board[*y * width + *x] != 0 && board[*y * width + *x] != 19 && board[*y * width + *x] != 20 && !(board[*y * width + *x] >= 1 && board[*y * width + *x] <= 8)) {
+			if (board[*y * width + *x] == 9) {
 				return 1;
 			}
 			return 0;
 		}
-		else if (board[*x * width + *y] >= 1 && board[*x * width + *y] <= 8) {
+		else if (board[*y * width + *x] >= 1 && board[*y * width + *x] <= 8) {
 			validChord = calcAdjacent(*x, *y, board, 2);
-			if (validChord == board[*x * width + *y]) {
+			if (validChord == board[*y * width + *x]) {
 				validChord = calcAdjacent(*x, *y, board, 3);
 				if (validChord != 0) {
 					return 1;
@@ -726,8 +727,8 @@ int clickLogic(int* x, int* y, int board[], int flag) {
 				for (int i = -1; i < 2; i++) {
 					for (int j = -1; j < 2; j++) {
 						if (*x + i >= 0 && *x + i < width && *y + j >= 0 && *y + j < height) {
-							if (board[(*x + i) * width + (*y + j)] == 10) {
-								board[(*x + i) * width + (*y + j)] = calcAdjacent(*x + i, *y + j, board, 0);
+							if (board[(*y + j) * width + (*x + i)] == 10) {
+								board[(*y + j) * width + (*x + i)] = calcAdjacent(*x + i, *y + j, board, 0);
 								expandBoard(*x + i, *y + j, board);
 							} 
 						}
@@ -737,13 +738,13 @@ int clickLogic(int* x, int* y, int board[], int flag) {
 		return 0;
 		}
 	}
-	else if (flag == 1 && !(board[*x * width + *y] >= 1 && board[*x * width + *y] <= 8)) {
-		if (!(board[*x * width + *y] >= 0 && board[*x * width + *y] <= 8)) {
-			if (board[*x * width + *y] == 19 || board[*x * width + *y] == 20) {
-				board[*x * width + *y] -= 10;
+	else if (flag == 1 && !(board[*y * width + *x] >= 1 && board[*y * width + *x] <= 8)) {
+		if (!(board[*y * width + *x] >= 0 && board[*y * width + *x] <= 8)) {
+			if (board[*y * width + *x] == 19 || board[*y * width + *x] == 20) {
+				board[*y * width + *x] -= 10;
 			}
 			else {
-				board[*x * width + *y] += 10;
+				board[*y * width + *x] += 10;
 			}
 			return 2;
 		}

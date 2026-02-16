@@ -56,7 +56,7 @@ int main() {
 	int sigExit;
 	int lose = 0;
 	//wordArt();
-	//std::future<void> idkman = std::async(std::launch::async, wordArt, board); // gemini
+	std::future<void> idkman = std::async(std::launch::async, wordArt, board); // gemini
 	//std::thread printTitle(wordArt);							// gemini
 	//printTitle.detach();										// gemini
 	do {
@@ -71,19 +71,13 @@ int main() {
 		sigExit = 0;
 		win = userInput(&x, &y, board, lose); // win == 1 that means you lose because it's the game that wins against the player lol
 		if (win == 6) {
-			cout << "\e[?1049l";		// alternate screen buffer
-			cout << "\e[?1003l\e[?1006l";	// set any-event to high and sgr to high for the mouse button release
-			cout << "\e[?25h";			// set cursor to low
-			cout << "\e[H";				// set cursor to home position
-			cout << "\e[B";				// one lower to not overlap titlebar
-			disable_raw_mode();
 			arrayChangeMutex.lock();							// done by me! learned something new
 			delete[] board;
 			width += 10;
 			height += 10;
-			int *board = new int[width * height];
-			arrayChangeMutex.unlock();
+			board = new int[width * height];
 			initBoard(board);
+			arrayChangeMutex.unlock();
 		}
 		if (win == 5) {
 			initBoard(board);
@@ -213,7 +207,6 @@ void printBoard(int board[], int lose) {
 		cout << "🟩";
 	}
 	cout << "\r\n";
-	arrayChangeMutex.lock();
 	for (int j = 0; j < height; j++) {
 		cout << "\e[" << (termWidth / 2) - width - 2 << "C"; // move to the center, again, an emoji takes up 2 spaces!
 		for (int i = 0; i < width; i++) {
@@ -324,7 +317,6 @@ void printBoard(int board[], int lose) {
 	cout << "\e[" << height << "A";
 	cout << "\e[" << ((termHeight - 1) / 2) - (height / 2) << "A"; // move to the enter
 	consoleMutex.unlock();									// gemini
-	arrayChangeMutex.unlock();
 }
 
 int userInput(int* x, int* y, int board[], int lose) {
@@ -341,220 +333,218 @@ int userInput(int* x, int* y, int board[], int lose) {
 	int termHeight;
 	struct winsize w;													// disclosing the same lines as gemini is very redundant
 	do {
-		do {
-			ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);						// just know that the code that gets the terminal size is not done by me
-			// The ioctl call returns 0 on success, -1 on error			// but if i need to get the terminal size in a future project
-			termWidth = w.ws_col;										// i won't have to use gemini because i learned how to do so
-			termHeight = w.ws_row;
-			if (lose == 0) {
-				temp = board[*x * width + *y];
-				if ((board[*x * width + *y] > 8 || board[*x * width + *y] < 1) && board[*x * width + *y] != 0 && board[*x * width + *y] != 19 && board[*x * width + *y] != 20) {
-					if (pressed == 1) {
-						board[*x * width + *y] = 11;
-						printBoard(board, 0);
-						board[*x * width + *y] = temp;
+		ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);						// just know that the code that gets the terminal size is not done by me
+		// The ioctl call returns 0 on success, -1 on error			// but if i need to get the terminal size in a future project
+		termWidth = w.ws_col;										// i won't have to use gemini because i learned how to do so
+		termHeight = w.ws_row;
+		if (lose == 0) {
+			temp = board[*x * width + *y];
+			if ((board[*x * width + *y] > 8 || board[*x * width + *y] < 1) && board[*x * width + *y] != 0 && board[*x * width + *y] != 19 && board[*x * width + *y] != 20) {
+				if (pressed == 1) {
+					board[*x * width + *y] = 11;
+					printBoard(board, 0);
+					board[*x * width + *y] = temp;
+				}
+				else if (pressed == 0) {
+					board[*x * width + *y] = 50;
+					printBoard(board, 0);
+					board[*x * width + *y] = temp;
+					pressed = 1;
+				}
+			}
+			else if (board[*x * width + *y] <= 8 && board[*x * width + *y] >= 1 || (board[*x * width + *y] == 19 || board[*x * width + *y] == 20)) {
+				board[*x * width + *y] += 20;
+				printBoard(board, 0);
+			}
+			else if (board[*x * width + *y] == 0) {
+				board[*x * width + *y] = 30;
+				printBoard(board, 0);
+			}
+		}
+		cin >> input;
+		if (input == '\e') {
+			cin >> input;
+			if (input == '[') {
+				cin >> input;
+				if (input == 'A') {			// up
+					if (*y > 0) {
+						*y -= 1;
 					}
-					else if (pressed == 0) {
-						board[*x * width + *y] = 50;
-						printBoard(board, 0);
-						board[*x * width + *y] = temp;
+				}
+				else if (input == 'B') {	// down
+					if (*y < height - 1) {
+						*y += 1;
+					}
+				}
+				else if (input == 'C') {	// right
+					if (*x < width - 1) {
+						*x += 1;
+					}
+				}
+				else if (input == 'D'){		// left
+					if (*x > 0) {
+						*x -= 1;
+					}
+				}
+				else if (input == '5') {	// page up, +5 spaces
+					cin >> input; // discard extra tilde from the escape sequence (^[[5~)
+					if (*y >= 5) {
+						*y -= 5;
+					}
+					else {
+						*y = 0;
+					}
+				}
+				else if (input == '6') {	// page down, -5 spaces
+					cin >> input; // discard extra tilde from the escape sequence (^[[6~)
+					if (*y <= height - 6) {
+						*y += 5;
+					}
+					else {
+						*y = height - 1;
+					}
+				}
+				else if (input == 'H') {	// home, -5 spaces
+					if (*x >= 5) {
+						*x -= 5;
+					}
+					else {
+						*x = 0;
+					}
+				}
+				else if (input == 'F') {	// end, +5 spaces
+					if (*x <= width - 6) {
+						*x += 5;
+					}
+					else {
+						*x = width - 1;
+					}
+				}
+				else if (input == '<') {	// mouse driven controls
+					/*
+					 * format: ESC[<z;x;ym
+					 * z = 0 if left click
+					 * z = 2 if right click
+					 * z = 35 if nothing is pressed
+					 * z = 34 if movement while right click is pressed
+					 * z = 23 if movement while left click is pressed
+					 * x denotes the x coordinates (horizontal) (absolute value)
+					 * y denotes the y coordinates (vertical) also absolute
+					 * M if mouse NOT pressed down
+					 * m if mouse IS pressed down
+					 */
+					tempVal = getMouseVal(&pressed);
+					if (tempVal == 35) {	// unpressed
+						mouseValx = getMouseVal(&pressed);
+						mouseValx--;
+						mouseValx -= (termWidth / 2) - width;
+						mouseValx /= 2;		// emojis take 2 spaces horizontally
+						mouseValy = getMouseVal(&pressed);
+						mouseValy--;		// but not vertically! although there is a small offset
+						mouseValy -= termHeight / 2 - height / 2;
+						if (mouseValx >= 0 && mouseValx < width) {
+							*x = mouseValx;
+						}
+						if (mouseValy >= 0 && mouseValy < height) {
+							*y = mouseValy;
+						}
 						pressed = 1;
 					}
-				}
-				else if (board[*x * width + *y] <= 8 && board[*x * width + *y] >= 1 || (board[*x * width + *y] == 19 || board[*x * width + *y] == 20)) {
-					board[*x * width + *y] += 20;
-					printBoard(board, 0);
-				}
-				else if (board[*x * width + *y] == 0) {
-					board[*x * width + *y] = 30;
-					printBoard(board, 0);
-				}
-			}
-			cin >> input;
-			if (input == '\e') {
-				cin >> input;
-				if (input == '[') {
-					cin >> input;
-					if (input == 'A') {			// up
-						if (*y > 0) {
-							*y -= 1;
+					else if (tempVal == 0) { // left click
+						mouseValx = getMouseVal(&pressed);
+						mouseValy = getMouseVal(&pressed);
+						if ((mouseValy == 0 || mouseValy == 1) && pressed == 1) {
+							if (mouseValx >= 9) {
+								return 5;
+							}
+							else {
+								return 6; // TODO, settings menu
+							}
+						}
+						mouseValx--;
+						mouseValx -= (termWidth / 2) - width;
+						mouseValx /= 2;		// emojis take 2 spaces horizontally
+						mouseValy--;		// but not vertically! although there is a small offset
+						mouseValy -= termHeight / 2 - height / 2;
+						if (mouseValx >= 0 && mouseValx < width) {
+							*x = mouseValx;
+						}
+						if (mouseValy >= 0 && mouseValy < height) {
+							*y = mouseValy;
+						}
+						if (pressed == 1 && lose == 0) {
+							logicTemp = clickLogic(x, y, board, 0);
+							if (logicTemp != 3) {
+								return logicTemp;
+							}
 						}
 					}
-					else if (input == 'B') {	// down
-						if (*y < height - 1) {
-							*y += 1;
+					else if (tempVal == 2) {
+						mouseValx = getMouseVal(&pressed);
+						mouseValx--;
+						mouseValx -= (termWidth / 2) - width;
+						mouseValx /= 2;		// emojis take 2 spaces horizontally
+						mouseValy = getMouseVal(&pressed);
+						mouseValy--;		// but not vertically! although there is a small offset
+						mouseValy -= termHeight / 2 - height / 2;
+						if (mouseValx >= 0 && mouseValx < width) {
+							*x = mouseValx;
+						}
+						if (mouseValy >= 0 && mouseValy < height) {
+							*y = mouseValy;
+						}
+						if (pressed == 1 && lose == 0) {
+							logicTemp = clickLogic(x, y, board, 1);
+							if (logicTemp != 0) {
+								return logicTemp;
+							}
 						}
 					}
-					else if (input == 'C') {	// right
-						if (*x < width - 1) {
-							*x += 1;
+					else if (tempVal == 34 || tempVal == 32) { // pressed down and moving
+						mouseValx = getMouseVal(&pressed);
+						mouseValx--;
+						mouseValx -= (termWidth / 2) - width;
+						mouseValx /= 2;		// emojis take 2 spaces horizontally
+						mouseValy = getMouseVal(&pressed);
+						mouseValy--;		// but not vertically! although there is a small offset
+						mouseValy -= termHeight / 2 - height / 2;
+						if (mouseValx >= 0 && mouseValx < width) {
+							*x = mouseValx;
 						}
-					}
-					else if (input == 'D'){		// left
-						if (*x > 0) {
-							*x -= 1;
-						}
-					}
-					else if (input == '5') {	// page up, +5 spaces
-						cin >> input; // discard extra tilde from the escape sequence (^[[5~)
-						if (*y >= 5) {
-							*y -= 5;
-						}
-						else {
-							*y = 0;
-						}
-					}
-					else if (input == '6') {	// page down, -5 spaces
-						cin >> input; // discard extra tilde from the escape sequence (^[[6~)
-						if (*y <= height - 6) {
-							*y += 5;
-						}
-						else {
-							*y = height - 1;
-						}
-					}
-					else if (input == 'H') {	// home, -5 spaces
-						if (*x >= 5) {
-							*x -= 5;
-						}
-						else {
-							*x = 0;
-						}
-					}
-					else if (input == 'F') {	// end, +5 spaces
-						if (*x <= width - 6) {
-							*x += 5;
-						}
-						else {
-							*x = width - 1;
-						}
-					}
-					else if (input == '<') {	// mouse driven controls
-						/*
-						 * format: ESC[<z;x;ym
-						 * z = 0 if left click
-						 * z = 2 if right click
-						 * z = 35 if nothing is pressed
-						 * z = 34 if movement while right click is pressed
-						 * z = 23 if movement while left click is pressed
-						 * x denotes the x coordinates (horizontal) (absolute value)
-						 * y denotes the y coordinates (vertical) also absolute
-						 * M if mouse NOT pressed down
-						 * m if mouse IS pressed down
-						 */
-						tempVal = getMouseVal(&pressed);
-						if (tempVal == 35) {	// unpressed
-							mouseValx = getMouseVal(&pressed);
-							mouseValx--;
-							mouseValx -= (termWidth / 2) - width;
-							mouseValx /= 2;		// emojis take 2 spaces horizontally
-							mouseValy = getMouseVal(&pressed);
-							mouseValy--;		// but not vertically! although there is a small offset
-							mouseValy -= termHeight / 2 - height / 2;
-							if (mouseValx >= 0 && mouseValx < width) {
-								*x = mouseValx;
-							}
-							if (mouseValy >= 0 && mouseValy < height) {
-								*y = mouseValy;
-							}
-							pressed = 1;
-						}
-						else if (tempVal == 0) { // left click
-							mouseValx = getMouseVal(&pressed);
-							mouseValy = getMouseVal(&pressed);
-							if (mouseValy == 0 || mouseValy == 1) {
-								if (mouseValx >= 9) {
-									return 5;
-								}
-								else {
-									return 6; // TODO, settings menu
-								}
-							}
-							mouseValx--;
-							mouseValx -= (termWidth / 2) - width;
-							mouseValx /= 2;		// emojis take 2 spaces horizontally
-							mouseValy--;		// but not vertically! although there is a small offset
-							mouseValy -= termHeight / 2 - height / 2;
-							if (mouseValx >= 0 && mouseValx < width) {
-								*x = mouseValx;
-							}
-							if (mouseValy >= 0 && mouseValy < height) {
-								*y = mouseValy;
-							}
-							if (pressed == 1 && lose == 0) {
-								logicTemp = clickLogic(x, y, board, 0);
-								if (logicTemp != 3) {
-									return logicTemp;
-								}
-							}
-						}
-						else if (tempVal == 2) {
-							mouseValx = getMouseVal(&pressed);
-							mouseValx--;
-							mouseValx -= (termWidth / 2) - width;
-							mouseValx /= 2;		// emojis take 2 spaces horizontally
-							mouseValy = getMouseVal(&pressed);
-							mouseValy--;		// but not vertically! although there is a small offset
-							mouseValy -= termHeight / 2 - height / 2;
-							if (mouseValx >= 0 && mouseValx < width) {
-								*x = mouseValx;
-							}
-							if (mouseValy >= 0 && mouseValy < height) {
-								*y = mouseValy;
-							}
-							if (pressed == 1 && lose == 0) {
-								logicTemp = clickLogic(x, y, board, 1);
-								if (logicTemp != 0) {
-									return logicTemp;
-								}
-							}
-						}
-						else if (tempVal == 34 || tempVal == 32) { // pressed down and moving
-							mouseValx = getMouseVal(&pressed);
-							mouseValx--;
-							mouseValx -= (termWidth / 2) - width;
-							mouseValx /= 2;		// emojis take 2 spaces horizontally
-							mouseValy = getMouseVal(&pressed);
-							mouseValy--;		// but not vertically! although there is a small offset
-							mouseValy -= termHeight / 2 - height / 2;
-							if (mouseValx >= 0 && mouseValx < width) {
-								*x = mouseValx;
-							}
-							if (mouseValy >= 0 && mouseValy < height) {
-								*y = mouseValy;
-							}
+						if (mouseValy >= 0 && mouseValy < height) {
+							*y = mouseValy;
 						}
 					}
 				}
 			}
-			else if (input == '\x03') { // sigint
-				return 4;
+		}
+		else if (input == '\x03') { // sigint
+			return 4;
+		}
+		else if (input == '\x1a') { // sigtstp
+			cleanup();
+			signal(SIGTSTP, SIG_DFL);				// gemini aided
+			raise(SIGTSTP);
+			enable_raw_mode();
+			consoleMutex.lock();
+			cout << "\e[?1049h";		// alternate screen buffer
+			cout << "\e[?1003h\e[?1006h";	// set any-event to high and sgr to high for the mouse button release
+			cout << "\e[?25l" << flush;
+			consoleMutex.unlock();
+		}
+		else if (input != 'f' && lose == 0) {
+			logicTemp = clickLogic(x, y, board, 0);
+			if (logicTemp != 3) {
+				return logicTemp;
 			}
-			else if (input == '\x1a') { // sigtstp
-				cleanup();
-				signal(SIGTSTP, SIG_DFL);				// gemini aided
-				raise(SIGTSTP);
-				enable_raw_mode();
-				consoleMutex.lock();
-				cout << "\e[?1049h";		// alternate screen buffer
-				cout << "\e[?1003h\e[?1006h";	// set any-event to high and sgr to high for the mouse button release
-				cout << "\e[?25l" << flush;
-				consoleMutex.unlock();
+		}
+		else if (input == 'f' && !(board[*x * width + *y] >= 0 && board[*x * width + *y] <= 8) && lose == 0) {
+			logicTemp = clickLogic(x, y, board, 1);
+			if (logicTemp != 0) {
+				return logicTemp;
 			}
-			else if (input != 'f' && lose == 0) {
-				logicTemp = clickLogic(x, y, board, 0);
-				if (logicTemp != 3) {
-					return logicTemp;
-				}
-			}
-			else if (input == 'f' && !(board[*x * width + *y] >= 0 && board[*x * width + *y] <= 8) && lose == 0) {
-				logicTemp = clickLogic(x, y, board, 1);
-				if (logicTemp != 0) {
-					return logicTemp;
-				}
-			}
-		} while (true);//(*x < 0 || *x > width);
-	} while (true); 
+		}
+	} while (true);//(*x < 0 || *x > width);
 	return 0;
 }
 int calcAdjacent(int x, int y, int board[], int mode) {
@@ -750,12 +740,14 @@ void clearBuffer(int board[]) {
 	int termWidth = w.ws_col;
 	int termHeight = w.ws_row;
 	consoleMutex.lock();
+	arrayChangeMutex.lock();
 	for (int i = 1; i < termHeight; i++) {
 		for (int j = 0; j < termWidth; j++) {
 			cout << " ";
 		}
 		cout << "\r\n";
 	}
+	arrayChangeMutex.unlock();
 	consoleMutex.unlock();
 	printBoard(board, 0);
 }

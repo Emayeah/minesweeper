@@ -8,5 +8,6 @@ void cleanup();
 int getMouseVal(int*);
 int clickLogic(int*, int*, int[], int);
 void wordArt(int[]);
-void clearBuffer(int[]);
+void clearBuffer();
 void printSettingsMenu(int);
+void asyncClearBuffer();

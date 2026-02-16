@@ -91,9 +91,8 @@ int main() {
 				sigExit = 1;
 			}
 			else {
-				arrayChangeMutex.unlock();
 				blockOutput = 0;
-				clearBuffer(board);
+				clearBuffer();
 			}
 		}
 		if (win == 5) {
@@ -464,14 +463,10 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings) {
 						if (openSettings == 1) {
 							if (mouseValy - (termHeight / 2 - 13 / 2) == 2)  {
 								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) <= 10) {
-									consoleMutex.lock();
 									printSettingsMenu(1);
-									consoleMutex.unlock();
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 15 && mouseValx - (termWidth / 2 - 36 / 2) <= 18) {
-									consoleMutex.lock();
 									printSettingsMenu(2);
-									consoleMutex.unlock();
 								}
 								else {
 									printSettingsMenu(0);
@@ -509,34 +504,24 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings) {
 							if (mouseValy - (termHeight / 2 - 13 / 2) == 2)  {
 								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) <= 10) {
 									if (pressed == 0) {
-										consoleMutex.lock();
 										printSettingsMenu(11);
-										consoleMutex.unlock();
 									}
 									else {
-										consoleMutex.lock();
 										printSettingsMenu(1);
-										consoleMutex.unlock();
 										width++;
 									}
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 15 && mouseValx - (termWidth / 2 - 36 / 2) <= 18) {
 									if (pressed == 0) {
-										consoleMutex.lock();
 										printSettingsMenu(12);
-										consoleMutex.unlock();
 									}
 									else {
-										consoleMutex.lock();
 										printSettingsMenu(2);
-										consoleMutex.unlock();
 										height++;
 									}
 								}
 								else {
-									consoleMutex.lock();
 									printSettingsMenu(0);
-									consoleMutex.unlock();
 								}						
 							}
 							else {
@@ -772,7 +757,8 @@ void wordArt(int board[]) {
 		if (termWidth != oldWidth || termHeight != oldHeight) {
 			oldWidth = termWidth;
 			oldHeight = termHeight;
-			clearBuffer(board);
+			clearBuffer();
+			printBoard(board, 0);
 		}
 		/*
 		 * just wanted to get the terminal size to adjust the logic
@@ -813,7 +799,7 @@ void wordArt(int board[]) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(125));	// gemini aided
 	} while (true);
 }
-void clearBuffer(int board[]) {
+void clearBuffer() {
 	struct winsize w;
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 	// The ioctl call returns 0 on success, -1 on error	
@@ -822,6 +808,7 @@ void clearBuffer(int board[]) {
 	consoleMutex.lock();
 	arrayChangeMutex.lock();
 	blockPrintMutex.lock();
+	cout << '\n' << flush;
 	for (int i = 1; i < termHeight; i++) {
 		for (int j = 0; j < termWidth; j++) {
 			cout << " ";
@@ -831,7 +818,6 @@ void clearBuffer(int board[]) {
 	arrayChangeMutex.unlock();
 	consoleMutex.unlock();
 	blockPrintMutex.unlock();
-	printBoard(board, 0);
 }
 void printSettingsMenu(int update) {
 	struct winsize w;
@@ -839,6 +825,7 @@ void printSettingsMenu(int update) {
 	int termWidth = w.ws_col;
 	int termHeight = w.ws_row;
 	// menu wide 36 and tall 13
+	consoleMutex.lock();
 	cout << "\e[H";
 	cout << "\e[" << termHeight / 2 - 13 / 2 << "B";
 	cout << "\e[48;5;233m";
@@ -871,4 +858,5 @@ void printSettingsMenu(int update) {
 		}
 		cout << "\r\e[4B";
 	}
+	consoleMutex.unlock();
 }

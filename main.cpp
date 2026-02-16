@@ -76,6 +76,7 @@ int main() {
 		win = userInput(&x, &y, board, blockOutput, 0); // win == 1 that means you lose because it's the game that wins against the player lol
 		if (win == 6) {
 			blockOutput = 1;
+			blockPrintMutex.lock();
 			printSettingsMenu(0);
 			win = userInput(&x, &y, board, blockOutput, 1);
 			if (win == 6) {
@@ -87,12 +88,13 @@ int main() {
 				initBoard(board);
 				arrayChangeMutex.unlock();
 			}
+			blockPrintMutex.unlock();
 			if (win == 4) {
 				sigExit = 1;
 			}
 			else {
 				blockOutput = 0;
-				clearBuffer();
+				clearBuffer(board);
 			}
 		}
 		if (win == 5) {
@@ -507,8 +509,8 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings) {
 										printSettingsMenu(11);
 									}
 									else {
-										printSettingsMenu(1);
 										width++;
+										printSettingsMenu(1);
 									}
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 15 && mouseValx - (termWidth / 2 - 36 / 2) <= 18) {
@@ -516,8 +518,8 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings) {
 										printSettingsMenu(12);
 									}
 									else {
-										printSettingsMenu(2);
 										height++;
+										printSettingsMenu(2);
 									}
 								}
 								else {
@@ -757,8 +759,7 @@ void wordArt(int board[]) {
 		if (termWidth != oldWidth || termHeight != oldHeight) {
 			oldWidth = termWidth;
 			oldHeight = termHeight;
-			clearBuffer();
-			printBoard(board, 0);
+			clearBuffer(board);
 		}
 		/*
 		 * just wanted to get the terminal size to adjust the logic
@@ -799,25 +800,27 @@ void wordArt(int board[]) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(125));	// gemini aided
 	} while (true);
 }
-void clearBuffer() {
+void clearBuffer(int board[]) {
 	struct winsize w;
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 	// The ioctl call returns 0 on success, -1 on error	
 	int termWidth = w.ws_col;
 	int termHeight = w.ws_row;
-	consoleMutex.lock();
 	arrayChangeMutex.lock();
-	blockPrintMutex.lock();
-	cout << '\n' << flush;
-	for (int i = 1; i < termHeight; i++) {
-		for (int j = 0; j < termWidth; j++) {
-			cout << " ";
+	if (blockPrintMutex.try_lock()) {							// gemini aided
+		consoleMutex.lock();
+		cout << "\e[2;0H" << flush;
+		for (int i = 1; i < termHeight - 2; i++) {
+			for (int j = 0; j < termWidth; j++) {
+				cout << " ";
+			}
+			cout << "\r\n";
 		}
-		cout << "\r\n";
+		consoleMutex.unlock();
+		printBoard(board, 0);
+		blockPrintMutex.unlock();
 	}
 	arrayChangeMutex.unlock();
-	consoleMutex.unlock();
-	blockPrintMutex.unlock();
 }
 void printSettingsMenu(int update) {
 	struct winsize w;
@@ -853,10 +856,45 @@ void printSettingsMenu(int update) {
 				}
 			}
 			cout << "\e[6C";
-			cout << " + ";
+			if (i == 1) {
+				if (j == 0) {
+					if (width < 10) {
+						cout << " ";
+					}
+					cout << width;
+					if (width < 100) {
+						cout << " ";
+					}
+				}
+				else if (j == 1) {
+					if (height < 10) {
+						cout << " ";
+					}
+					cout << height;
+					if (height < 100) {
+						cout << " ";
+					}
+				}
+				else if (j == 2) {
+					if (mineCount < 10) {
+						cout << " ";
+					}
+					cout << mineCount;
+					if (mineCount < 100) {
+						cout << " ";
+					}
+				}
+			}
+			else if (i == 0) {
+				cout << " + ";
+			}
+			else if (i == 2) {
+				cout << " - ";
+			}
 			cout << "\e[48;5;15m";
 		}
 		cout << "\r\e[4B";
 	}
+	cout << "\e[0;0m";
 	consoleMutex.unlock();
 }

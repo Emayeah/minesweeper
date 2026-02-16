@@ -7,4 +7,5 @@ void expandBoard(int, int, int [width][height]);
 void cleanup();
 int getMouseVal(int*);
 int clickLogic(int*, int*, int[width][height], int);
-void wordArt();
+void wordArt(int[width][height]);
+void clearBuffer(int[width][height]);

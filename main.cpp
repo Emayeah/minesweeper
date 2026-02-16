@@ -322,12 +322,12 @@ int userInput(int* x, int* y, int board[width][height], int lose) {
 	int termWidth;
 	int termHeight;
 	struct winsize w;											// disclosing the same lines as gemini is very redundant
-	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);						// just know that the code that gets the terminal size is not done by me
-	// The ioctl call returns 0 on success, -1 on error			// but if i need to get the terminal size in a future project
-	termWidth = w.ws_col;										// i won't have to use gemini because i learned how to do so
-	termHeight = w.ws_row;
 	do {
 		do {
+			ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);						// just know that the code that gets the terminal size is not done by me
+			// The ioctl call returns 0 on success, -1 on error			// but if i need to get the terminal size in a future project
+			termWidth = w.ws_col;										// i won't have to use gemini because i learned how to do so
+			termHeight = w.ws_row;
 			if (lose == 0) {
 				temp = board[*x][*y];
 				if ((board[*x][*y] > 8 || board[*x][*y] < 1) && board[*x][*y] != 0 && board[*x][*y] != 19 && board[*x][*y] != 20) {

@@ -26,6 +26,7 @@ using namespace std;
  * 50 = clicked selected (orange), good ux
  */
 std::mutex consoleMutex;
+std::mutex arrayChangeMutex;
 const int devBit = 0;
 const int debugBit = 0;
 
@@ -49,13 +50,13 @@ int main() {
 	int firstInput = 1;
 	int win, x = 0, y = 0;
 	int adjacent;
-	int board[width][height];
+	int *board = new int[width * height];						// straight into the heap and not the stack, i need to free the heap to change the size (gemini)
 	initBoard(board);
 	int flag;
 	int sigExit;
 	int lose = 0;
 	//wordArt();
-	std::future<void> idkman = std::async(std::launch::async, wordArt, board); // gemini
+	//std::future<void> idkman = std::async(std::launch::async, wordArt, board); // gemini
 	//std::thread printTitle(wordArt);							// gemini
 	//printTitle.detach();										// gemini
 	do {
@@ -69,6 +70,21 @@ int main() {
 		consoleMutex.unlock();									// gemini aided
 		sigExit = 0;
 		win = userInput(&x, &y, board, lose); // win == 1 that means you lose because it's the game that wins against the player lol
+		if (win == 6) {
+			cout << "\e[?1049l";		// alternate screen buffer
+			cout << "\e[?1003l\e[?1006l";	// set any-event to high and sgr to high for the mouse button release
+			cout << "\e[?25h";			// set cursor to low
+			cout << "\e[H";				// set cursor to home position
+			cout << "\e[B";				// one lower to not overlap titlebar
+			disable_raw_mode();
+			arrayChangeMutex.lock();							// done by me! learned something new
+			delete[] board;
+			width += 10;
+			height += 10;
+			int *board = new int[width * height];
+			arrayChangeMutex.unlock();
+			initBoard(board);
+		}
 		if (win == 5) {
 			initBoard(board);
 			lose = 0;
@@ -80,9 +96,9 @@ int main() {
 			do {
 				tempx = rand() % width;
 				tempy = rand() % height;
-			} while (board[tempx][tempy] == 9 && (tempx != x || tempy != y));
-			board[tempx][tempy] = 9;
-			board[x][y] = 10;
+			} while (board[tempx * width + tempy] == 9 && (tempx != x || tempy != y));
+			board[tempx * width + tempy] = 9;
+			board[x * width + y] = 10;
 			win = 0;
 			firstInput = 0;
 		}
@@ -91,7 +107,7 @@ int main() {
 		}
 		if (win == 0) {
 			adjacent = calcAdjacent(x, y, board, 0); // 0 is a mode for calcAdjacent, 0 calcs nearby bombs, 1 calcs for nearby 0s for board expansion
-			board[x][y] = adjacent;
+			board[x * width + y] = adjacent;
 			if (adjacent == 0) {
 				expandBoard(x, y, board);
 			}
@@ -101,7 +117,7 @@ int main() {
 			flag = 0;
 			for (int i = 0; i < width && flag != 1; i++) {
 				for (int j = 0; j < height && flag != 1; j++) {
-					if (board[i][j] == 10 || board[i][j] == 20) {
+					if (board[i * width + j] == 10 || board[i * width + j] == 20) {
 						flag = 1;
 					}
 				}
@@ -151,26 +167,26 @@ int main() {
 	exit(EXIT_SUCCESS);
 }
 
-void initBoard(int board[width][height]) {
+void initBoard(int board[]) {
 	int x, y;
 	for (int i = 0; i < width; i++) {
 		for (int j = 0; j < height; j++) {
-			board[i][j] = 10;
+			board[i * width + j] = 10;
 		}
 	}
 	srand(time(NULL));
 	for (int i = 0; i < mineCount; i++) { // this assumes that mineCount < height * width
 		x = rand() % width;
 		y = rand() % height;
-		while (board[x][y] == 9) {
+		while (board[x * width + y] == 9) {
 			x = rand() % width;
 			y = rand() % height;
 		}
-		board[x][y] = 9;
+		board[x * width + y] = 9;
 	}
 }
 
-void printBoard(int board[width][height], int lose) {
+void printBoard(int board[], int lose) {
 	int termWidth;
 	int termHeight;
 	struct winsize w;											// gemini
@@ -197,22 +213,23 @@ void printBoard(int board[width][height], int lose) {
 		cout << "🟩";
 	}
 	cout << "\r\n";
+	arrayChangeMutex.lock();
 	for (int j = 0; j < height; j++) {
 		cout << "\e[" << (termWidth / 2) - width - 2 << "C"; // move to the center, again, an emoji takes up 2 spaces!
 		for (int i = 0; i < width; i++) {
 			if (i == 0) {
 				cout << "🟩";
 			}
-			if (board[i][j] == 10 || ((devBit != 1 && lose != 1) && board[i][j] == 9)) {
+			if (board[i * width + j] == 10 || ((devBit != 1 && lose != 1) && board[i * width + j] == 9)) {
 				cout << "⬜";
 			}
-			else if ((devBit == 1 || lose == 1) && board[i][j] == 9 || (board[i][j] == 19 && lose == 1)) {
+			else if ((devBit == 1 || lose == 1) && board[i * width + j] == 9 || (board[i * width + j] == 19 && lose == 1)) {
 				cout << "🟥";
 			}
-			else if (board[i][j] == 0) {
+			else if (board[i * width + j] == 0) {
 				cout << "  ";
 			}
-			else if (board[i][j] == 20 || board[i][j] == 19) {
+			else if (board[i * width + j] == 20 || board[i * width + j] == 19) {
 				if (lose != 1) {
 					cout << "🚩";
 				}
@@ -220,23 +237,23 @@ void printBoard(int board[width][height], int lose) {
 					cout << "🏳️";
 				}
 			}
-			else if (board[i][j] == 11) {
+			else if (board[i * width + j] == 11) {
 				cout << "🟨";
 			}
-			else if (board[i][j] == 30) {
+			else if (board[i * width + j] == 30) {
 				cout << "⬛";
-				board[i][j] = 0;
+				board[i * width + j] = 0;
 			}
-			else if (board[i][j] == 39 || board[i][j] == 40) {
+			else if (board[i * width + j] == 39 || board[i * width + j] == 40) {
 				cout << "🏁";
-				board[i][j] -= 20;
+				board[i * width + j] -= 20;
 			}
-			else if (board[i][j] == 50) {
+			else if (board[i * width + j] == 50) {
 				cout << "🟧";
 			}
 			else {
-				if (board[i][j] <= 20) {
-					switch (board[i][j]) { // print with colors
+				if (board[i * width + j] <= 20) {
+					switch (board[i * width + j]) { // print with colors
 						case 1:
 							cout << "\e[0;34m";
 							break;
@@ -264,8 +281,8 @@ void printBoard(int board[width][height], int lose) {
 					}
 				}
 				else {
-					board[i][j] -= 20;
-					switch (board[i][j]) { // print with colors
+					board[i * width + j] -= 20;
+					switch (board[i * width + j]) { // print with colors
 						case 1:
 							cout << "\e[0;44m";
 							break;
@@ -293,8 +310,8 @@ void printBoard(int board[width][height], int lose) {
 					}
 
 				}
-				cout << board[i][j] << " " << "\e[0;0m";
-//				cout << board[i][j] << " ";
+				cout << board[i * width + j] << " " << "\e[0;0m";
+//				cout << board[i * width + j] << " ";
 			}
 		}
 		cout << "🟩";
@@ -307,9 +324,10 @@ void printBoard(int board[width][height], int lose) {
 	cout << "\e[" << height << "A";
 	cout << "\e[" << ((termHeight - 1) / 2) - (height / 2) << "A"; // move to the enter
 	consoleMutex.unlock();									// gemini
+	arrayChangeMutex.unlock();
 }
 
-int userInput(int* x, int* y, int board[width][height], int lose) {
+int userInput(int* x, int* y, int board[], int lose) {
 	char flag;
 	int temp;
 	int validChord;
@@ -321,7 +339,7 @@ int userInput(int* x, int* y, int board[width][height], int lose) {
 	int logicTemp;
 	int termWidth;
 	int termHeight;
-	struct winsize w;											// disclosing the same lines as gemini is very redundant
+	struct winsize w;													// disclosing the same lines as gemini is very redundant
 	do {
 		do {
 			ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);						// just know that the code that gets the terminal size is not done by me
@@ -329,26 +347,26 @@ int userInput(int* x, int* y, int board[width][height], int lose) {
 			termWidth = w.ws_col;										// i won't have to use gemini because i learned how to do so
 			termHeight = w.ws_row;
 			if (lose == 0) {
-				temp = board[*x][*y];
-				if ((board[*x][*y] > 8 || board[*x][*y] < 1) && board[*x][*y] != 0 && board[*x][*y] != 19 && board[*x][*y] != 20) {
+				temp = board[*x * width + *y];
+				if ((board[*x * width + *y] > 8 || board[*x * width + *y] < 1) && board[*x * width + *y] != 0 && board[*x * width + *y] != 19 && board[*x * width + *y] != 20) {
 					if (pressed == 1) {
-						board[*x][*y] = 11;
+						board[*x * width + *y] = 11;
 						printBoard(board, 0);
-						board[*x][*y] = temp;
+						board[*x * width + *y] = temp;
 					}
 					else if (pressed == 0) {
-						board[*x][*y] = 50;
+						board[*x * width + *y] = 50;
 						printBoard(board, 0);
-						board[*x][*y] = temp;
+						board[*x * width + *y] = temp;
 						pressed = 1;
 					}
 				}
-				else if (board[*x][*y] <= 8 && board[*x][*y] >= 1 || (board[*x][*y] == 19 || board[*x][*y] == 20)) {
-					board[*x][*y] += 20;
+				else if (board[*x * width + *y] <= 8 && board[*x * width + *y] >= 1 || (board[*x * width + *y] == 19 || board[*x * width + *y] == 20)) {
+					board[*x * width + *y] += 20;
 					printBoard(board, 0);
 				}
-				else if (board[*x][*y] == 0) {
-					board[*x][*y] = 30;
+				else if (board[*x * width + *y] == 0) {
+					board[*x * width + *y] = 30;
 					printBoard(board, 0);
 				}
 			}
@@ -449,7 +467,7 @@ int userInput(int* x, int* y, int board[width][height], int lose) {
 									return 5;
 								}
 								else {
-									// return 6; // TODO, settings menu
+									return 6; // TODO, settings menu
 								}
 							}
 							mouseValx--;
@@ -529,7 +547,7 @@ int userInput(int* x, int* y, int board[width][height], int lose) {
 					return logicTemp;
 				}
 			}
-			else if (input == 'f' && !(board[*x][*y] >= 0 && board[*x][*y] <= 8) && lose == 0) {
+			else if (input == 'f' && !(board[*x * width + *y] >= 0 && board[*x * width + *y] <= 8) && lose == 0) {
 				logicTemp = clickLogic(x, y, board, 1);
 				if (logicTemp != 0) {
 					return logicTemp;
@@ -539,21 +557,21 @@ int userInput(int* x, int* y, int board[width][height], int lose) {
 	} while (true); 
 	return 0;
 }
-int calcAdjacent(int x, int y, int board[width][height], int mode) {
+int calcAdjacent(int x, int y, int board[], int mode) {
 	int count = 0;
 	for (int i = -1; i < 2; i++) {
 		for (int j = -1; j < 2; j++) {
 			if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) { // check for out of bounds
-				if (mode == 0 && (board[x + i][y + j] == 9 || board[x + i][y + j] == 19)) {
+				if (mode == 0 && (board[(x + i) * width + (y + j)] == 9 || board[(x + i) * width + (y + j)] == 19)) {
 					count++;
 				}
-				else if (mode == 1 && board[x + i][y + j] == 0) {
+				else if (mode == 1 && board[(x + i) * width + (y + j)] == 0) {
 					return 1; // i know, i know, jacopini... va bene che compiler optimization tolgono le altre condizioni ma questo è più semplice da leggere
 				}
-				else if (mode == 2 && (board[x + i][y + j] == 20 || board[x + i][y + j] == 19)) {
+				else if (mode == 2 && (board[(x + i) * width + (y + j)] == 20 || board[(x + i) * width + (y + j)] == 19)) {
 					count++;
 				}
-				else if (mode == 3 && board[x + i][y + j] == 9) {
+				else if (mode == 3 && board[(x + i) * width + (y + j)] == 9) {
 					count++;
 				}
 			}
@@ -561,21 +579,21 @@ int calcAdjacent(int x, int y, int board[width][height], int mode) {
 	}
 	return count;
 }
-void expandBoard(int x, int y, int board[width][height]) {	
+void expandBoard(int x, int y, int board[]) {	
 	int flag, count = 1, adjacent;
 	char asdf;
 	do {
 		flag = 0;
 		for (int i = -count; i <= count; i++) {
 			for (int j = -count; j <= count; j++) {
-				if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) { //&& board[x + i][y + j] != 9 && board[x + i][y + j] != 19) { // check for out of bounds blah blah
+				if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) { //&& board[x + i * width + y + j] != 9 && board[(x + i) * width + (y + j)] != 19) { // check for out of bounds blah blah
 					adjacent = calcAdjacent(x + i, y + j, board, 1);
 					if (adjacent == 1) {
-						if (board[x + i][y + j] == 10 || board[x + i][y + j] == 20) {
+						if (board[(x + i) * width + (y + j)] == 10 || board[(x + i) * width + (y + j)] == 20) {
 							flag = 1;
 						}
-						if (board[x + i][y + j] != 19) {
-							board[x + i][y + j] = calcAdjacent(x + i, y + j, board, 0);
+						if (board[(x + i) * width + (y + j)] != 19) {
+							board[(x + i) * width + (y + j)] = calcAdjacent(x + i, y + j, board, 0);
 						}
 					}
 				}
@@ -620,18 +638,18 @@ int getMouseVal(int* pressed) {
 	} while ((int)(input - 48) >= 0 && (int)(input - 48) <= 9);
 	return tempVal;
 }
-int clickLogic(int* x, int* y, int board[width][height], int flag) {
+int clickLogic(int* x, int* y, int board[], int flag) {
 	int validChord;
 	if (flag == 0) {
-		if (board[*x][*y] != 0 && board[*x][*y] != 19 && board[*x][*y] != 20 && !(board[*x][*y] >= 1 && board[*x][*y] <= 8)) {
-			if (board[*x][*y] == 9) {
+		if (board[*x * width + *y] != 0 && board[*x * width + *y] != 19 && board[*x * width + *y] != 20 && !(board[*x * width + *y] >= 1 && board[*x * width + *y] <= 8)) {
+			if (board[*x * width + *y] == 9) {
 				return 1;
 			}
 			return 0;
 		}
-		else if (board[*x][*y] >= 1 && board[*x][*y] <= 8) {
+		else if (board[*x * width + *y] >= 1 && board[*x * width + *y] <= 8) {
 			validChord = calcAdjacent(*x, *y, board, 2);
-			if (validChord == board[*x][*y]) {
+			if (validChord == board[*x * width + *y]) {
 				validChord = calcAdjacent(*x, *y, board, 3);
 				if (validChord != 0) {
 					return 1;
@@ -639,8 +657,8 @@ int clickLogic(int* x, int* y, int board[width][height], int flag) {
 				for (int i = -1; i < 2; i++) {
 					for (int j = -1; j < 2; j++) {
 						if (*x + i >= 0 && *x + i < width && *y + j >= 0 && *y + j < height) {
-							if (board[*x + i][*y + j] == 10) {
-								board[*x + i][*y + j] = calcAdjacent(*x + i, *y + j, board, 0);
+							if (board[(*x + i) * width + (*y + j)] == 10) {
+								board[(*x + i) * width + (*y + j)] = calcAdjacent(*x + i, *y + j, board, 0);
 								expandBoard(*x + i, *y + j, board);
 							} 
 						}
@@ -650,13 +668,13 @@ int clickLogic(int* x, int* y, int board[width][height], int flag) {
 		return 0;
 		}
 	}
-	else if (flag == 1 && !(board[*x][*y] >= 1 && board[*x][*y] <= 8)) {
-		if (!(board[*x][*y] >= 0 && board[*x][*y] <= 8)) {
-			if (board[*x][*y] == 19 || board[*x][*y] == 20) {
-				board[*x][*y] -= 10;
+	else if (flag == 1 && !(board[*x * width + *y] >= 1 && board[*x * width + *y] <= 8)) {
+		if (!(board[*x * width + *y] >= 0 && board[*x * width + *y] <= 8)) {
+			if (board[*x * width + *y] == 19 || board[*x * width + *y] == 20) {
+				board[*x * width + *y] -= 10;
 			}
 			else {
-				board[*x][*y] += 10;
+				board[*x * width + *y] += 10;
 			}
 			return 2;
 		}
@@ -666,7 +684,7 @@ int clickLogic(int* x, int* y, int board[width][height], int flag) {
 	}
 	return 3;
 }
-void wordArt(int board[width][height]) {
+void wordArt(int board[]) {
 	char word[] = "minesweeper";
 	int Art = 0, termWidth, termHeight, flip = 0, oldWidth = 0, oldHeight = 0;
 	do {
@@ -725,7 +743,7 @@ void wordArt(int board[width][height]) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(125));	// gemini aided
 	} while (true);
 }
-void clearBuffer(int board[width][height]) {
+void clearBuffer(int board[]) {
 	struct winsize w;
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 	// The ioctl call returns 0 on success, -1 on error	

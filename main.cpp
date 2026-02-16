@@ -876,6 +876,7 @@ void clearBuffer(int board[], int *width, int *height) {
 	arrayChangeMutex.lock();
 	if (blockPrintMutex.try_lock()) {							// gemini aided
 		consoleMutex.lock();
+		cout << "\e[H";
 		cout << "\e[48;5;15m";
 		cout << "\e[38;5;16m";
 		cout << " Settings";

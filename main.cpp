@@ -890,7 +890,35 @@ void printSettingsMenu(int update) {
 	cout << "\e[H";
 	cout << "\e[" << termHeight / 2 - 13 / 2 << "B";
 	cout << "\e[48;5;233m";
-	for (int i = 0; i < 13; i++) {
+	for (int i = 0; i < 12; i++) {
+		if (i == 1) {
+			cout << "\e[" << termWidth / 2 - 36 / 2  << "C";
+			for (int k = 0; k < 6; k++) {
+				cout << " ";
+			}
+			cout << "\e[38;5;16m";
+			cout << "\e[48;5;15m";
+			cout << "Width";
+			cout << "\e[48;5;233m";
+			for (int k = 0; k < 3; k++) {
+				cout << " ";
+			}
+			cout << "\e[38;5;16m";
+			cout << "\e[48;5;15m";
+			cout << "Height";
+			cout << "\e[48;5;233m";
+			for (int k = 0; k < 2; k++) {
+				cout << " ";
+			}
+			cout << "\e[38;5;16m";
+			cout << "\e[48;5;15m";
+			cout << "Mine count";
+			cout << "\e[48;5;233m";
+			for (int k = 0; k < 4; k++) {
+				cout << " ";
+			}
+			cout << '\r' << endl;
+		}
 		cout << "\e[" << termWidth / 2 - 36 / 2  << "C";
 		for (int j = 0; j < 36; j++) {
 			cout << " ";

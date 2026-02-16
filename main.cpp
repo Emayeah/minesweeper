@@ -8,6 +8,8 @@
 #include <sys/ioctl.h>		// for terminal size
 #include <future>			// for async
 #include <mutex>			// race condition! i was experimenting with the async stuff but of course i got a race condition
+#include <thread>	
+#include <chrono>			// i guess i'll have to use chrono since usleep won't work for ranges < 1s
 using namespace std;
 /*
  * 0 = uncovered (nothing)
@@ -53,18 +55,18 @@ int main() {
 	int sigExit;
 	int lose = 0;
 	//wordArt();
-	std::future<void> idkman = std::async(std::launch::async, wordArt);
-	//std::thread printTitle(wordArt);	// gemini
-	//printTitle.detach();				// gemini
+	std::future<void> idkman = std::async(std::launch::async, wordArt, board); // gemini
+	//std::thread printTitle(wordArt);							// gemini
+	//printTitle.detach();										// gemini
 	do {
-		consoleMutex.lock(); // gemini
+		consoleMutex.lock();									// gemini aided
 		cout << '\r';
 		cout << "\e[H";
 		cout << "\e[48;5;15m";
 		cout << "\e[38;5;16m";
 		cout << " Settings";
 		cout << "\e[0;0m";
-		consoleMutex.unlock(); // gemini
+		consoleMutex.unlock();									// gemini aided
 		sigExit = 0;
 		win = userInput(&x, &y, board, lose); // win == 1 that means you lose because it's the game that wins against the player lol
 		if (win == 5) {
@@ -126,11 +128,11 @@ int main() {
 			cout << "\r\e[" << termWidth / 2 - 22 << "C";
 			cout << " Click titlebar for new game or ^C to exit!";
 			lose = 1;
-			consoleMutex.unlock(); // gemini
+			consoleMutex.unlock();								// gemini aided
 		}
 		else if (win == 1) {
 			printBoard(board, 1);
-			consoleMutex.lock(); // gemini
+			consoleMutex.lock();								// gemini aided
 			cout << "\e[H";
 			cout << "\e[" << termHeight / 2 <<"B";
 			cout << "\e[" << termWidth / 2 - 12 <<"C";
@@ -171,11 +173,11 @@ void initBoard(int board[width][height]) {
 void printBoard(int board[width][height], int lose) {
 	int termWidth;
 	int termHeight;
-	struct winsize w;										// gemini
-	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);					// gemini
-	// The ioctl call returns 0 on success, -1 on error		// gemini
-	termWidth = w.ws_col;									// gemini aided
-	termHeight = w.ws_row;									// gemini aided	
+	struct winsize w;											// gemini
+	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);						// gemini
+	// The ioctl call returns 0 on success, -1 on error			// gemini
+	termWidth = w.ws_col;										// gemini aided
+	termHeight = w.ws_row;										// gemini aided	
 	/*
 	 * just wanted to get the terminal size to adjust the logic
 	 */
@@ -184,7 +186,7 @@ void printBoard(int board[width][height], int lose) {
 //		cout << " ";
 //	}
 //	cout << '\r';
-//	cout << "\e[" << (termWidth / 2) - (11 / 2) /* 11 is the length of the word "minesweeper" */ << "C"; // hardcoded to my terminal size
+//	cout << "\e[" << (termWidth / 2) - (11 / 2) /* 11 is the length of the word "minesweeper" */ << "C"; 
 //	cout << "\e[1m\e[38;5;16mMinesweeper";
 //	cout << "\e[0;0m\e[22m\r" << endl;
 	consoleMutex.lock(); // gemini
@@ -319,11 +321,11 @@ int userInput(int* x, int* y, int board[width][height], int lose) {
 	int logicTemp;
 	int termWidth;
 	int termHeight;
-	struct winsize w;										// gemini
-	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);					// gemini
-	// The ioctl call returns 0 on success, -1 on error		// gemini
-	termWidth = w.ws_col;									// gemini aided
-	termHeight = w.ws_row;									// gemini aided	
+	struct winsize w;											// disclosing the same lines as gemini is very redundant
+	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);						// just know that the code that gets the terminal size is not done by me
+	// The ioctl call returns 0 on success, -1 on error			// but if i need to get the terminal size in a future project
+	termWidth = w.ws_col;										// i won't have to use gemini because i learned how to do so
+	termHeight = w.ws_row;
 	do {
 		do {
 			if (lose == 0) {
@@ -512,14 +514,14 @@ int userInput(int* x, int* y, int board[width][height], int lose) {
 			}
 			else if (input == '\x1a') { // sigtstp
 				cleanup();
-				signal(SIGTSTP, SIG_DFL);
+				signal(SIGTSTP, SIG_DFL);				// gemini aided
 				raise(SIGTSTP);
 				enable_raw_mode();
-				consoleMutex.lock(); // gemini
+				consoleMutex.lock();
 				cout << "\e[?1049h";		// alternate screen buffer
 				cout << "\e[?1003h\e[?1006h";	// set any-event to high and sgr to high for the mouse button release
 				cout << "\e[?25l" << flush;
-				consoleMutex.unlock(); // gemini
+				consoleMutex.unlock();
 			}
 			else if (input != 'f' && lose == 0) {
 				logicTemp = clickLogic(x, y, board, 0);
@@ -588,14 +590,14 @@ void expandBoard(int x, int y, int board[width][height]) {
 }
 
 void cleanup() {
-	consoleMutex.lock(); // gemini
+	consoleMutex.lock();
 	cout << "\e[" << height << "B";
 	cout << "\e[?1003l\e[?1006l";
 	cout << "\e[?25h";
 	cout << "\e[?1049l" << flush;
 	cout << "\e[1A" << flush;
 	disable_raw_mode();
-	consoleMutex.unlock(); // gemini
+	consoleMutex.unlock();
 }
 
 int getMouseVal(int* pressed) {
@@ -664,9 +666,9 @@ int clickLogic(int* x, int* y, int board[width][height], int flag) {
 	}
 	return 3;
 }
-void wordArt() {
+void wordArt(int board[width][height]) {
 	char word[] = "minesweeper";
-	int Art = 0, termWidth, termHeight;
+	int Art = 0, termWidth, termHeight, flip = 0, oldWidth = 0, oldHeight = 0;
 	do {
 		if (Art < 11) {
 			word[Art] -= 32;
@@ -674,15 +676,20 @@ void wordArt() {
 		else if (Art >= 15 && Art < 26) {
 			word[10 - (Art - 15)] -= 32; 
 		}
-		struct winsize w;										// gemini
-		ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);					// gemini
-		// The ioctl call returns 0 on success, -1 on error		// gemini
-		termWidth = w.ws_col;									// gemini aided
-		termHeight = w.ws_row;									// gemini aided	
+		struct winsize w;
+		ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+		// The ioctl call returns 0 on success, -1 on error	
+		termWidth = w.ws_col;
+		termHeight = w.ws_row;
+		if (termWidth != oldWidth || termHeight != oldHeight) {
+			oldWidth = termWidth;
+			oldHeight = termHeight;
+			clearBuffer(board);
+		}
 		/*
 		 * just wanted to get the terminal size to adjust the logic
 		 */
-		consoleMutex.lock();									// gemini
+		consoleMutex.lock();
 		cout << "\e[H";
 		cout << "\e[48;5;15m";
 		cout << "\e[38;5;16m";
@@ -691,7 +698,7 @@ void wordArt() {
 			cout << " ";
 		}
 		cout << '\r';
-		cout << "\e[" << (termWidth / 2) - (11 / 2) /* 11 is the length of the word "minesweeper" */ << "C"; // hardcoded to my terminal size
+		cout << "\e[" << (termWidth / 2) - (11 / 2) /* 11 is the length of the word "minesweeper" */ << "C";
 		cout << "\e[1m\e[38;5;16m";
 		if (Art == 11 || Art == 13 || Art == 26 || Art == 28) {
 			cout << "           "; // that's 11 spaces
@@ -700,17 +707,37 @@ void wordArt() {
 			cout << word;
 		}
 		cout << "\e[0;0m\e[22m\r" << endl;
-		consoleMutex.unlock();									// gemini
+		consoleMutex.unlock();
 		if (Art < 11) {
 			word[Art] += 32;
 		}
 		else if (Art >= 15 && Art < 26) {
 			word[10 - (Art - 15)] += 32; 
 		}
-		Art++;
+		flip++;
+		flip %= 2;
+		if (flip == 0) {
+			Art++;
+		}
 		if (Art >= 30) {
 			Art = 0;
 		}
-		sleep(1);
+		std::this_thread::sleep_for(std::chrono::milliseconds(500));	// gemini aided
 	} while (true);
+}
+void clearBuffer(int board[width][height]) {
+	struct winsize w;
+	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+	// The ioctl call returns 0 on success, -1 on error	
+	int termWidth = w.ws_col;
+	int termHeight = w.ws_row;
+	consoleMutex.lock();
+	for (int i = 1; i < termHeight; i++) {
+		for (int j = 0; j < termWidth; j++) {
+			cout << " ";
+		}
+		cout << "\r\n";
+	}
+	consoleMutex.unlock();
+	printBoard(board, 0);
 }

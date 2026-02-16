@@ -461,14 +461,31 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings) {
 						mouseValx = getMouseVal(&pressed);
 						mouseValx--;
 						mouseValy = getMouseVal(&pressed);
-						mouseValy--;	
+						mouseValy--;
 						if (openSettings == 1) {
 							if (mouseValy - (termHeight / 2 - 13 / 2) == 2)  {
-								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) <= 10) {
+								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
 									printSettingsMenu(1);
 								}
-								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 15 && mouseValx - (termWidth / 2 - 36 / 2) <= 18) {
+								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 16 && mouseValx - (termWidth / 2 - 36 / 2) < 19) {
 									printSettingsMenu(2);
+								}
+								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
+									printSettingsMenu(3);
+								}
+								else {
+									printSettingsMenu(0);
+								}
+							}
+							else if (mouseValy - (termHeight / 2 - 13 / 2) == 10) {
+								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
+									printSettingsMenu(7);
+								}
+								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 16 && mouseValx - (termWidth / 2 - 36 / 2) < 19) {
+									printSettingsMenu(8);
+								}
+								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
+									printSettingsMenu(9);
 								}
 								else {
 									printSettingsMenu(0);
@@ -504,7 +521,7 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings) {
 						}
 						if (openSettings == 1) {
 							if (mouseValy - (termHeight / 2 - 13 / 2) == 2)  {
-								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) <= 10) {
+								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
 									if (pressed == 0) {
 										printSettingsMenu(11);
 									}
@@ -513,13 +530,54 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings) {
 										printSettingsMenu(1);
 									}
 								}
-								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 15 && mouseValx - (termWidth / 2 - 36 / 2) <= 18) {
+								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 16 && mouseValx - (termWidth / 2 - 36 / 2) < 19) {
 									if (pressed == 0) {
 										printSettingsMenu(12);
 									}
 									else {
 										height++;
 										printSettingsMenu(2);
+									}
+								}
+								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
+									if (pressed == 0) {
+										printSettingsMenu(13);
+									}
+									else {
+										mineCount++;
+										printSettingsMenu(3);
+									}
+								}
+								else {
+									printSettingsMenu(0);
+								}
+							}
+							else if (mouseValy - (termHeight / 2 - 13 / 2) == 10) {
+								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
+									if (pressed == 0) {
+										printSettingsMenu(17);
+									}
+									else {
+										width--;
+										printSettingsMenu(7);
+									}
+								}
+								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 16 && mouseValx - (termWidth / 2 - 36 / 2) < 19) {
+									if (pressed == 0) {
+										printSettingsMenu(18);
+									}
+									else {
+										height--;
+										printSettingsMenu(8);
+									}
+								}
+								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
+									if (pressed == 0) {
+										printSettingsMenu(19);
+									}
+									else {
+										mineCount--;
+										printSettingsMenu(9);
 									}
 								}
 								else {
@@ -599,7 +657,7 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings) {
 			cout << "\e[?25l" << flush;
 			consoleMutex.unlock();
 		}
-		else if (input != 'f' && lose == 0) {
+		else if (input == 'd' && lose == 0) {
 			logicTemp = clickLogic(x, y, board, 0);
 			if (logicTemp != 3) {
 				return logicTemp;
@@ -839,6 +897,8 @@ void printSettingsMenu(int update) {
 		}
 		cout << '\r' << endl;
 	}
+	int tempNum;
+	int divCount;
 	cout << "\e[H";
 	cout << "\e[" << termHeight / 2 - 13 / 2 + 1 << "B";
 	cout << "\e[38;5;16m";
@@ -855,40 +915,90 @@ void printSettingsMenu(int update) {
 					cout << "\e[48;5;28m";
 				}
 			}
-			cout << "\e[6C";
+			if (width < 3) {
+				width = 3;
+			}
+			if (height < 3) {
+				height = 3;
+			}
+			if (width * height - 1 < mineCount) {
+				mineCount = width * height - 1;
+			}
+			if (mineCount < 1) {
+				mineCount = 1;
+			}
 			if (i == 1) {
 				if (j == 0) {
-					if (width < 10) {
+					tempNum = width;
+					divCount = 0;
+					do {
+						tempNum /= 10;
+						divCount++;
+					} while (tempNum > 0);
+					cout << "\e[6C";
+					cout << "\e[" << (divCount / 2) - 1 << "D";
+					if (divCount > 3) {
+						cout << "\e[" << (divCount / 2) - 1 << "D";
+					}
+					if (divCount % 2 != 0) {
 						cout << " ";
+					}
+					else {
+						cout << "\e[C";
 					}
 					cout << width;
-					if (width < 100) {
-						cout << " ";
-					}
+					cout << " ";
+					cout << "\e[" << 6 - (divCount - 1) / 2 << "C";
 				}
 				else if (j == 1) {
-					if (height < 10) {
+					tempNum = height;
+					divCount = 0;
+					do {
+						tempNum /= 10;
+						divCount++;
+					} while (tempNum > 0);
+					cout << "\e[" << (divCount / 2) - 1 << "D";
+					if (divCount > 3) {
+						cout << "\e[" << (divCount / 2) - 1 << "D";
+					}
+					if (divCount % 2 != 0) {
 						cout << " ";
+					}
+					else {
+						cout << "\e[C";
 					}
 					cout << height;
-					if (height < 100) {
-						cout << " ";
-					}
+					cout << " ";
+					cout << "\e[" << 6 - (divCount - 1) / 2 << "C";
 				}
 				else if (j == 2) {
-					if (mineCount < 10) {
+					tempNum = mineCount;
+					divCount = 0;
+					do {
+						tempNum /= 10;
+						divCount++;
+					} while (tempNum > 0);
+					cout << "\e[" << (divCount / 2) - 1 << "D";
+					if (divCount > 3) {
+						cout << "\e[" << (divCount / 2) - 1 << "D";
+					}
+					if (divCount % 2 != 0) {
 						cout << " ";
+					}
+					else {
+						cout << "\e[C";
 					}
 					cout << mineCount;
-					if (mineCount < 100) {
-						cout << " ";
-					}
+					cout << " ";
+					cout << "\e[" << 6 - (divCount - 1) / 2 - 1 << "C";
 				}
 			}
 			else if (i == 0) {
+				cout << "\e[6C";
 				cout << " + ";
 			}
 			else if (i == 2) {
+				cout << "\e[6C";
 				cout << " - ";
 			}
 			cout << "\e[48;5;15m";

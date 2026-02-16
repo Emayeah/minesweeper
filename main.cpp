@@ -27,6 +27,7 @@ using namespace std;
  */
 std::mutex consoleMutex;
 std::mutex arrayChangeMutex;
+std::mutex blockPrintMutex;
 const int devBit = 0;
 const int debugBit = 0;
 
@@ -52,9 +53,12 @@ int main() {
 	int adjacent;
 	int *board = new int[width * height];						// straight into the heap and not the stack, i need to free the heap to change the size (gemini)
 	initBoard(board);
+	for (int i = width * height - (width * 2); i < width * height; i++) {
+		board[i] = 20;
+	}
 	int flag;
 	int sigExit;
-	int lose = 0;
+	int blockOutput = 0;
 	//wordArt();
 	std::future<void> idkman = std::async(std::launch::async, wordArt, board); // gemini
 	//std::thread printTitle(wordArt);							// gemini
@@ -69,19 +73,32 @@ int main() {
 		cout << "\e[0;0m";
 		consoleMutex.unlock();									// gemini aided
 		sigExit = 0;
-		win = userInput(&x, &y, board, lose); // win == 1 that means you lose because it's the game that wins against the player lol
+		win = userInput(&x, &y, board, blockOutput, 0); // win == 1 that means you lose because it's the game that wins against the player lol
 		if (win == 6) {
-			arrayChangeMutex.lock();							// done by me! learned something new
-			delete[] board;
-			width += 10;
-			height += 10;
-			board = new int[width * height];
-			initBoard(board);
-			arrayChangeMutex.unlock();
+			blockOutput = 1;
+			printSettingsMenu(0);
+			win = userInput(&x, &y, board, blockOutput, 1);
+			if (win == 6) {
+				arrayChangeMutex.lock();							// done by me! learned something new
+				delete[] board;
+				//width += 10;
+				//height += 10;
+				board = new int[width * height];
+				initBoard(board);
+				arrayChangeMutex.unlock();
+			}
+			if (win == 4) {
+				sigExit = 1;
+			}
+			else {
+				arrayChangeMutex.unlock();
+				blockOutput = 0;
+				clearBuffer(board);
+			}
 		}
 		if (win == 5) {
 			initBoard(board);
-			lose = 0;
+			blockOutput = 0;
 			firstInput = 1;
 		}
 		if (firstInput == 1 && win == 1) { // first input is always safe
@@ -128,8 +145,9 @@ int main() {
 		termWidth = w.ws_col;									// gemini aided
 		termHeight = w.ws_row;									// gemini aided	
 		if (flag == 0) {
+			blockPrintMutex.lock();
 			printBoard(board, 0);
-			consoleMutex.lock(); // gemini
+			consoleMutex.lock();								// gemini aided
 			cout << "\e[H";
 			cout << "\e[" << termHeight / 2 << "B";
 			cout << "\e[" << termWidth / 2 - 4 <<"C";
@@ -137,10 +155,12 @@ int main() {
 			cout << "\e[B";
 			cout << "\r\e[" << termWidth / 2 - 22 << "C";
 			cout << " Click titlebar for new game or ^C to exit!";
-			lose = 1;
+			blockOutput = 1;
 			consoleMutex.unlock();								// gemini aided
+			blockPrintMutex.unlock();
 		}
 		else if (win == 1) {
+			blockPrintMutex.lock();
 			printBoard(board, 1);
 			consoleMutex.lock();								// gemini aided
 			cout << "\e[H";
@@ -150,8 +170,9 @@ int main() {
 			cout << "\e[B";
 			cout << "\r\e[" << termWidth / 2 - 22 << "C";
 			cout << " Click titlebar for new game or ^C to exit!";
-			lose = 1;
+			blockOutput = 1;
 			consoleMutex.unlock(); // gemini
+			blockPrintMutex.unlock();
 		}
 	} while (sigExit == 0);
 	cleanup();
@@ -163,8 +184,8 @@ int main() {
 
 void initBoard(int board[]) {
 	int x, y;
-	for (int i = 0; i < width; i++) {
-		for (int j = 0; j < height; j++) {
+	for (int i = 0; i < height; i++) {
+		for (int j = 0; j < width; j++) {
 			board[i * width + j] = 10;
 		}
 	}
@@ -172,11 +193,11 @@ void initBoard(int board[]) {
 	for (int i = 0; i < mineCount; i++) { // this assumes that mineCount < height * width
 		x = rand() % width;
 		y = rand() % height;
-		while (board[x * width + y] == 9) {
+		while (board[y * width + x] == 9) {
 			x = rand() % width;
 			y = rand() % height;
 		}
-		board[x * width + y] = 9;
+		board[y * width + x] = 9;
 	}
 }
 
@@ -319,7 +340,7 @@ void printBoard(int board[], int lose) {
 	consoleMutex.unlock();									// gemini
 }
 
-int userInput(int* x, int* y, int board[], int lose) {
+int userInput(int* x, int* y, int board[], int lose, int openSettings) {
 	char flag;
 	int temp;
 	int validChord;
@@ -437,11 +458,31 @@ int userInput(int* x, int* y, int board[], int lose) {
 					if (tempVal == 35) {	// unpressed
 						mouseValx = getMouseVal(&pressed);
 						mouseValx--;
+						mouseValy = getMouseVal(&pressed);
+						mouseValy--;	
+						if (openSettings == 1) {
+							if (mouseValy - (termHeight / 2 - 13 / 2) == 2)  {
+								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) <= 10) {
+									consoleMutex.lock();
+									printSettingsMenu(1);
+									consoleMutex.unlock();
+								}
+								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 15 && mouseValx - (termWidth / 2 - 36 / 2) <= 18) {
+									consoleMutex.lock();
+									printSettingsMenu(2);
+									consoleMutex.unlock();
+								}
+								else {
+									printSettingsMenu(0);
+								}						
+							}
+							else {
+								printSettingsMenu(0);
+							}
+						}
+						mouseValy -= termHeight / 2 - height / 2;
 						mouseValx -= (termWidth / 2) - width;
 						mouseValx /= 2;		// emojis take 2 spaces horizontally
-						mouseValy = getMouseVal(&pressed);
-						mouseValy--;		// but not vertically! although there is a small offset
-						mouseValy -= termHeight / 2 - height / 2;
 						if (mouseValx >= 0 && mouseValx < width) {
 							*x = mouseValx;
 						}
@@ -452,7 +493,9 @@ int userInput(int* x, int* y, int board[], int lose) {
 					}
 					else if (tempVal == 0) { // left click
 						mouseValx = getMouseVal(&pressed);
+						mouseValx--;
 						mouseValy = getMouseVal(&pressed);
+						mouseValy--;
 						if ((mouseValy == 0 || mouseValy == 1) && pressed == 1) {
 							if (mouseValx >= 9) {
 								return 5;
@@ -461,10 +504,46 @@ int userInput(int* x, int* y, int board[], int lose) {
 								return 6; // TODO, settings menu
 							}
 						}
-						mouseValx--;
+						if (openSettings == 1) {
+							if (mouseValy - (termHeight / 2 - 13 / 2) == 2)  {
+								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) <= 10) {
+									if (pressed == 0) {
+										consoleMutex.lock();
+										printSettingsMenu(11);
+										consoleMutex.unlock();
+									}
+									else {
+										consoleMutex.lock();
+										printSettingsMenu(1);
+										consoleMutex.unlock();
+										width++;
+									}
+								}
+								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 15 && mouseValx - (termWidth / 2 - 36 / 2) <= 18) {
+									if (pressed == 0) {
+										consoleMutex.lock();
+										printSettingsMenu(12);
+										consoleMutex.unlock();
+									}
+									else {
+										consoleMutex.lock();
+										printSettingsMenu(2);
+										consoleMutex.unlock();
+										height++;
+									}
+								}
+								else {
+									consoleMutex.lock();
+									printSettingsMenu(0);
+									consoleMutex.unlock();
+								}						
+							}
+							else {
+								printSettingsMenu(0);
+							}
+						}
 						mouseValx -= (termWidth / 2) - width;
 						mouseValx /= 2;		// emojis take 2 spaces horizontally
-						mouseValy--;		// but not vertically! although there is a small offset
 						mouseValy -= termHeight / 2 - height / 2;
 						if (mouseValx >= 0 && mouseValx < width) {
 							*x = mouseValx;
@@ -741,6 +820,7 @@ void clearBuffer(int board[]) {
 	int termHeight = w.ws_row;
 	consoleMutex.lock();
 	arrayChangeMutex.lock();
+	blockPrintMutex.lock();
 	for (int i = 1; i < termHeight; i++) {
 		for (int j = 0; j < termWidth; j++) {
 			cout << " ";
@@ -749,5 +829,45 @@ void clearBuffer(int board[]) {
 	}
 	arrayChangeMutex.unlock();
 	consoleMutex.unlock();
+	blockPrintMutex.unlock();
 	printBoard(board, 0);
+}
+void printSettingsMenu(int update) {
+	struct winsize w;
+	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+	int termWidth = w.ws_col;
+	int termHeight = w.ws_row;
+	// menu wide 36 and tall 13
+	cout << "\e[H";
+	cout << "\e[" << termHeight / 2 - 13 / 2 << "B";
+	cout << "\e[48;5;233m";
+	for (int i = 0; i < 13; i++) {
+		cout << "\e[" << termWidth / 2 - 36 / 2  << "C";
+		for (int j = 0; j < 36; j++) {
+			cout << " ";
+		}
+		cout << '\r' << endl;
+	}
+	cout << "\e[H";
+	cout << "\e[" << termHeight / 2 - 13 / 2 + 1 << "B";
+	cout << "\e[38;5;16m";
+	cout << "\e[48;5;15m";
+	cout << "\r\e[B";
+	for (int i = 0; i < 3; i++) {
+		cout << "\e[" << termWidth / 2 - 36 / 2 + 1 << "C";
+		for (int j = 0; j < 3; j++) {
+			if (update != 0) {
+				if (update < 10 && update == (j + 3 * i) + 1) {
+					cout << "\e[48;5;82m";
+				}
+				else if (update > 10 && (update - 10) == (j + 3 * i) + 1) {
+					cout << "\e[48;5;28m";
+				}
+			}
+			cout << "\e[6C";
+			cout << " + ";
+			cout << "\e[48;5;15m";
+		}
+		cout << "\r\e[4B";
+	}
 }

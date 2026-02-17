@@ -18,20 +18,20 @@ using namespace std;
  * 30 = uncovered selection		// black square
  * 50 = clicked selected (orange), good ux
  * 51 = single mine
- * 52 = double mine
- * 53 = triple mine
- * 61 = mine with single flag
+ * 61 = double mine
+ * 71 = triple mine
+ * 52 = mine with single flag
  * 62 = mine with double flag	// i'll have to use 1f, 2f and 3f for those, there aren't emojis for double and triple
- * 63 = mine with triple flag	// i'm thinking of red text, a gray background on selected unclicked, wet gray shirt on clicked and white-ish on unselected
- * 71 = tile with single flag	// an int has 4 billion numbers, there's no space constraint *cough cough* unlike *cough* ipv4 *cough*, the space left will allow for a 4 flag mode or something else
- * 72 = tile with double flag
+ * 72 = mine with triple flag	// i'm thinking of red text, a gray background on selected unclicked, wet gray shirt on clicked and white-ish on unselected
+ * 53 = tile with single flag	// an int has 4 billion numbers, there's no space constraint *cough cough* unlike *cough* ipv4 *cough*, the space left will allow for a 4 flag mode or something else
+ * 63 = tile with double flag
  * 73 = tile with triple flag
- * 81 = selected mine with single flag
- * 82 = selected mine with double flag
- * 83 = selected mine with triple flag
- * 91 = selected tile with single flag
- * 92 = selected tile with double flag	// aka wrong flag
- * 93 = selected tile with triple flag	// why is there even a code for this???
+ * 54 = selected mine with single flag
+ * 64 = selected mine with double flag
+ * 74 = selected mine with triple flag
+ * 55 = selected tile with single flag
+ * 65 = selected tile with double flag	// aka wrong flag
+ * 75 = selected tile with triple flag	// why is there even a code for this???
  * 101 - 124 = selection number
  * 201 - 224 = uncovered (bomb nearby)
  */
@@ -42,7 +42,7 @@ const int devBit = 1;
 const int debugBit = 0;
 
 int main() {
-	int gameMode = 0; // 0 for monoflag, 1 for biflag and 2 for triflag
+	int gameMode = 1; // 0 for monoflag, 1 for biflag and 2 for triflag
 	int width = 20, height = 20, mineCount = 20;
 	cout << "\e[?1049h";		// alternate screen buffer
 	cout << "\e[?1003h\e[?1006h";	// set any-event to high and sgr to high for the mouse button release
@@ -269,6 +269,7 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 			}
 			else if ((devBit == 1 || lose == 1) && ((board[i * width + j] > 50 && board[i * width + j] < 60) || ((board[i * width + j] > 60 && board[i * width + j] < 70) && lose == 1))) {
 				cout << "🟥";
+				cout << board[i * width + j] - 50;
 			}
 			else if (board[i * width + j] == 0) {
 				cout << "  ";
@@ -882,15 +883,15 @@ int clickLogic(int* x, int* y, int board[], int flag, int width, int height, int
 	else if (flag == 1 && !(board[*y * width + *x] > 100 && board[*y * width + *x] <= 200)) {
 		if (!(board[*y * width + *x] > 100 && board[*y * width + *x] <= 200)) {
 			if (board[*y * width + *x] > 60 && board[*y * width + *x] <= 80) {
-				board[*y * width + *x] -= 1;
-				if (board[*y * width + *x] == 60) {
-					board[*y * width + *x] -= 9;
+				board[*y * width + *x] += 1;
+				if (board[*y * width + *x] == 60 + gameMode + 2) {
+					board[*y * width + *x] -= (9 + gameMode + 1);
 				}
-				else if (board[*y * width + *x] == 70) {
+				else if (board[*y * width + *x] == 70 + gameMode + 2) {
 					board[*y * width + *x] = 10;
 				}
 			}
-			else if (board[*y * width + *x] > 50 && board[*y * width + *x] <= 60) {
+			else if (board[*y * width + *x] > 50 && board[*y * width + *x] < 60) {
 				board[*y * width + *x] += 10;
 			}
 			else {

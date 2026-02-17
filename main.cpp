@@ -29,6 +29,9 @@ using namespace std;
  * 54 = triple mine with single flag
  * 64 = triple mine with double flag
  * 74 = triple mine with triple flag
+ * 55 = 0 mine cell with single flag
+ * 65 = 0 mine cell with double flag
+ * 75 = 0 mine cell with triple flag
  * 81 = selected mine with single flag
  * 82 = selected mine with double flag
  * 83 = selected mine with triple flag

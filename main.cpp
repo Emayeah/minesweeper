@@ -1,9 +1,9 @@
 #include <iostream>
 #include <cstdlib>
-#include "prototype.h"		// width, height and mineCount are stored here!
+#include "prototype.h"
 #include "rawmode.h"
 //#include <termios.h>
-//#include <unistd.h>		// for sleeping
+//#include <unistd.h>
 #include <csignal>			// throwing sigint if ctrl-c, sigtstp for ctrl-z
 #include <sys/ioctl.h>		// for terminal size
 #include <future>			// for async
@@ -81,7 +81,7 @@ int main() {
 			printSettingsMenu(0, &width, &height, &mineCount);
 			win = userInput(&x, &y, board, blockOutput, 1, &width, &height, &mineCount);
 			if (win == 6) {
-				arrayChangeMutex.lock();							// done by me! learned something new
+				arrayChangeMutex.lock();						// done by me! learned something new
 				delete[] board;
 				//width += 10;
 				//height += 10;
@@ -104,7 +104,7 @@ int main() {
 			blockOutput = 0;
 			firstInput = 1;
 		}
-		if (firstInput == 1 && win == 1) { // first input is always safe
+		if (firstInput == 1 && win == 1) {			// first input is always safe
 			srand(time(NULL));
 			int tempx, tempy;
 			do {
@@ -120,7 +120,7 @@ int main() {
 			firstInput = 0;
 		}
 		if (win == 0) {
-			adjacent = calcAdjacent(x, y, board, 0, &width, &height); // 0 is a mode for calcAdjacent, 0 calcs nearby bombs, 1 calcs for nearby 0s for board expansion
+			adjacent = calcAdjacent(x, y, board, 0, &width, &height); // 0 is a mode for calcAdjacent, 0 calcs nearby bombs, 1 calcs for nearby 0s for board expansion, there are other modes
 			board[y * width + x] = adjacent;
 			if (adjacent == 0) {
 				expandBoard(x, y, board, &width, &height);
@@ -192,7 +192,7 @@ void initBoard(int board[], int *width, int *height, int *mineCount) {
 		}
 	}
 	srand(time(NULL));
-	for (int i = 0; i < *mineCount; i++) { // this assumes that mineCount < *height * *width
+	for (int i = 0; i < *mineCount; i++) {						// this assumes that mineCount < *height * *width
 		x = rand() % *width;
 		y = rand() % *height;
 		while (board[y * *width + x] == 9) {
@@ -208,12 +208,8 @@ void printBoard(int board[], int lose, int *width, int *height) {
 	int termHeight;
 	struct winsize w;											// gemini
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);						// gemini
-	// The ioctl call returns 0 on success, -1 on error			// gemini
 	termWidth = w.ws_col;										// gemini aided
 	termHeight = w.ws_row;										// gemini aided	
-	/*
-	 * just wanted to get the terminal size to adjust the logic
-	 */
 //	cout << "\e[48;5;15m";
 //	for (int i = 0; i < termWidth; i++) {
 //		cout << " ";
@@ -224,14 +220,14 @@ void printBoard(int board[], int lose, int *width, int *height) {
 //	cout << "\e[0;0m\e[22m\r" << endl;
 	consoleMutex.lock(); // gemini
 	cout << "\e[H";
-	cout << "\e[" << ((termHeight - 1) / 2) - (*height / 2) - 1 << "B"; // move to the enter
-	cout << "\e[" << (termWidth / 2) - *width << "C"; // move to the center, again, an emoji takes up 2 spaces!
+	cout << "\e[" << ((termHeight - 1) / 2) - (*height / 2) - 1 << "B";		// move to the center
+	cout << "\e[" << (termWidth / 2) - *width << "C";						// move to the center, again, an emoji takes up 2 spaces!
 	for (int i = 0; i < *width; i++) {
 		cout << "🟩";
 	}
 	cout << "\r\n";
 	for (int i = 0; i < *height; i++) {
-		cout << "\e[" << (termWidth / 2) - *width - 2 << "C"; // move to the center, again, an emoji takes up 2 spaces!
+		cout << "\e[" << (termWidth / 2) - *width - 2 << "C";				// move to the center, again, an emoji takes up 2 spaces!
 		for (int j = 0; j < *width; j++) {
 			//cout << j << "|" << i << " ";
 			if (j == 0) {
@@ -270,7 +266,7 @@ void printBoard(int board[], int lose, int *width, int *height) {
 			}
 			else {
 				if (board[i * *width + j] <= 20) {
-					switch (board[i * *width + j]) { // print with colors
+					switch (board[i * *width + j]) {			// print number with colors (non selected)
 						case 1:
 							cout << "\e[0;34m";
 							break;
@@ -281,7 +277,7 @@ void printBoard(int board[], int lose, int *width, int *height) {
 							cout << "\e[38;5;196m";
 							break;
 						case 4:
-							cout << "\e[38;5;18m";
+							cout << "\e[38;5;19m";
 							break;
 						case 5:
 							cout << "\e[38;5;88m";
@@ -299,30 +295,30 @@ void printBoard(int board[], int lose, int *width, int *height) {
 				}
 				else {
 					board[i * *width + j] -= 20;
-					switch (board[i * *width + j]) { // print with colors
+					switch (board[i * *width + j]) {			// print with colors, filled in colors for selected (background)
 						case 1:
-							cout << "\e[0;44m";
+							cout << "\e[0;44m";					// light blue
 							break;
 						case 2:
-							cout << "\e[0;42m";
+							cout << "\e[0;42m";					// green
 							break;
 						case 3:
-							cout << "\e[48;5;196m";
+							cout << "\e[48;5;196m";				// red
 							break;
 						case 4:
-							cout << "\e[48;5;18m";
+							cout << "\e[48;5;19m";				// blue, deep blue on the purplish side
 							break;
 						case 5:
-							cout << "\e[48;5;88m";
+							cout << "\e[48;5;88m";				// maroon red
 							break;
 						case 6:
-							cout << "\e[0;46m";
+							cout << "\e[0;46m";					// light blue
 							break;
 						case 7:
-							cout << "\e[48;5;240m";
+							cout << "\e[48;5;240m";				// black			
 							break;
 						case 8:
-							cout << "\e[48;5;245m";
+							cout << "\e[48;5;245m";				// gray
 							break;
 					}
 
@@ -340,7 +336,7 @@ void printBoard(int board[], int lose, int *width, int *height) {
 	}
 	cout << "\e[" << *height << "A";
 	cout << "\e[" << ((termHeight - 1) / 2) - (*height / 2) << "A"; // move to the enter
-	consoleMutex.unlock();									// gemini
+	consoleMutex.unlock();
 }
 
 int userInput(int* x, int* y, int board[], int lose, int openSettings, int *width, int *height, int *mineCount) {
@@ -840,10 +836,10 @@ void wordArt(int board[], int *width, int *height) {
 			cout << " ";
 		}
 		cout << '\r';
-		cout << "\e[" << (termWidth / 2) - (11 / 2) /* 11 is the length of the word "minesweeper" */ << "C";
+		cout << "\e[" << (termWidth / 2) - (11 / 2)	/* 11 is the length of the word "minesweeper" */ << "C";
 		cout << "\e[1m\e[38;5;16m";
 		if (Art == 11 || Art == 13 || Art == 26 || Art == 28) {
-			cout << "           "; // that's 11 spaces
+			cout << "           ";					// that's 11 spaces
 		}
 		else {
 			cout << word;
@@ -870,7 +866,6 @@ void wordArt(int board[], int *width, int *height) {
 void clearBuffer(int board[], int *width, int *height) {
 	struct winsize w;
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-	// The ioctl call returns 0 on success, -1 on error	
 	int termWidth = w.ws_col;
 	int termHeight = w.ws_row;
 	arrayChangeMutex.lock();

@@ -661,6 +661,11 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 			cout << "\e[?1049h";		// alternate screen buffer
 			cout << "\e[?1003h\e[?1006h";	// set any-event to high and sgr to high for the mouse button release
 			cout << "\e[?25l" << flush;
+			cout << "\e[H";				// set cursor to home position
+			cout << "\e[48;5;15m";
+			cout << "\e[38;5;16m";
+			cout << " Settings";
+			cout << "\e[0;0m";
 			consoleMutex.unlock();
 		}
 		else if (input == 'd' && lose == 0) {

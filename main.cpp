@@ -20,32 +20,30 @@ using namespace std;
  * 51 = single mine
  * 61 = double mine
  * 71 = triple mine
+ * 42 = 0 mine cell with single flag
  * 52 = single mine with single flag
- * 62 = single mine with double flag	// i'll have to use 1f, 2f and 3f for those, there aren't emojis for double and triple
- * 72 = single mine with triple flag	// i'm thinking of red text, a gray background on selected unclicked, wet gray shirt on clicked and white-ish on unselected
- * 53 = double mine with single flag
+ * 62 = double mine with single flag	// i'll have to use 1f, 2f and 3f for those, there aren't emojis for double and triple
+ * 72 = triple mine with single flag	// i'm thinking of red text, a gray background on selected unclicked, wet gray shirt on clicked and white-ish on unselected
+ * 43 = 0 mine cell with double flag
+ * 53 = single mine with double flag
  * 63 = double mine with double flag
- * 73 = double mine with triple flag
- * 54 = triple mine with single flag
- * 64 = triple mine with double flag
+ * 73 = triple mine with double flag
+ * 44 = 0 mine cell with triple flag
+ * 54 = single mine with triple flag
+ * 64 = double mine with triple flag
  * 74 = triple mine with triple flag
- * 55 = 0 mine cell with single flag
- * 65 = 0 mine cell with double flag
- * 75 = 0 mine cell with triple flag
- * 81 = selected mine with single flag
- * 82 = selected mine with double flag
- * 83 = selected mine with triple flag
- * 91 = selected tile with single flag
- * 92 = selected tile with double flag	// aka wrong flag
- * 93 = selected tile with triple flag	// why is there even a code for this???
+ * 82 = selected mine with single flag
+ * 83 = selected mine with double flag
+ * 84 = selected mine with triple flag
  * 101 - 124 = selection number
  * 201 - 224 = uncovered (bomb nearby)
  */
 std::mutex consoleMutex;
 std::mutex arrayChangeMutex;
 std::mutex blockPrintMutex;
-const int devBit = 1;
+const int devBit = 0;
 const int debugBit = 0;
+const int showInfoBit = 0;
 
 int main() {
 	int gameMode = 1; // 0 for monoflag, 1 for biflag and 2 for triflag
@@ -152,7 +150,7 @@ int main() {
 			flag = 0;
 			for (int i = 0; i < width && flag != 1; i++) {
 				for (int j = 0; j < height && flag != 1; j++) {
-					if (board[j * width + i] == 10 || (board[j * width + i] >= 71 && board[j * width + i] < 80)) {
+					if (board[j * width + i] == 10 || board[j * width + i] / 10 == 4) {
 						flag = 1;
 					}
 				}
@@ -218,10 +216,10 @@ void initBoard(int board[], int width, int height, int mineCount, int gameMode) 
 		do {
 			x = rand() % width;
 			y = rand() % height;
-			if (board[y * width + x] - gameMode == 51) {
+			if (board[y * width + x] - (gameMode * 10) == 51) {
 				flag = 1;
 			}
-			else if (board[y * width + x] - gameMode < 51 && board[y * width + x] >= 51) {
+			else if (board[y * width + x] - (gameMode * 10) < 51 && board[y * width + x] >= 51) {
 				/*
 				 * for multiflag; if 51 (1 bomb) but 3 max bombs (gameMode 2), then 51 - 2 = 49, 51 >= 51
 				 * but if 51 (1 bomb) but 1 max (gM 0), 51 - 0 = 51 (51 is not less than 51)
@@ -234,7 +232,7 @@ void initBoard(int board[], int width, int height, int mineCount, int gameMode) 
 			}
 		} while (flag == 1);
 		if (flag == 2) {
-			board[y * width + x] += 1;
+			board[y * width + x] += 10;
 		}
 	}
 }
@@ -244,7 +242,7 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 	int termHeight;
 	struct winsize w;											// gemini
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);						// gemini
-	termWidth = w.ws_col;										// gemini aided
+	termWidth = w.ws_col;									 	// gemini aided
 	termHeight = w.ws_row;										// gemini aided	
 //	cout << "\e[48;5;15m";
 //	for (int i = 0; i < termWidth; i++) {
@@ -270,17 +268,19 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 			if (j == 0) {
 				cout << "🟩";
 			}
-			if (board[i * width + j] == 10 || ((devBit != 1 && lose != 1) && board[i * width + j] > 50 && board[i * width + j] < 60)) {
+			if (board[i * width + j] == 10 || ((devBit != 1 && lose != 1) && board[i * width + j] < 100 && board[i * width + j] % 10 == 1)) {
 				cout << "⬜";
 			}
-			else if ((devBit == 1 || lose == 1) && ((board[i * width + j] > 50 && board[i * width + j] < 60) || ((board[i * width + j] > 60 && board[i * width + j] < 70) && lose == 1))) {
+			else if ((devBit == 1 || lose == 1) && board[i * width + j] < 100 && (board[i * width + j] % 10 == 1 && (board[i * width + j] / 10 >= 5 && board[i * width + j] / 10 <= 7) || (board[i * width + j] / 10 >= 5 && board[i * width + j] / 10 <= 7) && lose == 1)) {
 				cout << "🟥";
-				cout << board[i * width + j] - 50;
+				if (showInfoBit == 1) {
+					cout << board[i * width + j];
+				}
 			}
 			else if (board[i * width + j] == 0) {
 				cout << "  ";
 			}
-			else if (board[i * width + j] > 60 && board[i * width + j] < 80) { // basically (non clicked / hovered) flags
+			else if (board[i * width + j] % 10 >= 2 && board[i * width + j] < 100 && board[i * width + j] % 10 <= 4) { // basically all of the (non clicked / hovered) flags
 				if (gameMode == 0) {
 					if (lose != 1) {
 						cout << "🚩";
@@ -297,13 +297,9 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 						cout << "\e[38;5;52";
 					}
 					offset10 = 0;
-					if (board[i * width + j] > 70) {
-						board[i * width + j] -= 10;
-						offset10 = 1;
-					}
-					cout << board[i * width + j] - 60 << "F";
-					if (offset10 == 1) {
-						board[i * width + j] += 10;
+					cout << board[i * width + j] % 10 - 1 << "F";
+					if (showInfoBit == 1) {
+						cout << board[i * width + j];
 					}
 				}
 			}
@@ -314,23 +310,15 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 				cout << "⬛";
 				board[i * width + j] = 0;
 			}
-			else if ((board[i * width + j] > 80 && board[i * width + j] < 100)) {
+			else if (board[i * width + j] / 10 == 8) {
 				if (gameMode == 0) {
 					cout << "🏁";
 				}
 				else {
 					cout << "\e[38;5;242m";
 					offset10 = 0;
-					if (board[i * width + j] > 90) {
-						board[i * width + j] -= 10;
-						offset10 = 1;
-					}
-					cout << board[i * width + j] - 80 << "F";
-					if (offset10 == 1) {
-						board[i * width + j] += 10;
-					}
+					cout << board[i * width + j] % 10 - 1 << "F";
 				}
-				board[i * width + j] -= 20;
 			}
 			else if (board[i * width + j] == 50) {
 				cout << "🟧";
@@ -435,7 +423,20 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 		termHeight = w.ws_row;
 		if (lose == 0) {
 			temp = board[*y * *width + *x];
-			if (board[*y * *width + *x] <= 100 && board[*y * *width + *x] != 0 && (board[*y * *width + *x] <= 60 || board[*y * *width + *x] > 80)) {
+			if (board[*y * *width + *x] > 100) {
+				board[*y * *width + *x] += 100;
+				printBoard(board, 0, *width, *height, *gameMode);
+			}
+			else if (board[*y * *width + *x] % 10 >= 2 && board[*y * *width + *x] % 10 <= 4) {
+				board[*y * *width + *x] = 80 + (temp % 10);
+				printBoard(board, 0, *width, *height, *gameMode);
+				board[*y * *width + *x] = temp;
+			}
+			else if (board[*y * *width + *x] == 0) {
+				board[*y * *width + *x] = 30;
+				printBoard(board, 0, *width, *height, *gameMode);
+			}
+			else if (board[*y * *width + *x] != 0 && board[*y * *width + *x] % 10 != 1) {
 				if (pressed == 1) {
 					board[*y * *width + *x] = 20;
 					printBoard(board, 0, *width, *height, *gameMode);
@@ -448,18 +449,7 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 					pressed = 1;
 				}
 			}
-			else if (board[*y * *width + *x] > 100) {
-				board[*y * *width + *x] += 100;
-				printBoard(board, 0, *width, *height, *gameMode);
-			}
-			else if (board[*y * *width + *x] > 60 && board[*y * *width + *x] <= 80) {
-				board[*y * *width + *x] += 20;
-				printBoard(board, 0, *width, *height, *gameMode);
-			}
-			else if (board[*y * *width + *x] == 0) {
-				board[*y * *width + *x] = 30;
-				printBoard(board, 0, *width, *height, *gameMode);
-			}
+
 		}
 		cin >> input;
 		if (input == '\e') {
@@ -763,23 +753,25 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 	return 0;
 }
 int calcAdjacent(int x, int y, int board[], int mode, int width, int height) {
-	int count = 0, tempCount;
+	int count = 0, tempCount, temp;
 	for (int i = -1; i < 2; i++) {
 		for (int j = -1; j < 2; j++) {
 			if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) { // check for out of bounds
-				if (mode == 0 && (board[(y + j) * width + (x + i)] > 50 && board[(y + j) * width + (x + i)] <= 70)) {				// this is to check the amount of mines nearby (to place a number)
-					tempCount = (board[(y + j) * width + (x + i)] - 50);
-					tempCount %= 10;
-					count += tempCount;
-				}
-				else if (mode == 1 && board[(y + j) * width + (x + i)] == 0) {														// this is to check if there's a nearby blank square, used by expandBoard
-					return 1; // i know, i know, jacopini... va bene che compiler optimization tolgono le altre condizioni ma questo è più semplice da leggere
-				}
-				else if (mode == 2 && (board[(y + j) * width + (x + i)] > 60 && board[(y + j) * width + (x + i)] <= 80)) {		// this is used to check if there's the right amount of flags where you're chording
-					count++;
-				}
-				else if (mode == 3 && board[(y + j) * width + (x + i)] > 50 && board[(y + j) * width + (x + i)] <= 60) {			// if you're chording and there's an unflagged mine nearby then you lose
-					count++;
+				temp = board[(y + j) * width + (x + i)];
+				if (temp < 100) {		// to avoid checking numbers
+					if (mode == 0 && temp / 10 >= 5 && temp / 10 <= 7) {// this is to check the amount of mines nearby (to place a number)
+						tempCount = (temp / 10 - 4);
+						count += tempCount;
+					}
+					else if (mode == 1 && temp == 0) {														// this is to check if there's a nearby blank square, used by expandBoard
+						return 1; // i know, i know, jacopini... va bene che compiler optimization tolgono le altre condizioni ma questo è più semplice da leggere
+					}
+					else if (mode == 2 && temp % 10 >= 2 && temp % 10 <= 5) {		// this is used to check if there's the right amount of flags where you're chording
+						count += board[(y + j) * width + (x + i)] % 10 - 1;
+					}
+					else if (mode == 3 && temp % 10 == 1) {														// if you're chording and there's an unflagged mine nearby then you lose
+						count++;
+					}
 				}
 			}
 		}
@@ -787,19 +779,20 @@ int calcAdjacent(int x, int y, int board[], int mode, int width, int height) {
 	return count;
 }
 void expandBoard(int x, int y, int board[], int width, int height, int gameMode) {	
-	int flag, count = 1, adjacent, temp;
+	int flag, count = 1, adjacent, temp, temp2;
 	char asdf;
 	do {
 		flag = 0;
 		for (int i = -count; i <= count; i++) {
 			for (int j = -count; j <= count; j++) {
 				if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) { //&& board[x + i * width + y + j] != 9 && board[(y + j) * width + (x + i)] != 19) { // check for out of bounds blah blah
+					temp2 = board[(y + j) * width + (x + i)];
 					adjacent = calcAdjacent(x + i, y + j, board, 1, width, height);
 					if (adjacent == 1) {
-						if (board[(y + j) * width + (x + i)] == 10 || (board[(y + j) * width + (x + i)] > 70 && board[(y + j) * width + (x + i)] <= 80)) {
+						if (temp2 == 10 || temp2 / 10 == 4) {				// if you flag a white spot, that flagged spot is overridden when board expansion
 							flag = 1;
 						}
-						if (board[(y + j) * width + (x + i)] <= 60 || board[(y + j) * width + (x + i)] > 70) {
+						if (temp2 < 100 && !(temp2 / 10 >= 5 && temp2 / 10 <= 7)) {
 							temp = calcAdjacent(x + i, y + j, board, 0, width, height);
 							if (temp != 0) {
 								temp += 100;
@@ -811,7 +804,7 @@ void expandBoard(int x, int y, int board[], int width, int height, int gameMode)
 			}
 		}
 		if (debugBit == 1) {
-			printBoard(board, 0, width, height, gameMode); // WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING TEMPORARY
+			printBoard(board, 0, width, height, gameMode);
 			cin >> asdf;
 		}
 		count++;
@@ -850,23 +843,24 @@ int getMouseVal(int* pressed) {
 	return tempVal;
 }
 int clickLogic(int* x, int* y, int board[], int flag, int width, int height, int gameMode) {
-	int validChord, temp;
-	if (flag == 0) {
-		if (board[*y * width + *x] != 0 && !(board[*y * width + *x] > 60 && board[*y * width + *x] <= 70) && !(board[*y * width + *x] > 100 && board[*y * width + *x] <= 200)) {
-			if (board[*y * width + *x] > 50 && board[*y * width + *x] <= 60) {
-				return 1;
+	int validChord, temp, temp2;
+	temp2 = board[*y * width + *x];
+	if (flag == 0) {																	// are you trying to place a flag? flag = 0 -> no (either that is chording or normal clicking), flag = 1 -> flagging
+		if (temp2 != 0 && temp2 < 100) {												// are you trying to chord? if you're trying to chord then temp2 would be > 100
+			if (temp2 % 10 == 1 && temp2 / 10 >= 5 && temp2 / 10 <= 7) {			
+				return 1;																// whoops, you just clicked on a bomb!
 			}
-			return 0;
+			return 0;																	// do nothing, you probably clicked on a flag
 		}
-		else if (board[*y * width + *x] > 100 && board[*y * width + *x] <= 200) {
+		else if (temp2 > 100 && temp2 <= 200) {											// chording!
 			validChord = calcAdjacent(*x, *y, board, 2, width, height);
 			if (validChord != 0) {
 				validChord += 100;
 			}
-			if (validChord == board[*y * width + *x]) {
+			if (validChord == temp2) {
 				validChord = calcAdjacent(*x, *y, board, 3, width, height);
 				if (validChord != 0) {
-					return 1;
+					return 1;			// you chorded near an unflagged mine!
 				}
 				for (int i = -1; i < 2; i++) {
 					for (int j = -1; j < 2; j++) {
@@ -886,33 +880,26 @@ int clickLogic(int* x, int* y, int board[], int flag, int width, int height, int
 		return 0;
 		}
 	}
-	else if (flag == 1 && !(board[*y * width + *x] > 100 && board[*y * width + *x] <= 200)) {
-		if (!(board[*y * width + *x] > 100 && board[*y * width + *x] <= 200)) {
-			if (board[*y * width + *x] > 60 && board[*y * width + *x] <= 80) {
-				board[*y * width + *x] += 1;
-				if (board[*y * width + *x] == 60 + gameMode + 2) {
-					board[*y * width + *x] -= (9 + gameMode + 1);
+	else if (flag == 1 && temp2 < 100) {							// flagging
+		if (temp2 / 10 >= 4 && temp2 / 10 <= 7) {
+			board[*y * width + *x] += 1;
+			if (board[*y * width + *x] % 10 > gameMode + 2) {		// if you try to add 1 flag while you're at the max, that means you're trying to deflag
+				if (board[*y * width + *x] / 10 >= 5 && board[*y * width + *x] / 10 <= 7) {
+					board[*y * width + *x] /= 10;
+					board[*y * width + *x] *= 10;
+					board[*y * width + *x] += 1;
 				}
-				else if (board[*y * width + *x] == 70 + gameMode + 2) {
+				else if (board[*y * width + *x] / 10 == 4) {
 					board[*y * width + *x] = 10;
 				}
 			}
-			else if (board[*y * width + *x] > 50 && board[*y * width + *x] < 60) {
-				board[*y * width + *x] += 10;
-			}
-			else {
-				if (board[*y * width + *x] = 10) {
-					board[*y * width + *x] = 71;
-				}
-				else {
-					//board[*y * width + *x] 
-				}
-			}
-			return 2;
 		}
 		else {
-			return 0;
+			if (board[*y * width + *x] == 10) {
+				board[*y * width + *x] = 42;
+			}
 		}
+		return 2;
 	}
 	return 3;
 }

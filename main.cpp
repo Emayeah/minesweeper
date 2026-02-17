@@ -88,6 +88,7 @@ int main() {
 				board = new int[width * height];
 				initBoard(board, &width, &height, &mineCount);
 				arrayChangeMutex.unlock();
+				firstInput = 1;
 			}
 			blockPrintMutex.unlock();
 			if (win == 4) {
@@ -109,7 +110,7 @@ int main() {
 			do {
 				tempx = rand() % width;
 				tempy = rand() % height;
-			} while (board[tempy * width + tempx] == 9 && (tempx != x || tempy != y));
+			} while (board[tempy * width + tempx] == 9 || (tempx == x && tempy == y));
 			board[tempy * width + tempx] = 9;
 			board[y * width + x] = 10;
 			win = 0;
@@ -143,7 +144,6 @@ int main() {
 		int termHeight;
 		struct winsize w;										// gemini
 		ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);					// gemini
-		// The ioctl call returns 0 on success, -1 on error		// gemini
 		termWidth = w.ws_col;									// gemini aided
 		termHeight = w.ws_row;									// gemini aided	
 		if (flag == 0) {

@@ -72,7 +72,7 @@ int main() {
 	int sigExit;
 	int blockOutput = 0;
 	//wordArt();
-	//std::future<void> idkman = std::async(std::launch::async, wordArt, board, &width, &height, &gameMode); // gemini aided
+	std::future<void> idkman = std::async(std::launch::async, wordArt, board, &width, &height, &gameMode); // gemini aided
 	//std::thread printTitle(wordArt);							// gemini
 	//printTitle.detach();										// gemini
 	do {
@@ -260,7 +260,7 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 	for (int i = 0; i < height; i++) {
 		cout << "\e[" << (termWidth / 2) - width - 2 << "C";				// move to the center, again, an emoji takes up 2 spaces!
 		for (int j = 0; j < width; j++) {
-			//cout << board[i * width + j] << " ";
+			// cout << board[i * width + j] << " ";
 			if (j == 0) {
 				cout << "🟩";
 			}
@@ -446,7 +446,7 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 				printBoard(board, 0, *width, *height, *gameMode);
 			}
 			else if (board[*y * *width + *x] > 60 && board[*y * *width + *x] <= 80) {
-				board[*y * *width + *x] += 10;
+				board[*y * *width + *x] += 20;
 				printBoard(board, 0, *width, *height, *gameMode);
 			}
 			else if (board[*y * *width + *x] == 0) {
@@ -881,17 +881,25 @@ int clickLogic(int* x, int* y, int board[], int flag, int width, int height, int
 	}
 	else if (flag == 1 && !(board[*y * width + *x] > 100 && board[*y * width + *x] <= 200)) {
 		if (!(board[*y * width + *x] > 100 && board[*y * width + *x] <= 200)) {
-			if (board[*y * width + *x] > 60 && board[*y * width + *x] <= 70) {
+			if (board[*y * width + *x] > 60 && board[*y * width + *x] <= 80) {
 				board[*y * width + *x] -= 1;
 				if (board[*y * width + *x] == 60) {
-					board[*y * width + *x] -= 10;
+					board[*y * width + *x] -= 9;
 				}
 				else if (board[*y * width + *x] == 70) {
 					board[*y * width + *x] = 10;
 				}
 			}
-			else {
+			else if (board[*y * width + *x] > 50 && board[*y * width + *x] <= 60) {
 				board[*y * width + *x] += 10;
+			}
+			else {
+				if (board[*y * width + *x] = 10) {
+					board[*y * width + *x] = 71;
+				}
+				else {
+					//board[*y * width + *x] 
+				}
 			}
 			return 2;
 		}

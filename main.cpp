@@ -197,7 +197,7 @@ int main() {
 }
 
 void initBoard(int board[], int *width, int *height, int *mineCount, int gameMode) {
-	int x, y;
+	int x, y, flag;
 	for (int i = 0; i < *height; i++) {
 		for (int j = 0; j < *width; j++) {
 			board[i * *width + j] = 10;
@@ -205,13 +205,24 @@ void initBoard(int board[], int *width, int *height, int *mineCount, int gameMod
 	}
 	srand(time(NULL));
 	for (int i = 0; i < *mineCount; i++) {						// this assumes that mineCount < *height * *width
-		x = rand() % *width;
-		y = rand() % *height;
-		while (board[y * *width + x] == 51) {
+		flag = 1;
+		do {
 			x = rand() % *width;
 			y = rand() % *height;
+			if (board[y * *width + x] - gameMode == 51) {
+				flag = 1;
+			}
+			else if (board[y * *width + x] - gameMode < 51 && board[y * *width + x] >= 51) {
+				flag = 2;
+			}
+			else if (board[y * *width + x] == 10) {
+				board[y * *width + x] = 51;
+				flag = 3;
+			}
+		} while (flag == 1);
+		if (flag == 2) {
+			board[y * *width + x] += 1;
 		}
-		board[y * *width + x] = 51;
 	}
 }
 
@@ -245,10 +256,10 @@ void printBoard(int board[], int lose, int *width, int *height, int gameMode) {
 			if (j == 0) {
 				cout << "🟩";
 			}
-			if (board[i * *width + j] == 10 || ((devBit != 1 && lose != 1) && board[i * *width + j] == 9)) {
+			if (board[i * *width + j] == 10 || ((devBit != 1 && lose != 1) && board[i * *width + j] >= 51 && board[i * *width + j] < 60)) {
 				cout << "⬜";
 			}
-			else if ((devBit == 1 || lose == 1) && board[i * *width + j] == 9 || (board[i * *width + j] == 19 && lose == 1)) {
+			else if ((devBit == 1 || lose == 1) && (board[i * *width + j] >= 51 && board[i * *width + j] < 60 || (board[i * *width + j] == 19 && lose == 1)) {
 				cout << "🟥";
 			}
 			else if (board[i * *width + j] == 0) {

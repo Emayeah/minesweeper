@@ -65,6 +65,7 @@ int main() {
 	 * also the actual logic and handling raw code is fully gonna be made by me
 	 */
 	int firstInput = 1;
+	int win2 = 0;
 	int win, x = 0, y = 0;
 	int adjacent;
 	int *board = new int[width * height];						// straight into the heap and not the stack, i need to free the heap to change the size (gemini)
@@ -76,7 +77,7 @@ int main() {
 	int sigExit;
 	int blockOutput = 0;
 	//wordArt();
-	std::future<void> idkman = std::async(std::launch::async, wordArt, board, &width, &height, &gameMode); // gemini aided
+	std::future<void> idkman = std::async(std::launch::async, wordArt, board, &width, &height, &mineCount, &gameMode, &win2); // gemini aided
 	//std::thread printTitle(wordArt);							// gemini
 	//printTitle.detach();										// gemini
 	do {
@@ -90,10 +91,12 @@ int main() {
 		consoleMutex.unlock();									// gemini aided
 		sigExit = 0;
 		win = userInput(&x, &y, board, blockOutput, 0, &width, &height, &mineCount, &gameMode); // win == 1 that means you lose because it's the game that wins against the player lol
+		blockPrintMutex.unlock();
 		if (win == 6) {
+			win2 = 6;
 			blockOutput = 1;
 			blockPrintMutex.lock();
-			printSettingsMenu(0, &width, &height, &mineCount);
+			printSettingsMenu(0, &width, &height, &mineCount, &gameMode);
 			win = userInput(&x, &y, board, blockOutput, 1, &width, &height, &mineCount, &gameMode);
 			if (win == 6) {
 				arrayChangeMutex.lock();						// done by me! learned something new
@@ -111,12 +114,12 @@ int main() {
 			}
 			else {
 				blockOutput = 0;
-				flushBuffer(board, &width, &height, &gameMode);
+				flushBuffer(board, &width, &height, &mineCount, &gameMode, &win2);
 			}
 		}
 		else if (win == 5) {
 			initBoard(board, width, height, mineCount, gameMode);
-			flushBuffer(board, &width, &height, &gameMode);
+			flushBuffer(board, &width, &height, &mineCount, &gameMode, &win2);
 			blockOutput = 0;
 			firstInput = 1;
 		}
@@ -168,6 +171,7 @@ int main() {
 		if (flag == 0) {
 			blockPrintMutex.lock();
 			printBoard(board, 0, width, height, gameMode);
+			win2 = 0;
 			consoleMutex.lock();								// gemini aided
 			cout << "\e[H";
 			cout << "\e[" << termHeight / 2 << "B";
@@ -178,11 +182,11 @@ int main() {
 			cout << " Click titlebar for new game or ^C to exit!";
 			blockOutput = 1;
 			consoleMutex.unlock();								// gemini aided
-			blockPrintMutex.unlock();
 		}
 		else if (win == 1) {
 			blockPrintMutex.lock();
 			printBoard(board, 1, width, height, gameMode);
+			win2 = 1;
 			consoleMutex.lock();								// gemini aided
 			cout << "\e[H";
 			cout << "\e[" << termHeight / 2 <<"B";
@@ -193,7 +197,6 @@ int main() {
 			cout << " Click titlebar for new game or ^C to exit!";
 			blockOutput = 1;
 			consoleMutex.unlock(); // gemini
-			blockPrintMutex.unlock();
 		}
 	} while (sigExit == 0);
 	cleanup(height);
@@ -344,7 +347,7 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 							cout << "\e[38;5;196m";
 							break;
 						case 4:
-							cout << "\e[38;5;19m";
+							cout << "\e[38;5;21m";
 							break;
 						case 5:
 							cout << "\e[38;5;88m";
@@ -374,7 +377,7 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 							cout << "\e[48;5;196m";				// red
 							break;
 						case 4:
-							cout << "\e[48;5;19m";				// blue, deep blue on the purplish side
+							cout << "\e[48;5;21m";				// blue, deep blue on the purplish side
 							break;
 						case 5:
 							cout << "\e[48;5;88m";				// maroon red
@@ -535,41 +538,54 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 						mouseValx = getMouseVal(&pressed);
 						mouseValx--;
 						mouseValy = getMouseVal(&pressed);
-						if (termHeight % 2 != 0) {
-							mouseValy--;
-						}
+						mouseValy--; // for some reason the menu settings does not want to play ball unless i do this jankery
 						if (openSettings == 1) {
-							if (mouseValy - (termHeight / 2 - 13 / 2) == 2)  {
+							if (mouseValy - (termHeight / 2 - 15 / 2) == 2)  {
 								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
-									printSettingsMenu(1, width, height, mineCount);
+									printSettingsMenu(1, width, height, mineCount, gameMode);
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 16 && mouseValx - (termWidth / 2 - 36 / 2) < 19) {
-									printSettingsMenu(2, width, height, mineCount);
+									printSettingsMenu(2, width, height, mineCount, gameMode);
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
-									printSettingsMenu(3, width, height, mineCount);
+									printSettingsMenu(3, width, height, mineCount, gameMode);
 								}
 								else {
-									printSettingsMenu(0, width, height, mineCount);
+									printSettingsMenu(0, width, height, mineCount, gameMode);
 								}
 							}
-							else if (mouseValy - (termHeight / 2 - 13 / 2) == 10) {
+							else if (mouseValy - (termHeight / 2 - 15 / 2) == 10) {
 								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
-									printSettingsMenu(7, width, height, mineCount);
+									printSettingsMenu(7, width, height, mineCount, gameMode);
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 16 && mouseValx - (termWidth / 2 - 36 / 2) < 19) {
-									printSettingsMenu(8, width, height, mineCount);
+									printSettingsMenu(8, width, height, mineCount, gameMode);
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
-									printSettingsMenu(9, width, height, mineCount);
+									printSettingsMenu(9, width, height, mineCount, gameMode);
 								}
 								else {
-									printSettingsMenu(0, width, height, mineCount);
+									printSettingsMenu(0, width, height, mineCount, gameMode);
+								}						
+							}
+							else if (mouseValy - (termHeight / 2 - 15 / 2) == 13) {
+								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
+									printSettingsMenu(21, width, height, mineCount, gameMode);
+								}
+								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
+									printSettingsMenu(22, width, height, mineCount, gameMode);
+								}
+								else {
+									printSettingsMenu(0, width, height, mineCount, gameMode);
 								}						
 							}
 							else {
-								printSettingsMenu(0, width, height, mineCount);
+								printSettingsMenu(0, width, height, mineCount, gameMode);
 							}
+						}
+						mouseValy++; // i mean i guess it does the trick
+						if (termHeight % 2 != 0) {
+							mouseValy--;
 						}
 						mouseValy -= termHeight / 2 - *height / 2;
 						mouseValx -= (termWidth / 2) - *width;
@@ -586,9 +602,6 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 						mouseValx = getMouseVal(&pressed);
 						mouseValx--;
 						mouseValy = getMouseVal(&pressed);
-						if (termHeight % 2 != 0) {
-							mouseValy--;
-						}
 						if ((mouseValy == 0 || mouseValy == 1) && pressed == 1) {
 							if (mouseValx >= 9) {
 								return 5;
@@ -597,74 +610,102 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 								return 6;
 							}
 						}
+						mouseValy--;
 						if (openSettings == 1) {
-							if (mouseValy - (termHeight / 2 - 13 / 2) == 2)  {
+							if (mouseValy - (termHeight / 2 - 15 / 2) == 2)  {
 								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
 									if (pressed == 0) {
-										printSettingsMenu(11, width, height, mineCount);
+										printSettingsMenu(11, width, height, mineCount, gameMode);
 									}
 									else {
 										*width += 1;
-										printSettingsMenu(1, width, height, mineCount);
+										printSettingsMenu(1, width, height, mineCount, gameMode);
 									}
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 16 && mouseValx - (termWidth / 2 - 36 / 2) < 19) {
 									if (pressed == 0) {
-										printSettingsMenu(12, width, height, mineCount);
+										printSettingsMenu(12, width, height, mineCount, gameMode);
 									}
 									else {
 										*height += 1;
-										printSettingsMenu(2, width, height, mineCount);
+										printSettingsMenu(2, width, height, mineCount, gameMode);
 									}
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
 									if (pressed == 0) {
-										printSettingsMenu(13, width, height, mineCount);
+										printSettingsMenu(13, width, height, mineCount, gameMode);
 									}
 									else {
 										*mineCount += 1;
-										printSettingsMenu(3, width, height, mineCount);
+										printSettingsMenu(3, width, height, mineCount, gameMode);
 									}
 								}
 								else {
-									printSettingsMenu(0, width, height, mineCount);
+									printSettingsMenu(0, width, height, mineCount, gameMode);
 								}
 							}
-							else if (mouseValy - (termHeight / 2 - 13 / 2) == 10) {
+							else if (mouseValy - (termHeight / 2 - 15 / 2) == 10) {
 								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
 									if (pressed == 0) {
-										printSettingsMenu(17, width, height, mineCount);
+										printSettingsMenu(17, width, height, mineCount, gameMode);
 									}
 									else {
 										*width -= 1;
-										printSettingsMenu(7, width, height, mineCount);
+										printSettingsMenu(7, width, height, mineCount, gameMode);
 									}
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 16 && mouseValx - (termWidth / 2 - 36 / 2) < 19) {
 									if (pressed == 0) {
-										printSettingsMenu(18, width, height, mineCount);
+										printSettingsMenu(18, width, height, mineCount, gameMode);
 									}
 									else {
 										*height -= 1;
-										printSettingsMenu(8, width, height, mineCount);
+										printSettingsMenu(8, width, height, mineCount, gameMode);
 									}
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
 									if (pressed == 0) {
-										printSettingsMenu(19, width, height, mineCount);
+										printSettingsMenu(19, width, height, mineCount, gameMode);
 									}
 									else {
 										*mineCount -= 1;
-										printSettingsMenu(9, width, height, mineCount);
+										printSettingsMenu(9, width, height, mineCount, gameMode);
 									}
 								}
 								else {
-									printSettingsMenu(0, width, height, mineCount);
+									printSettingsMenu(0, width, height, mineCount, gameMode);
+								}						
+							}
+							else if (mouseValy - (termHeight / 2 - 15 / 2) == 13) {
+								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
+									if (pressed == 0) {
+										printSettingsMenu(31, width, height, mineCount, gameMode);
+									}
+									else {
+										*gameMode -= 1;
+										printSettingsMenu(21, width, height, mineCount, gameMode);
+									}
+								}
+								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
+									if (pressed == 0) {
+										printSettingsMenu(32, width, height, mineCount, gameMode);
+									}
+									else {
+										*gameMode += 1;
+										printSettingsMenu(22, width, height, mineCount, gameMode);
+									}
+								}
+								else {
+									printSettingsMenu(0, width, height, mineCount, gameMode);
 								}						
 							}
 							else {
-								printSettingsMenu(0, width, height, mineCount);
+								printSettingsMenu(0, width, height, mineCount, gameMode);
 							}
+						}
+						mouseValy++;
+						if (termHeight % 2 != 0) {
+							mouseValy--;
 						}
 						mouseValx -= (termWidth / 2) - *width;
 						mouseValx /= 2;		// emojis take 2 spaces horizontally
@@ -910,7 +951,7 @@ int clickLogic(int* x, int* y, int board[], int flag, int width, int height, int
 	}
 	return 3;
 }
-void wordArt(int board[], int *width, int *height, int *gameMode) {
+void wordArt(int board[], int *width, int *height, int *mineCount, int *gameMode, int *win) {
 	char word[] = "minesweeper";
 	int Art = 0, termWidth, termHeight, flip = 0, oldWidth = 0, oldHeight = 0;
 	do {
@@ -922,17 +963,13 @@ void wordArt(int board[], int *width, int *height, int *gameMode) {
 		}
 		struct winsize w;
 		ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-		// The ioctl call returns 0 on success, -1 on error	
 		termWidth = w.ws_col;
 		termHeight = w.ws_row;
 		if (termWidth != oldWidth || termHeight != oldHeight) {
 			oldWidth = termWidth;
 			oldHeight = termHeight;
-			flushBuffer(board, width, height, gameMode);
+			flushBuffer(board, width, height, mineCount, gameMode, win);
 		}
-		/*
-		 * just wanted to get the terminal size to adjust the logic
-		 */
 		consoleMutex.lock();
 		cout << "\e[H";
 		cout << "\e[48;5;15m";
@@ -969,18 +1006,21 @@ void wordArt(int board[], int *width, int *height, int *gameMode) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(125));	// gemini aided
 	} while (true);
 }
-void flushBuffer(int board[], int *width, int *height, int *gameMode) {
+void flushBuffer(int board[], int *width, int *height, int *mineCount, int *gameMode, int *win) {
 	struct winsize w;
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 	int termWidth = w.ws_col;
 	int termHeight = w.ws_row;
 	arrayChangeMutex.lock();
+	consoleMutex.lock();
+	cout << "\e[H";
+	cout << "\e[48;5;15m";
+	cout << "\e[38;5;16m";
+	cout << " Settings";
+	cout << "\e[0;0m";
+	consoleMutex.unlock();
 	if (blockPrintMutex.try_lock()) {							// gemini aided
 		consoleMutex.lock();
-		cout << "\e[H";
-		cout << "\e[48;5;15m";
-		cout << "\e[38;5;16m";
-		cout << " Settings";
 		cout << "\e[0;0m";
 		cout << "\e[2;0H" << flush;
 		for (int i = 1; i < termHeight - 2; i++) {
@@ -993,23 +1033,70 @@ void flushBuffer(int board[], int *width, int *height, int *gameMode) {
 		printBoard(board, 0, *width, *height, *gameMode);
 		blockPrintMutex.unlock();
 	}
+	else {
+		if (*win == 6 || *win == 1 || *win == 0) {
+			consoleMutex.lock();
+			cout << "\e[0;0m";
+			cout << "\e[2;0H" << flush;
+			for (int i = 1; i < termHeight - 2; i++) {
+				for (int j = 0; j < termWidth; j++) {
+					cout << " ";
+				}
+				cout << "\r\n";
+			}
+			consoleMutex.unlock();
+			/*
+			 * it is not safe to print the board while the menu settings is open: it tries to read out of bounds (if the settings have changed).
+			 * the heap region pointed by board hasn't yet been resized
+			 * instead of going for an extremely convoluted (and dumb) workaround, i just disabled the printing if the menu pane is open
+			 */
+			if (*win != 6) {
+				printBoard(board, *win, *width, *height, *gameMode);
+			}
+		}
+		consoleMutex.lock();
+		if (*win == 0) {
+			cout << "\e[H";
+			cout << "\e[" << termHeight / 2 << "B";
+			cout << "\e[" << termWidth / 2 - 4 <<"C";
+			cout << " YOU WIN!\r" << endl;
+			cout << "\e[B";
+			cout << "\r\e[" << termWidth / 2 - 22 << "C";
+			cout << " Click titlebar for new game or ^C to exit!";
+		}
+		else if (*win == 1) {
+			cout << "\e[H";
+			cout << "\e[" << termHeight / 2 <<"B";
+			cout << "\e[" << termWidth / 2 - 12 <<"C";
+			cout << " YOU LOSE!!!!!!!!!!!!!!!!\r" << endl;
+			cout << "\e[B";
+			cout << "\r\e[" << termWidth / 2 - 22 << "C";
+			cout << " Click titlebar for new game or ^C to exit!";
+		}
+		else if (*win == 6) {
+			consoleMutex.unlock();
+			printSettingsMenu(0, width, height, mineCount, gameMode);
+			consoleMutex.lock();
+		}
+	}
+	consoleMutex.unlock();
 	arrayChangeMutex.unlock();
 }
-void printSettingsMenu(int update, int *width, int *height, int *mineCount) {
+void printSettingsMenu(int update, int *width, int *height, int *mineCount, int *gameMode) {
 	struct winsize w;
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 	int termWidth = w.ws_col;
 	int termHeight = w.ws_row;
-	// menu wide 36 and tall 13
+	// menu wide 36 and tall 15
 	consoleMutex.lock();
 	cout << "\e[H";
 	cout << "\e[48;5;15m";
 	cout << "\e[38;5;16m";
 	cout << " < Back   ";
 	cout << "\e[H";
-	cout << "\e[" << termHeight / 2 - 13 / 2 << "B";
+	cout << "\e[" << termHeight / 2 - 15 / 2 << "B";
 	cout << "\e[48;5;233m";
-	for (int i = 0; i < 12; i++) {
+	for (int i = 0; i < 14; i++) {
 		if (i == 1) {
 			cout << "\e[" << termWidth / 2 - 36 / 2  << "C";
 			for (int k = 0; k < 6; k++) {
@@ -1047,18 +1134,18 @@ void printSettingsMenu(int update, int *width, int *height, int *mineCount) {
 	int tempNum;
 	int divCount;
 	cout << "\e[H";
-	cout << "\e[" << termHeight / 2 - 13 / 2 + 1 << "B";
+	cout << "\e[" << termHeight / 2 - 15 / 2 + 1 << "B";
 	cout << "\e[38;5;16m";
 	cout << "\e[48;5;15m";
 	cout << "\r\e[B";
-	for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < 4; i++) {
 		cout << "\e[" << termWidth / 2 - 36 / 2 + 1 << "C";
 		for (int j = 0; j < 3; j++) {
 			if (update != 0) {
 				if (update < 10 && update == (j + 3 * i) + 1) {
 					cout << "\e[48;5;82m";
 				}
-				else if (update > 10 && (update - 10) == (j + 3 * i) + 1) {
+				else if (update > 10 && update < 20 && (update - 10) == (j + 3 * i) + 1) {
 					cout << "\e[48;5;28m";
 				}
 			}
@@ -1149,6 +1236,50 @@ void printSettingsMenu(int update, int *width, int *height, int *mineCount) {
 				cout << " - ";
 			}
 			cout << "\e[48;5;15m";
+		}
+		if (i == 3) {
+			cout << "\e[A";
+			cout << "\e[6C";
+			if (update == 21) {
+				cout << "\e[48;5;82m";
+			}
+			else if (update == 31) {
+				cout << "\e[48;5;28m";
+			}
+			else {
+				cout << "\e[38;5;16m";
+				cout << "\e[48;5;15m";
+			}
+			cout << " - ";
+			cout << "\e[3C";
+			cout << "\e[38;5;16m";
+			cout << "\e[48;5;15m";
+			if (*gameMode < 0) {
+				*gameMode = 0;
+			}
+			else if (*gameMode > 2) {
+				*gameMode = 2;
+			}
+			cout << " " << *gameMode + 1 << " mine";
+			if (*gameMode != 0) {
+				cout << "s";
+			}
+			else {
+				cout << " ";
+			}
+			cout << " ";
+			if (update == 22) {
+				cout << "\e[48;5;82m";
+			}
+			else if (update == 32) {
+				cout << "\e[48;5;28m";
+			}
+			else {
+				cout << "\e[38;5;16m";
+				cout << "\e[48;5;15m";
+			}
+			cout << "\e[3C";
+			cout << " + ";
 		}
 		cout << "\r\e[4B";
 	}

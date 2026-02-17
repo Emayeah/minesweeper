@@ -1,5 +1,5 @@
-void initBoard(int[], int*, int*, int*);
-void printBoard(int[], int, int*, int*);
+void initBoard(int[], int*, int*, int*, int);
+void printBoard(int[], int, int*, int*, int);
 int userInput(int*, int*, int[], int, int, int*, int*, int*);
 int calcAdjacent(int, int, int[], int, int*, int*);
 void expandBoard(int, int, int[], int*, int*);

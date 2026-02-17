@@ -20,10 +20,18 @@ using namespace std;
  * 19 = mine with flag
  * 20 = covered with flag
  * 21 - 28 = selection number
- * 30 = uncovered selection
+ * 30 = uncovered selection		// black square
  * 39 = selected mine with flag
  * 40 = selected tile with flag
  * 50 = clicked selected (orange), good ux
+ * 52 = mine with double flag	// i'll have to use 1f, 2f and 3f for those, there aren't emojis for double and triple
+ * 53 = mine with triple flag	// i'm thinking of red text, a gray background on selected unclicked, wet gray shirt on clicked and white-ish on unselected
+ * 54 = tile with double flag	// aka wrong flag
+ * 55 = tile with triple flag	// the codes are suboptimal, either i modify them early or continue to dig my own grave. i'll probably edit them in a few commits, just paving the ground for more modes
+ * 56 = selected mine with double flag
+ * 57 = selected mine with triple flag
+ * 58 = selected tile with double flag	// aka wrong flag
+ * 59 = selected tile with triple flag
  */
 std::mutex consoleMutex;
 std::mutex arrayChangeMutex;
@@ -32,6 +40,7 @@ const int devBit = 0;
 const int debugBit = 0;
 
 int main() {
+	int gameMode = 0; // 0 for monoflag, 1 for biflag and 2 for triflag
 	int width = 20, height = 20, mineCount = 20;
 	cout << "\e[?1049h";		// alternate screen buffer
 	cout << "\e[?1003h\e[?1006h";	// set any-event to high and sgr to high for the mouse button release
@@ -53,7 +62,7 @@ int main() {
 	int win, x = 0, y = 0;
 	int adjacent;
 	int *board = new int[width * height];						// straight into the heap and not the stack, i need to free the heap to change the size (gemini)
-	initBoard(board, &width, &height, &mineCount);
+	initBoard(board, &width, &height, &mineCount, gameMode);
 //	for (int i = width * height - (width * 2); i < width * height; i++) {
 //		board[i] = 20;
 //	}
@@ -86,7 +95,7 @@ int main() {
 				//width += 10;
 				//height += 10;
 				board = new int[width * height];
-				initBoard(board, &width, &height, &mineCount);
+				initBoard(board, &width, &height, &mineCount, gameMode);
 				arrayChangeMutex.unlock();
 				firstInput = 1;
 			}
@@ -100,7 +109,7 @@ int main() {
 			}
 		}
 		else if (win == 5) {
-			initBoard(board, &width, &height, &mineCount);
+			initBoard(board, &width, &height, &mineCount, gameMode);
 			flushBuffer(board, &width, &height);
 			blockOutput = 0;
 			firstInput = 1;
@@ -149,7 +158,7 @@ int main() {
 		termHeight = w.ws_row;									// gemini aided	
 		if (flag == 0) {
 			blockPrintMutex.lock();
-			printBoard(board, 0, &width, &height);
+			printBoard(board, 0, &width, &height, gameMode);
 			consoleMutex.lock();								// gemini aided
 			cout << "\e[H";
 			cout << "\e[" << termHeight / 2 << "B";
@@ -164,7 +173,7 @@ int main() {
 		}
 		else if (win == 1) {
 			blockPrintMutex.lock();
-			printBoard(board, 1, &width, &height);
+			printBoard(board, 1, &width, &height, gameMode);
 			consoleMutex.lock();								// gemini aided
 			cout << "\e[H";
 			cout << "\e[" << termHeight / 2 <<"B";
@@ -185,7 +194,7 @@ int main() {
 	exit(EXIT_SUCCESS);
 }
 
-void initBoard(int board[], int *width, int *height, int *mineCount) {
+void initBoard(int board[], int *width, int *height, int *mineCount, int gameMode) {
 	int x, y;
 	for (int i = 0; i < *height; i++) {
 		for (int j = 0; j < *width; j++) {
@@ -204,7 +213,7 @@ void initBoard(int board[], int *width, int *height, int *mineCount) {
 	}
 }
 
-void printBoard(int board[], int lose, int *width, int *height) {
+void printBoard(int board[], int lose, int *width, int *height, int gameMode) {
 	int termWidth;
 	int termHeight;
 	struct winsize w;											// gemini
@@ -243,12 +252,31 @@ void printBoard(int board[], int lose, int *width, int *height) {
 			else if (board[i * *width + j] == 0) {
 				cout << "  ";
 			}
-			else if (board[i * *width + j] == 20 || board[i * *width + j] == 19) {
-				if (lose != 1) {
-					cout << "🚩";
+			else if (board[i * *width + j] == 20 || board[i * *width + j] == 19 || board[i * *width + j] == 52 || board[i * *width + j] == 53 || board[i * *width + j] == 54 || board[i * *width + j] == 55) { // basically (non clicked / hovered) flags
+				if (gameMode == 0) {
+					if (lose != 1) {
+						cout << "🚩";
+					}
+					else {
+						cout << "🏳️";
+					}
 				}
 				else {
-					cout << "🏳️";
+					if (lose != 1) {
+						cout << "\e[38;5;250m";
+					}
+					else {
+						cout << "\e[38;5;52";
+					}
+					if (board[i * *width + j] == 20) {
+						cout << "";
+					}
+					else if (board[i * *width + j] == 52) {
+						cout << "";
+					}
+					else if (board[i * *width + j] == 53) {
+						cout << "";
+					}
 				}
 			}
 			else if (board[i * *width + j] == 11) {
@@ -321,6 +349,9 @@ void printBoard(int board[], int lose, int *width, int *height) {
 						case 8:
 							cout << "\e[48;5;245m";				// gray
 							break;
+						/*
+						 * i'll need to add color codes for multiflag :)
+						 */
 					}
 
 				}
@@ -349,6 +380,7 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 	int mouseValx;
 	int mouseValy;
 	int pressed = 1;
+	int gameMode = 0;												// WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING; TEMPORARY!!!!
 	int logicTemp;
 	int termWidth;
 	int termHeight;
@@ -363,23 +395,23 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 			if ((board[*y * *width + *x] > 8 || board[*y * *width + *x] < 1) && board[*y * *width + *x] != 0 && board[*y * *width + *x] != 19 && board[*y * *width + *x] != 20) {
 				if (pressed == 1) {
 					board[*y * *width + *x] = 11;
-					printBoard(board, 0, width, height);
+					printBoard(board, 0, width, height, gameMode);
 					board[*y * *width + *x] = temp;
 				}
 				else if (pressed == 0) {
 					board[*y * *width + *x] = 50;
-					printBoard(board, 0, width, height);
+					printBoard(board, 0, width, height, gameMode);
 					board[*y * *width + *x] = temp;
 					pressed = 1;
 				}
 			}
 			else if (board[*y * *width + *x] <= 8 && board[*y * *width + *x] >= 1 || (board[*y * *width + *x] == 19 || board[*y * *width + *x] == 20)) {
 				board[*y * *width + *x] += 20;
-				printBoard(board, 0, width, height);
+				printBoard(board, 0, width, height, gameMode);
 			}
 			else if (board[*y * *width + *x] == 0) {
 				board[*y * *width + *x] = 30;
-				printBoard(board, 0, width, height);
+				printBoard(board, 0, width, height, gameMode);
 			}
 		}
 		cin >> input;
@@ -726,7 +758,7 @@ void expandBoard(int x, int y, int board[], int *width, int *height) {
 			}
 		}
 		if (debugBit == 1) {
-			printBoard(board, 0, width, height);
+			printBoard(board, 0, width, height, 0); // WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING TEMPORARY
 			cin >> asdf;
 		}
 		count++;
@@ -890,7 +922,7 @@ void flushBuffer(int board[], int *width, int *height) {
 			cout << "\r\n";
 		}
 		consoleMutex.unlock();
-		printBoard(board, 0, width, height);
+		printBoard(board, 0, width, height, 0); // WARNING WARNING WARNINGWARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING TEMPORARY 
 		blockPrintMutex.unlock();
 	}
 	arrayChangeMutex.unlock();

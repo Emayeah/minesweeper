@@ -47,7 +47,7 @@ const int showInfoBit = 0;
 
 int main() {
 	int gameMode = 1; // 0 for monoflag, 1 for biflag and 2 for triflag
-	int width = 20, height = 20, mineCount = 20;
+	int width = 20, height = 20, mineCount = 30;
 	cout << "\e[?1049h";		// alternate screen buffer
 	cout << "\e[?1003h\e[?1006h";	// set any-event to high and sgr to high for the mouse button release
 	cout << "\e[?25l";			// set cursor to low
@@ -126,8 +126,8 @@ int main() {
 			do {
 				tempx = rand() % width;
 				tempy = rand() % height;
-			} while (board[tempy * width + tempx] == 51 || (tempx == x && tempy == y)); // TEMPORARY
-			board[tempy * width + tempx] = 51;
+			} while (board[tempy * width + tempx] / 10 >= 5 && board[tempy * width + tempx] / 10 <= 7 || (tempx == x && tempy == y));
+			board[tempy * width + tempx] = board[y * width + x];
 			board[y * width + x] = 10;
 			win = 0;
 			firstInput = 0;
@@ -219,21 +219,13 @@ void initBoard(int board[], int width, int height, int mineCount, int gameMode) 
 			if (board[y * width + x] - (gameMode * 10) == 51) {
 				flag = 1;
 			}
-			else if (board[y * width + x] - (gameMode * 10) < 51 && board[y * width + x] >= 51) {
-				/*
-				 * for multiflag; if 51 (1 bomb) but 3 max bombs (gameMode 2), then 51 - 2 = 49, 51 >= 51
-				 * but if 51 (1 bomb) but 1 max (gM 0), 51 - 0 = 51 (51 is not less than 51)
-				 */
-				flag = 2;
-			}
 			else if (board[y * width + x] == 10) {
 				board[y * width + x] = 51;
-				flag = 3;
+				flag = rand() % (gameMode + 1);
+				board[y * width + x] += flag * 10;
+				flag = 0;
 			}
 		} while (flag == 1);
-		if (flag == 2) {
-			board[y * width + x] += 10;
-		}
 	}
 }
 
@@ -252,7 +244,6 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 //	cout << "\e[" << (termWidth / 2) - (11 / 2) /* 11 is the length of the word "minesweeper" */ << "C"; 
 //	cout << "\e[1m\e[38;5;16mMinesweeper";
 //	cout << "\e[0;0m\e[22m\r" << endl;
-	int offset10;
 	consoleMutex.lock(); // gemini
 	cout << "\e[H";
 	cout << "\e[" << ((termHeight - 1) / 2) - (height / 2) - 1 << "B";		// move to the center
@@ -271,8 +262,22 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 			if (board[i * width + j] == 10 || ((devBit != 1 && lose != 1) && board[i * width + j] < 100 && board[i * width + j] % 10 == 1)) {
 				cout << "⬜";
 			}
-			else if ((devBit == 1 || lose == 1) && board[i * width + j] < 100 && (board[i * width + j] % 10 == 1 && (board[i * width + j] / 10 >= 5 && board[i * width + j] / 10 <= 7) || (board[i * width + j] / 10 >= 5 && board[i * width + j] / 10 <= 7) && lose == 1)) {
-				cout << "🟥";
+			else if ((devBit == 1 || lose == 1) && board[i * width + j] < 100 && (board[i * width + j] % 10 == 1 && (board[i * width + j] / 10 >= 5 && board[i * width + j] / 10 <= 7 || lose == 1))) {
+				if (gameMode == 0) {
+					cout << "🟥";
+				}
+				else {
+					if (board[i * width + j] / 10 == 5) {
+						cout << "\e[48;5;196m";
+					}
+					else if (board[i * width + j] / 10 == 6) {
+						cout << "\e[48;5;124m";
+					}
+					else if (board[i * width + j] / 10 == 7) {
+						cout << "\e[48;5;88m";
+					}
+					cout << "  " << "\e[0;0m";
+				}
 				if (showInfoBit == 1) {
 					cout << board[i * width + j];
 				}
@@ -280,7 +285,7 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 			else if (board[i * width + j] == 0) {
 				cout << "  ";
 			}
-			else if (board[i * width + j] % 10 >= 2 && board[i * width + j] < 100 && board[i * width + j] % 10 <= 4) { // basically all of the (non clicked / hovered) flags
+			else if (board[i * width + j] % 10 >= 2 && board[i * width + j] < 100 && board[i * width + j] % 10 <= 4 && board[i * width + j] / 10 != 8) { // basically all of the (non clicked / hovered) flags
 				if (gameMode == 0) {
 					if (lose != 1) {
 						cout << "🚩";
@@ -290,14 +295,16 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 					}
 				}
 				else {
-					if (lose != 1) {
+					if (lose == 1) {
+						cout << "\e[48;5;88m";
 						cout << "\e[38;5;250m";
 					}
 					else {
-						cout << "\e[38;5;52";
+						cout << "\e[48;5;250m";
+						cout << "\e[38;5;1m";
 					}
-					offset10 = 0;
 					cout << board[i * width + j] % 10 - 1 << "F";
+					cout << "\e[0;0m";
 					if (showInfoBit == 1) {
 						cout << board[i * width + j];
 					}
@@ -315,9 +322,9 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 					cout << "🏁";
 				}
 				else {
-					cout << "\e[38;5;242m";
-					offset10 = 0;
+					cout << "\e[48;5;242m";
 					cout << board[i * width + j] % 10 - 1 << "F";
+					cout << "\e[0;0m";
 				}
 			}
 			else if (board[i * width + j] == 50) {
@@ -436,7 +443,7 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 				board[*y * *width + *x] = 30;
 				printBoard(board, 0, *width, *height, *gameMode);
 			}
-			else if (board[*y * *width + *x] != 0 && board[*y * *width + *x] % 10 != 1) {
+			else {
 				if (pressed == 1) {
 					board[*y * *width + *x] = 20;
 					printBoard(board, 0, *width, *height, *gameMode);

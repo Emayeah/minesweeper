@@ -14,24 +14,23 @@ using namespace std;
 /*
  * 0 = uncovered (nothing)
  * 1 - 8 = uncovered (bomb nearby)
- * 9 = mine
  * 10 = covered
  * 11 = selection tile
- * 19 = mine with flag
- * 20 = covered with flag
- * 21 - 28 = selection number
  * 30 = uncovered selection		// black square
- * 39 = selected mine with flag
- * 40 = selected tile with flag
  * 50 = clicked selected (orange), good ux
+ * 51 = mine with single flag
  * 52 = mine with double flag	// i'll have to use 1f, 2f and 3f for those, there aren't emojis for double and triple
  * 53 = mine with triple flag	// i'm thinking of red text, a gray background on selected unclicked, wet gray shirt on clicked and white-ish on unselected
- * 54 = tile with double flag	// aka wrong flag
- * 55 = tile with triple flag	// the codes are suboptimal, either i modify them early or continue to dig my own grave. i'll probably edit them in a few commits, just paving the ground for more modes
- * 56 = selected mine with double flag
- * 57 = selected mine with triple flag
- * 58 = selected tile with double flag	// aka wrong flag
- * 59 = selected tile with triple flag
+ * 61 = tile with single flag	// an int has 4 billion numbers, there's no space constraint *cough cough* unlike *cough* ipv4 *cough*, the space left will allow for a 4 flag mode or something else
+ * 62 = tile with double flag
+ * 63 = tile with triple flag
+ * 71 = selected mine with single flag
+ * 72 = selected mine with double flag
+ * 73 = selected mine with triple flag
+ * 81 = selected tile with single flag
+ * 82 = selected tile with double flag	// aka wrong flag
+ * 83 = selected tile with triple flag	// why is there even a code for this???
+ * 91 - 118 = selection number
  */
 std::mutex consoleMutex;
 std::mutex arrayChangeMutex;

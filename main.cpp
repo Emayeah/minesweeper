@@ -13,24 +13,27 @@
 using namespace std;
 /*
  * 0 = uncovered (nothing)
- * 1 - 8 = uncovered (bomb nearby)
- * 10 = covered
- * 11 = selection tile
- * 30 = uncovered selection		// black square
+ * 1 - 24 = uncovered (bomb nearby)
+ * 40 = covered
+ * 41 = selection tile
+ * 42 = uncovered selection		// black square
  * 50 = clicked selected (orange), good ux
- * 51 = mine with single flag
- * 52 = mine with double flag	// i'll have to use 1f, 2f and 3f for those, there aren't emojis for double and triple
- * 53 = mine with triple flag	// i'm thinking of red text, a gray background on selected unclicked, wet gray shirt on clicked and white-ish on unselected
- * 61 = tile with single flag	// an int has 4 billion numbers, there's no space constraint *cough cough* unlike *cough* ipv4 *cough*, the space left will allow for a 4 flag mode or something else
- * 62 = tile with double flag
- * 63 = tile with triple flag
- * 71 = selected mine with single flag
- * 72 = selected mine with double flag
- * 73 = selected mine with triple flag
- * 81 = selected tile with single flag
- * 82 = selected tile with double flag	// aka wrong flag
- * 83 = selected tile with triple flag	// why is there even a code for this???
- * 91 - 118 = selection number
+ * 51 = single mine
+ * 52 = double mine
+ * 53 = triple mine
+ * 61 = mine with single flag
+ * 62 = mine with double flag	// i'll have to use 1f, 2f and 3f for those, there aren't emojis for double and triple
+ * 63 = mine with triple flag	// i'm thinking of red text, a gray background on selected unclicked, wet gray shirt on clicked and white-ish on unselected
+ * 71 = tile with single flag	// an int has 4 billion numbers, there's no space constraint *cough cough* unlike *cough* ipv4 *cough*, the space left will allow for a 4 flag mode or something else
+ * 72 = tile with double flag
+ * 73 = tile with triple flag
+ * 81 = selected mine with single flag
+ * 82 = selected mine with double flag
+ * 83 = selected mine with triple flag
+ * 91 = selected tile with single flag
+ * 92 = selected tile with double flag	// aka wrong flag
+ * 93 = selected tile with triple flag	// why is there even a code for this???
+ * 101 - 128 = selection number
  */
 std::mutex consoleMutex;
 std::mutex arrayChangeMutex;
@@ -204,11 +207,11 @@ void initBoard(int board[], int *width, int *height, int *mineCount, int gameMod
 	for (int i = 0; i < *mineCount; i++) {						// this assumes that mineCount < *height * *width
 		x = rand() % *width;
 		y = rand() % *height;
-		while (board[y * *width + x] == 9) {
+		while (board[y * *width + x] == 51) {
 			x = rand() % *width;
 			y = rand() % *height;
 		}
-		board[y * *width + x] = 9;
+		board[y * *width + x] = 51;
 	}
 }
 

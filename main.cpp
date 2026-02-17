@@ -13,10 +13,9 @@
 using namespace std;
 /*
  * 0 = uncovered (nothing)
- * 1 - 24 = uncovered (bomb nearby)
- * 40 = covered
- * 41 = selection tile
- * 42 = uncovered selection		// black square
+ * 10 = covered
+ * 20 = selection tile
+ * 30 = uncovered selection		// black square
  * 50 = clicked selected (orange), good ux
  * 51 = single mine
  * 52 = double mine
@@ -33,7 +32,8 @@ using namespace std;
  * 91 = selected tile with single flag
  * 92 = selected tile with double flag	// aka wrong flag
  * 93 = selected tile with triple flag	// why is there even a code for this???
- * 101 - 128 = selection number
+ * 101 - 124 = selection number
+ * 201 - 224 = uncovered (bomb nearby)
  */
 std::mutex consoleMutex;
 std::mutex arrayChangeMutex;

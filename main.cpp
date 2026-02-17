@@ -96,11 +96,12 @@ int main() {
 			}
 			else {
 				blockOutput = 0;
-				clearBuffer(board, &width, &height);
+				flushBuffer(board, &width, &height);
 			}
 		}
-		if (win == 5) {
+		else if (win == 5) {
 			initBoard(board, &width, &height, &mineCount);
+			flushBuffer(board, &width, &height);
 			blockOutput = 0;
 			firstInput = 1;
 		}
@@ -822,7 +823,7 @@ void wordArt(int board[], int *width, int *height) {
 		if (termWidth != oldWidth || termHeight != oldHeight) {
 			oldWidth = termWidth;
 			oldHeight = termHeight;
-			clearBuffer(board, width, height);
+			flushBuffer(board, width, height);
 		}
 		/*
 		 * just wanted to get the terminal size to adjust the logic
@@ -863,7 +864,7 @@ void wordArt(int board[], int *width, int *height) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(125));	// gemini aided
 	} while (true);
 }
-void clearBuffer(int board[], int *width, int *height) {
+void flushBuffer(int board[], int *width, int *height) {
 	struct winsize w;
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 	int termWidth = w.ws_col;

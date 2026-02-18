@@ -68,7 +68,7 @@ int main() {
 	int win2 = 0;
 	int win, x = 0, y = 0;
 	int adjacent;
-	int *board = new int[width * height];						// straight into the heap and not the stack, i need to free the heap to change the size (gemini)
+	int *board = new int[width * height];						// straight into the heap and not the stack, i need to free the heap to change the size (gemini aided)
 	initBoard(board, width, height, mineCount, gameMode);
 //	for (int i = width * height - (width * 2); i < width * height; i++) {
 //		board[i] = 20;
@@ -300,11 +300,14 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 				 */
 				if (gameMode == 0) {
 					if (lose != 1) {
+						cout << "\e[48;5;255m";
 						cout << "🚩";
 					}
 					else {
+						cout << "\e[48;5;88m";
 						cout << "🏳️";
 					}
+					cout << "\e[0;0m";
 				}
 				else {
 					if (lose == 1) {
@@ -331,7 +334,9 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 			}
 			else if (board[i * width + j] / 10 == 8) {
 				if (gameMode == 0) {
-					cout << "🏁";
+					cout << "\e[48;5;220m";
+					cout << "🚩";
+					cout << "\e[0;0m";
 				}
 				else {
 					cout << "\e[48;5;242m";

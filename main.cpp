@@ -415,7 +415,11 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 					}
 					board[i * width + j] += 100;
 				}
-				cout << board[i * width + j] - 100 << " " << "\e[0;0m";
+				cout << board[i * width + j] - 100;
+				if (board[i * width + j] - 100 < 10) {
+					cout << " ";
+				}
+				cout << "\e[0;0m";
 //				cout << board[i * width + j] << " ";
 			}
 		}

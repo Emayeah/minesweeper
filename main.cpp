@@ -276,16 +276,20 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 					cout << "🟥";
 				}
 				else {
+					cout << "\e[38;5;255m";
 					if (board[i * width + j] / 10 == 5) {
 						cout << "\e[48;5;196m";
 					}
 					else if (board[i * width + j] / 10 == 6) {
-						cout << "\e[48;5;124m";
+						cout << "\e[48;5;160m";
 					}
 					else if (board[i * width + j] / 10 == 7) {
 						cout << "\e[48;5;88m";
 					}
-					cout << "  " << "\e[0;0m";
+					else {
+						cout << "\e[48;5;0m";
+					}
+					cout << board[i * width + j] / 10 - 4 << " " << "\e[0;0m";
 				}
 				if (showInfoBit == 1) {
 					cout << board[i * width + j];
@@ -825,13 +829,13 @@ int calcAdjacent(int x, int y, int board[], int mode, int width, int height) {
 						tempCount = (temp / 10 - 4);
 						count += tempCount;
 					}
-					else if (mode == 1 && temp == 0) {														// this is to check if there's a nearby blank square, used by expandBoard
+					else if (mode == 1 && temp == 0) {								// this is to check if there's a nearby blank square, used by expandBoard
 						return 1; // i know, i know, jacopini... va bene che compiler optimization tolgono le altre condizioni ma questo è più semplice da leggere
 					}
 					else if (mode == 2 && temp % 10 >= 2 && temp % 10 <= 5) {		// this is used to check if there's the right amount of flags where you're chording
 						count += board[(y + j) * width + (x + i)] % 10 - 1;
 					}
-					else if (mode == 3 && temp % 10 == 1) {														// if you're chording and there's an unflagged mine nearby then you lose
+					else if (mode == 3 && temp % 10 == 1) {							// if you're chording and there's an unflagged mine nearby then you lose
 						count++;
 					}
 				}
@@ -907,14 +911,17 @@ int getMouseVal(int* pressed) {
 int clickLogic(int* x, int* y, int board[], int flag, int width, int height, int gameMode) {
 	int validChord, temp, temp2;
 	temp2 = board[*y * width + *x];
-	if (flag == 0) {																	// are you trying to place a flag? flag = 0 -> no (either that is chording or normal clicking), flag = 1 -> flagging
-		if (temp2 != 0 && temp2 < 100) {												// are you trying to chord? if you're trying to chord then temp2 would be > 100
+	if (flag == 0) {														// are you trying to place a flag? flag = 0 -> no (either that is chording or normal clicking), flag = 1 -> flagging
+		if (temp2 != 0 && temp2 < 100) {									// are you trying to chord? if you're trying to chord then temp2 would be > 100
 			if (temp2 % 10 == 1 && temp2 / 10 >= 5 && temp2 / 10 <= 7) {			
-				return 1;																// whoops, you just clicked on a bomb!
+				return 1;													// whoops, you just clicked on a bomb!
 			}
-			return 0;																	// do nothing, you probably clicked on a flag
+			else if (temp2 % 10 >= 2 && temp % 10 <= 4) {
+				return 3;													// do nothing, you clicked on a flag
+			}
+			return 0;
 		}
-		else if (temp2 > 100 && temp2 <= 200) {											// chording!
+		else if (temp2 > 100 && temp2 <= 200) {								// chording!
 			validChord = calcAdjacent(*x, *y, board, 2, width, height);
 			if (validChord != 0) {
 				validChord += 100;
@@ -939,7 +946,7 @@ int clickLogic(int* x, int* y, int board[], int flag, int width, int height, int
 					}
 				}
 			}
-		return 0;
+			return 0;
 		}
 	}
 	else if (flag == 1 && temp2 < 100) {							// flagging
@@ -959,6 +966,9 @@ int clickLogic(int* x, int* y, int board[], int flag, int width, int height, int
 		else {
 			if (board[*y * width + *x] == 10) {
 				board[*y * width + *x] = 42;
+			}
+			else {
+				return 0;											// just in case
 			}
 		}
 		return 2;

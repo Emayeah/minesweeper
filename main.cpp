@@ -46,7 +46,7 @@ const int debugBit = 0;
 const int showInfoBit = 0;
 
 int main() {
-	int gameMode = 1; // 0 for monoflag, 1 for biflag and 2 for triflag
+	int gameMode = 0; // 0 for monoflag, 1 for biflag and 2 for triflag
 	int width = 20, height = 20, mineCount = 30;
 	cout << "\e[?1049h";		// alternate screen buffer
 	cout << "\e[?1003h\e[?1006h";	// set any-event to high and sgr to high for the mouse button release
@@ -139,7 +139,10 @@ int main() {
 			firstInput = 0;
 		}
 		if (win == 0) {
-			adjacent = calcAdjacent(x, y, board, 0, width, height); // 0 is a mode for calcAdjacent, 0 calcs nearby bombs, 1 calcs for nearby 0s for board expansion, there are other modes
+			adjacent = calcAdjacent(x, y, board, 0, width, height);
+			/*
+			 * 0 is a mode for calcAdjacent, 0 calcs nearby bombs, 1 calcs for nearby 0s for board expansion. there are other modes
+			 */
 			if (adjacent != 0) {
 				adjacent += 100;
 			}
@@ -265,7 +268,10 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 			if (board[i * width + j] == 10 || ((devBit != 1 && lose != 1) && board[i * width + j] < 100 && board[i * width + j] % 10 == 1)) {
 				cout << "⬜";
 			}
-			else if ((devBit == 1 || lose == 1) && board[i * width + j] < 100 && (board[i * width + j] % 10 == 1 && (board[i * width + j] / 10 >= 5 && board[i * width + j] / 10 <= 7 || lose == 1))) {
+			else if (
+					devBit == 1 || (board[i * width + j] / 10 >= 5 && board[i * width + j] / 10 <= 7 && lose == 1) &&
+					board[i * width + j] < 100 && board[i * width + j] % 10 == 1
+					) {
 				if (gameMode == 0) {
 					cout << "🟥";
 				}
@@ -288,7 +294,10 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 			else if (board[i * width + j] == 0) {
 				cout << "  ";
 			}
-			else if (board[i * width + j] % 10 >= 2 && board[i * width + j] < 100 && board[i * width + j] % 10 <= 4 && board[i * width + j] / 10 != 8) { // basically all of the (non clicked / hovered) flags
+			else if (board[i * width + j] % 10 >= 2 && board[i * width + j] < 100 && board[i * width + j] % 10 <= 4 && board[i * width + j] / 10 != 8) {
+				/*
+				 * basically all of the (non clicked / hovered) flags
+				 */
 				if (gameMode == 0) {
 					if (lose != 1) {
 						cout << "🚩";
@@ -366,7 +375,7 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 				}
 				else if (board[i * width + j] > 200) {
 					board[i * width + j] -= 200;
-					switch (board[i * width + j]) {			// print with colors, filled in colors for selected (background)
+					switch (board[i * width + j]) {				// print with colors, filled in colors for selected (background)
 						case 1:
 							cout << "\e[0;44m";					// light blue
 							break;
@@ -425,7 +434,7 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 	int logicTemp;
 	int termWidth;
 	int termHeight;
-	struct winsize w;													// disclosing the same lines as gemini is very redundant
+	struct winsize w;												// disclosing the same lines as gemini is very redundant
 	do {
 		ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);						// just know that the code that gets the terminal size is not done by me
 		// The ioctl call returns 0 on success, -1 on error			// but if i need to get the terminal size in a future project

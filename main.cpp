@@ -555,7 +555,7 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 					 * m if mouse IS pressed down
 					 */
 					tempVal = getMouseVal(&pressed);
-					if (tempVal == 35 || tempVal == 14) {	// unpressed || unpressed + ctrl
+					if (tempVal == 35 || tempVal == 51) {	// unpressed || unpressed + ctrl
 						mouseValx = getMouseVal(&pressed);
 						mouseValx--;
 						mouseValy = getMouseVal(&pressed);

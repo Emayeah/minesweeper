@@ -69,6 +69,7 @@ int main() {
 	int win, x = 0, y = 0;
 	int adjacent;
 	int *board = new int[width * height];						// straight into the heap and not the stack, i need to free the heap to change the size (gemini aided)
+	int **board2 = &board;
 	initBoard(board, width, height, mineCount, gameMode);
 //	for (int i = width * height - (width * 2); i < width * height; i++) {
 //		board[i] = 20;
@@ -77,7 +78,7 @@ int main() {
 	int sigExit;
 	int blockOutput = 0;
 	//wordArt();
-	std::future<void> idkman = std::async(std::launch::async, wordArt, board, &width, &height, &mineCount, &gameMode, &win2); // gemini aided
+	std::future<void> idkman = std::async(std::launch::async, wordArt, board2, &width, &height, &mineCount, &gameMode, &win2); // gemini aided
 	//std::thread printTitle(wordArt);							// gemini
 	//printTitle.detach();										// gemini
 	do {
@@ -979,7 +980,7 @@ int clickLogic(int* x, int* y, int board[], int flag, int width, int height, int
 	}
 	return 3;
 }
-void wordArt(int board[], int *width, int *height, int *mineCount, int *gameMode, int *win) {
+void wordArt(int** board, int *width, int *height, int *mineCount, int *gameMode, int *win) {
 	char word[] = "minesweeper";
 	int Art = 0, termWidth, termHeight, flip = 0, oldWidth = 0, oldHeight = 0;
 	do {
@@ -996,7 +997,7 @@ void wordArt(int board[], int *width, int *height, int *mineCount, int *gameMode
 		if (termWidth != oldWidth || termHeight != oldHeight) {
 			oldWidth = termWidth;
 			oldHeight = termHeight;
-			flushBuffer(board, width, height, mineCount, gameMode, win);
+			flushBuffer(*board, width, height, mineCount, gameMode, win);
 		}
 		consoleMutex.lock();
 		cout << "\e[H";

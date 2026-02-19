@@ -6,6 +6,6 @@ void expandBoard(int, int, int[], int, int, int);
 void cleanup(int);
 int getMouseVal(int*);
 int clickLogic(int*, int*, int[], int, int, int, int);
-void wordArt(int[], int*, int*, int*, int*, int*);
+void wordArt(int**, int*, int*, int*, int*, int*);
 void flushBuffer(int[], int*, int*, int*, int*, int*);
 void printSettingsMenu(int, int*, int*, int*, int*);

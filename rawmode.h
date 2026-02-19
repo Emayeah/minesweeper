@@ -24,7 +24,7 @@ void enable_raw_mode() {
 	raw.c_oflag &= ~(OPOST);
 
 	// 4. Set read timeout (return after 1 byte, no delay)
-	// ! so, basically 0 means that it won't wait for input, hm
+	// ! so, basically 0 means that it waits indefinitely until it gets 1 byte of input, hm
 	raw.c_cc[VMIN] = 1;
 	raw.c_cc[VTIME] = 0;
 

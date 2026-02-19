@@ -52,7 +52,6 @@ int main() {
 	cout << "\e[?1003h\e[?1006h";	// set any-event to high and sgr to high for the mouse button release
 	cout << "\e[?25l";			// set cursor to low
 	cout << "\e[H";				// set cursor to home position
-	cout << "\e[B";				// one lower to not overlap titlebar
 	enable_raw_mode();
 	/*
 	 * some sections that weren't covered by the teacher were partially done by google gemini
@@ -83,7 +82,6 @@ int main() {
 	//printTitle.detach();										// gemini
 	do {
 		consoleMutex.lock();									// gemini aided
-		cout << '\r';
 		cout << "\e[H";
 		cout << "\e[48;5;15m";
 		cout << "\e[38;5;16m";
@@ -203,7 +201,7 @@ int main() {
 			consoleMutex.unlock(); // gemini
 		}
 	} while (sigExit == 0);
-	cleanup(height);
+	cleanup();
 	if (win == 4) {
 		raise(SIGINT);
 	}
@@ -218,7 +216,7 @@ void initBoard(int board[], int width, int height, int mineCount, int gameMode) 
 		}
 	}
 	srand(time(NULL));
-	for (int i = 0; i < mineCount; i++) {						// this assumes that mineCount < height * *width
+	for (int i = 0; i < mineCount; i++) {						// this assumes that mineCount < height * width
 		flag = 1;
 		do {
 			x = rand() % width;
@@ -431,7 +429,7 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 	for (int i = 0; i < width; i++) {
 		cout << "🟩";
 	}
-	cout << "\e[" << height << "A";
+	cout << "\e[H";
 	cout << "\e[" << ((termHeight - 1) / 2) - (height / 2) << "A"; // move to the enter
 	consoleMutex.unlock();
 }
@@ -616,9 +614,26 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 						if (mouseValx >= 0 && mouseValx < *width) {
 							*x = mouseValx;
 						}
+						else {
+							if (mouseValx < 0) {
+								*x = 0;
+							}
+							else {
+								*x = *width - 1;
+							}
+						}
 						if (mouseValy >= 0 && mouseValy < *height) {
 							*y = mouseValy;
 						}
+						else {
+							if (mouseValy < 0) {
+								*y = 0;
+							}
+							else {
+								*y = *height - 1;
+							}
+						}
+
 						pressed = 1;
 					}
 					else if (tempVal == 0) { // left click
@@ -736,9 +751,26 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 						if (mouseValx >= 0 && mouseValx < *width) {
 							*x = mouseValx;
 						}
+						else {
+							if (mouseValx < 0) {
+								*x = 0;
+							}
+							else {
+								*x = *width - 1;
+							}
+						}
 						if (mouseValy >= 0 && mouseValy < *height) {
 							*y = mouseValy;
 						}
+						else {
+							if (mouseValy < 0) {
+								*y = 0;
+							}
+							else {
+								*y = *height - 1;
+							}
+						}
+
 						if (pressed == 1 && lose == 0) {
 							logicTemp = clickLogic(x, y, board, 0, *width, *height, *gameMode);
 							if (logicTemp != 3) {
@@ -759,9 +791,26 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 						if (mouseValx >= 0 && mouseValx < *width) {
 							*x = mouseValx;
 						}
+						else {
+							if (mouseValx < 0) {
+								*x = 0;
+							}
+							else {
+								*x = *width - 1;
+							}
+						}
 						if (mouseValy >= 0 && mouseValy < *height) {
 							*y = mouseValy;
 						}
+						else {
+							if (mouseValy < 0) {
+								*y = 0;
+							}
+							else {
+								*y = *height - 1;
+							}
+						}
+
 						if (pressed == 1 && lose == 0) {
 							logicTemp = clickLogic(x, y, board, 1, *width, *height, *gameMode);
 							if (logicTemp != 0) {
@@ -782,9 +831,26 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 						if (mouseValx >= 0 && mouseValx < *width) {
 							*x = mouseValx;
 						}
+						else {
+							if (mouseValx < 0) {
+								*x = 0;
+							}
+							else {
+								*x = *width - 1;
+							}
+						}
 						if (mouseValy >= 0 && mouseValy < *height) {
 							*y = mouseValy;
 						}
+						else {
+							if (mouseValy < 0) {
+								*y = 0;
+							}
+							else {
+								*y = *height - 1;
+							}
+						}
+
 					}
 				}
 			}
@@ -793,7 +859,7 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 			return 4;
 		}
 		else if (input == '\x1a') { // sigtstp
-			cleanup(*height);
+			cleanup();
 			signal(SIGTSTP, SIG_DFL);				// gemini aided
 			raise(SIGTSTP);
 			enable_raw_mode();
@@ -814,7 +880,7 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 				return logicTemp;
 			}
 		}
-		else if (input == 'f' && !(board[*y * *width + *x] >= 0 && board[*y * *width + *x] <= 8) && lose == 0) {
+		else if (input == 'f' && !(board[*y * *width + *x] >= 100 && board[*y * *width + *x] <= 200) && lose == 0) {
 			logicTemp = clickLogic(x, y, board, 1, *width, *height, *gameMode);
 			if (logicTemp != 0) {
 				return logicTemp;
@@ -882,14 +948,13 @@ void expandBoard(int x, int y, int board[], int width, int height, int gameMode)
 	} while (flag == 1);
 }
 
-void cleanup(int height) {
+void cleanup() {
 	consoleMutex.lock();
-	cout << "\e[" << height << "B";
-	cout << "\e[?1003l\e[?1006l";
-	cout << "\e[?25h";
+	cout << "\e[?1003l\e[?1006l" << flush;
 	cout << "\e[?1049l" << flush;
-	cout << "\e[1A" << flush;
+	cout << "\e[?25h" << flush;
 	disable_raw_mode();
+	cout << "\e[A" << flush;
 	consoleMutex.unlock();
 }
 
@@ -1052,7 +1117,7 @@ void flushBuffer(int board[], int *width, int *height, int *mineCount, int *game
 		consoleMutex.lock();
 		cout << "\e[0;0m";
 		cout << "\e[2;0H" << flush;
-		for (int i = 1; i < termHeight - 2; i++) {
+		for (int i = 0; i < termHeight - 2; i++) {
 			for (int j = 0; j < termWidth; j++) {
 				cout << " ";
 			}
@@ -1084,6 +1149,7 @@ void flushBuffer(int board[], int *width, int *height, int *mineCount, int *game
 			}
 		}
 		consoleMutex.lock();
+		cout << flush;
 		if (*win == 0) {
 			cout << "\e[H";
 			cout << "\e[" << termHeight / 2 << "B";
@@ -1103,10 +1169,16 @@ void flushBuffer(int board[], int *width, int *height, int *mineCount, int *game
 			cout << " Click titlebar for new game or ^C to exit!";
 		}
 		else if (*win == 6) {
+			cout << "\e[H";
+			cout << "\e[48;5;15m";
+			cout << "\e[38;5;16m";
+			cout << " < Back  ";
+			cout << "\e[0;0m";
 			consoleMutex.unlock();
 			printSettingsMenu(0, width, height, mineCount, gameMode);
 			consoleMutex.lock();
 		}
+		cout << flush;
 	}
 	consoleMutex.unlock();
 	arrayChangeMutex.unlock();
@@ -1121,7 +1193,7 @@ void printSettingsMenu(int update, int *width, int *height, int *mineCount, int 
 	cout << "\e[H";
 	cout << "\e[48;5;15m";
 	cout << "\e[38;5;16m";
-	cout << " < Back   ";
+	cout << " < Back  ";
 	cout << "\e[H";
 	cout << "\e[" << termHeight / 2 - 15 / 2 << "B";
 	cout << "\e[48;5;233m";

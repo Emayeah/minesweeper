@@ -3,7 +3,7 @@ void printBoard(int[], int, int, int, int);
 int userInput(int*, int*, int[], int, int, int*, int*, int*, int*);
 int calcAdjacent(int, int, int[], int, int, int);
 void expandBoard(int, int, int[], int, int, int);
-void cleanup(int);
+void cleanup();
 int getMouseVal(int*);
 int clickLogic(int*, int*, int[], int, int, int, int);
 void wordArt(int**, int*, int*, int*, int*, int*);

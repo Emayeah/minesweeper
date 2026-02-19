@@ -555,7 +555,7 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 					 * m if mouse IS pressed down
 					 */
 					tempVal = getMouseVal(&pressed);
-					if (tempVal == 35) {	// unpressed
+					if (tempVal == 35 || tempVal == 14) {	// unpressed || unpressed + ctrl
 						mouseValx = getMouseVal(&pressed);
 						mouseValx--;
 						mouseValy = getMouseVal(&pressed);
@@ -636,7 +636,7 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 
 						pressed = 1;
 					}
-					else if (tempVal == 0) { // left click
+					else if (tempVal == 0 || tempVal == 16) { // left click || left click + ctrl
 						mouseValx = getMouseVal(&pressed);
 						mouseValx--;
 						mouseValy = getMouseVal(&pressed);
@@ -656,6 +656,9 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 										printSettingsMenu(11, width, height, mineCount, gameMode);
 									}
 									else {
+										if (tempVal == 16) {
+											*width += 9;
+										}
 										*width += 1;
 										printSettingsMenu(1, width, height, mineCount, gameMode);
 									}
@@ -665,6 +668,9 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 										printSettingsMenu(12, width, height, mineCount, gameMode);
 									}
 									else {
+										if (tempVal == 16) {
+											*height += 9;
+										}
 										*height += 1;
 										printSettingsMenu(2, width, height, mineCount, gameMode);
 									}
@@ -674,6 +680,9 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 										printSettingsMenu(13, width, height, mineCount, gameMode);
 									}
 									else {
+										if (tempVal == 16) {
+											*mineCount += 9;
+										}
 										*mineCount += 1;
 										printSettingsMenu(3, width, height, mineCount, gameMode);
 									}
@@ -688,7 +697,10 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 										printSettingsMenu(17, width, height, mineCount, gameMode);
 									}
 									else {
-										*width -= 1;
+										if (tempVal == 16) {
+											*width -= 9;
+										}
+											*width -= 1;
 										printSettingsMenu(7, width, height, mineCount, gameMode);
 									}
 								}
@@ -697,6 +709,9 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 										printSettingsMenu(18, width, height, mineCount, gameMode);
 									}
 									else {
+										if (tempVal == 16) {
+											*height -= 9;
+										}
 										*height -= 1;
 										printSettingsMenu(8, width, height, mineCount, gameMode);
 									}
@@ -706,6 +721,9 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 										printSettingsMenu(19, width, height, mineCount, gameMode);
 									}
 									else {
+										if (tempVal == 16) {
+											*mineCount -= 9;
+										}
 										*mineCount -= 1;
 										printSettingsMenu(9, width, height, mineCount, gameMode);
 									}
@@ -720,6 +738,9 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 										printSettingsMenu(31, width, height, mineCount, gameMode);
 									}
 									else {
+										if (tempVal == 16) {
+											*gameMode -= 9;
+										}
 										*gameMode -= 1;
 										printSettingsMenu(21, width, height, mineCount, gameMode);
 									}
@@ -729,6 +750,9 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 										printSettingsMenu(32, width, height, mineCount, gameMode);
 									}
 									else {
+										if (tempVal == 16) {
+											*gameMode += 9;
+										}
 										*gameMode += 1;
 										printSettingsMenu(22, width, height, mineCount, gameMode);
 									}
@@ -850,7 +874,6 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 								*y = *height - 1;
 							}
 						}
-
 					}
 				}
 			}

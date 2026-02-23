@@ -65,7 +65,8 @@ visto che la maggior parte di terminal emulator hanno il supporto per unicode e 
 un emoji gialla viene usata per indicare la casella selezionata, e le bombe vengono visualizzate se si vince (o perde) con emoji rosse. la bandiera rossa indica una bandiera, una bandiera bianca indica una bandiera posizionata in un posto scorretto (mostrato quando si perde)
 un emoji arancione viene usata per indicare che l'utente ha il tasto cliccato
 
-quando gameMode è diverso da 0, al posto di stampare bandiere, numeri vengono stampati (perchè non esistono emoji contenenti 3 bandiere)
+quando gameMode è diverso da 0, certi elementi come la quantità di bandiere e altro vengono stampati in modi diversi, per esempio al posto di stampare bandiere, numeri vengono stampati (perchè non esistono emoji contenenti 3 bandiere)
+
 
 calcAdjacent: calcola la quantità di un determinato tipo di casella attorno ad una casella
 
@@ -73,9 +74,10 @@ calcAdjacent ha pure un selettore modalità, 0 calcola le bombe (coperte con o s
 ritorna la quantità di una determinata casella vicino ad un posto (se modalità == 1 allora ritorna 1 se c'è una casella vuota, 0 se non c'è)
 
 
-wordArt: è una funzione asincrona, e si occupa di 2 robe
+wordArt: è una funzione asincrona, e si occupa di 3 robe
 1. di animare la titlebar
 2. di pulire lo schermo se lo schermo è stato ridimensionato, tramite flushBuffer
+3. di mostrare la quantità di bandiere rimanenti e quanti secondi sono passati
 
 flushBuffer si occupa di ripulire lo schermo, e ha diversi parametri
 i parametri sono necessari per chiamare printBoard dopo avere ripulito lo schermo, altrimenti la tavola scompare e riappare solo quando l'utente esegue un'azione
@@ -85,6 +87,16 @@ cleanup si occupa di disabilitare:
 il buffer alternativo
 l'input mouse
 e si occupa di riabilitare il cursore
+resume si occupa di abilitare:
+il buffer alternativo
+l'input mouse
+e si occupa di disabilitare il cursore
+
+
+sigtstp_handler e sigint_handler
+come dicono i nomi sono degli handler
+sigtstp_handler (^Z) ripulisce il tutto grazie a cleanup e disable_raw_mode e quando il programma ricontinua l'esecuzione reimposta tutte le impostazioni con resume e enable_raw_mode (si, con una variabile globale di tipo sig_atomic_t per evitare race conditions PERÒ C'È UN BUON MOTIVO: gli handler sono estremamente limitati) stampa la tavola
+sigint_handler (^C) invece ripulisce il tutto, disabilita la modalità non canonical grazie a disable_raw_mode ed esce dal programma
 
 viene chiamato poco prima di uscire dal programma (quando un SIGINT o un SIGTSTP viene intercettato)
 il modo in cui SIGINT e SIGTSTP vengono intercettati è alquanto stupido, adesso lo sistemo perchè mi è appena venuto in mente come sistemarlo

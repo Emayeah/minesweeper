@@ -50,6 +50,7 @@ int main() {
 	int gameMode = 0; // 0 for monoflag, 1 for biflag and 2 for triflag
 	int width = 20, height = 20, mineCount = 30;
 	signal(SIGINT, sigint_handler);
+	signal(SIGTERM, sigint_handler);
 	signal(SIGTSTP, sigtstp_handler);
 	resume();
 	/*

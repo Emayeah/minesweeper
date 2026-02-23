@@ -2,87 +2,89 @@ relazione
 
 le due costanti (devbit e debugbit) scopo debugging
 
-prototype.h contiene le globali costanti che determinano la larghezza, lunghezza e quantità bombe
-
 decisioni prese e perchè
-ho scelto di calcolare il modo in cui la tavola viene auto-scopre in un modo "quadrato"
-ho scelto il modo "quadrato" per auto-scoprire la tavola perchè mi sembrava il più semplice ed effettivo
-ho scelto di implemtare i controlli keyboard driven perchè sono molto più intuitivi rispetto a manualmente scegliere coordinate, però rendendo il programma esclusivo linux / posix compliant
+ho usato un'array monodimensionale e non bidimensionale perchè non volevo usare dei vettori per fare la tavola e mi serviva un modo per ridimensionare la tavola, cosa che non si può fare con le array bidimensionali (il compiler deve sapere al compile time la dimensione)
+ho scelto di implemtare i controlli keyboard driven e mouse driven perchè sono molto più intuitivi rispetto a manualmente scegliere coordinate, però rendendo il programma esclusivo linux / posix compliant (o wsl)
 
-ho usato delle emoji per stampare la tavola perchè rende il gioco più giocabile, va bene il non compatibile ma se il tuo terminal emulator non è compatibile allora è il momento di cambiare terminal emulator
+ho usato delle emoji per stampare la tavola perchè rende il gioco più giocabile, va bene il non compatibile ma se il tuo terminal emulator non è compatibile allora è il momento di cambiare terminal emulator. è possibile renderlo compatibile con emulatori che non hanno il supporto per unicode / rendering di emoji.
 
 perchè stampo i colori dei numeri? per differenziare più facilmente i numeri tra di loro, quelli che giocano a minesweeper 24/7 usano i colori per identificare più velocemente il numero. non sono li a caso, sono gli stessi colori trovati nell'implementazione originale di campo minato di microsoft.
 
-letteralmente tutti i terminal emulator supportano i colori, pure fbcon. questo programma è stato sviluppato con linux in mente, non so se windows supporta questi colori ma nell'eventuale caso potrei in qualche modo fare un define o qualcosa per controllare se si trova in un ambiente senza il supporto per i colori e emoji e fare il fallback a modi più rudimentali per il display. dopotutto tutto questo è puramente grafico e cambiare l'output è questione di modificare condizioni e il contenuto nel blocco
+letteralmente tutti i terminal emulator supportano i colori, pure fbcon. questo programma è stato sviluppato con linux in mente, sono piuttosto sicuro che wsl ha il supporto per ansi. dopotutto tutto questo è puramente grafico e cambiare l'output è questione di modificare condizioni e il contenuto nel blocco di codice contenuto nella funzione printBoard
 
 ho deciso di rendere il programma agnostico alla quantità di bombe e dimensione, che brutto fare il hard code. ho testato il programma con diverse configurazioni di dimensioni.
 
-il metodo "quadrato":
-non so come scriverlo qui, lo spiegherò dal vivo
-può abilitare "debugBit trovata in riga 15" per vedere step by step come il programma auto-scopre le caselle, premendo un tasto a caso e poi invio per continuare
-spiegherò sotto in un modo rudimentale come funziona (expandBoard, in fondo)
+expandBoard
+il metodo in cui il programma fa la reazione a catena nel caso in cui una casella contenente uno 0 (quando tutte le caselle adiacenti alla casella cliccata non contengono bombe):
+può abilitare "debugBit" trovata in riga ~35 per vedere step by step come il programma auto-scopre le caselle, premendo un tasto a caso e poi invio per continuare
+abbiamo un'area 3x3 (il centro è la casella cliccata)
+tutte le caselle (non solo il preimetro) vengono controllate per vedere se accanto ad essa c'è una casella scoperta (con uno zero), se si allora la quantità di bombe adiacenti alla casella viene calcolata, e il numero viene posizionato sovrascrivendo il valore della casella che viene controllata (se la casella che viene controllata è una bomba allora per forza ci sarà accanto un numero diverso da zero, se questo non è il caso allora il programma contiene un bug)
+poi, con un counter che incrementa la dimensione dell'area che deve essere controllata, l'area che deve essere controllata diventa 5x5
+tutte le caselle in quel 5x5 (non solo il perimetro, questo metodo NON funzionerebbe se solo il perimetro viene controllato) vengono controllate per vedere se accanto c'è una casella scoperta con valore di 0...
+tutto questo viene ripetuto fin quando un flag (che controlla se il valore di una casella è stato cambiato) rimane di valore 0 (ovvero nessuna casella è stata "scoperta")
 
-cosa fa int main
-int main esegue le variabili ed è lo "scheletro" del programma, le decisioni vengono prese da int main, ma gli altri componenti come la stampa, l'input etc sono altrove. se però la prima casella selezionata è una bomba allora riposiziona la bomba usando 2 coordinate casuali.
-int main fa qualcosa però, non è vero che non fa niente. controlla se l'utente ha vinto (ovvero tutte le caselle sono state scoperte)
+cosa fa main
+main non fa un cavolo in realtà, lo scope di int main si è gradualmente ridotto e ironicamente è tipo la quartultima funzione in termini di lunghezza
+main stampa certe sequenze di escape ANSI per abilitare il buffer alternativo e l'input mouse
+main inizializza le variabili e chiama le funzioni ed è lo "scheletro" del programma, l'unica cosa che fa è gestire il flow del programma in base a cosa viene ritornato da userInput (ovvero la funzione che ha usurpato main)
+ovvero se userInput ritorna un valore che indica che l'utente ha messo una bandiera allora salta certi controlli
+main però calcola se l'utente ha vinto (ovvero se non tutte le caselle senza bombe sono state scoperte), e mostra un messaggio di vittoria o sconfitta
 
-initBoard: inizializza la tavola e sceglie dove mettere le bombe, usando 2 coordinate prese a caso per posizionare la bomba
+cosa fa userInput (il vero main)
+userInput gestisce l'input dell'utente, facendo il parsing delle sequenza di escape ANSI per l'input mouse E tastiera
+tastiera: se l'input è uguale a freccia giù (esc[B) allora incrementa y e così via
+mouse: prima di tutto controlla se si tratta di input mouse (se inizia con esc[<)
+se si allora prendi il numero appena dopo il < e prima del ; grazie alla funzione chiamata "getMouseVal"
+input mouse è strutturato così: esc[<z;x;ym (se m è minuscolo allora il tasto è premuto, maiuscolo allora tasto non è premuto)
+input = z
+se l'input è uguale a 35 allora nessun tasto viene premuto
+se l'input è uguale a 0 allora vuol dire che il tasto sinistro è stato premuto
+input = input + 16 se l'utente sta premendo ctrl
+se l'input = 2 allora tasto destro
+se l'input = 34 allora movimento mentre il tasto destro è premuto
+ce ne sono molti altri
+le condizioni modificano il flow del programma in base all'input
+
+se l'utente ha cliccato il tasto destro (se input == 2), il programma fa questo
+prende le coordinate (x e y) (sempre grazie a getMouseVal)
+grazie ad una variabile passata per riferimento, getMouseVal ritorna se il tasto è premuto o meno (controllando se m è minuscolo o no)
+se M è maiuscolo (ovvero l'utente non ha premuto il tasto) allora vuol dire che l'utente ha hasciato andare il tasto destro, quindi esegui la logica per la bandiera
+clickLogic viene chiamato per vedere se la posizione della bandiera è valida (non puoi mettere bandiere su caselle scoperte etc), se la posizione è valida allora clickLogic ritorna un valore diverso da 0, e userInput ritornerà a main lo stesso valore che è stato ritornato da clickLogic. se il valore ritornato da clickLogic è uguale a 0, allora userInput continua
+
+clickLogic calcola anche se il click sinistro è valido, se non è valido allora al posto di ritornare 0 ritorna 3
+
+initBoard: inizializza la tavola e sceglie dove mettere le bombe, usando 2 coordinate prese a caso per posizionare la bomba. usa un generatore casuale per decidere se mettere 1, 2 o 3 bombe (in base al valore di gameMode). se gameMode == 1 allora userà un generatore casuale per prendere un numero, poi il risultato di numero % (gameMode + 1) viene aggiunto alla bomba che è stata appena piazzata
+lo stesso succede se gameMode == 3 (lo stesso succede per qualsiasi valore di gameMode, però il resto del programma non risponde correttamente se un posto ha più di 3 bombe)
 
 printBoard: stampa la tavola
-perchè ho voluto usare emoji? Fedora 44 includerà kmscon rimpiazzando il datato fbcon, e dopo questo è probabile che altre distribuzioni includino kmscon di default. kmscon ha il supporto per unicode ed è meglio rispetto a fbcon. supporta il scrollback e font a vettori, ed essendo un componente che gira in userspace se kmscon crasha l'intero sistema non crolla.
+perchè ho voluto usare emoji? Fedora 44 includerà kmscon rimpiazzando il datato fbcon, e dopo questo è probabile che altre distribuzioni includino kmscon di default. kmscon ha il supporto per unicode ed è meglio rispetto a fbcon. supporta il scrollback e font a vettori, ed essendo un componente che gira in userspace se kmscon crasha l'intero sistema non crolla. (kmscon non supporta proprio bene il rendering di emoji, ma ora che c'è unicode implementare emoji sarà più semplice)
 
 visto che la maggior parte di terminal emulator hanno il supporto per unicode e kmscon rimpiazzerà fbcon, ho optato per i caratteri unicode per rendere il gioco più giocabile e più bello. si, non sarà 100% compatibile ma preferisco avere un gioco giocabile
 
-printBoard stampa anche il numero della riga e colonna, il modo in cui stampa i numeri della colonna è "strano", i numeri sono stampati in verticale
-
-1
-0
-questo è un 10
-
-0
-7
-questo è un 7
-
-1
-0
-9
-questo è un 109
-
-tutto questo per aggirare le limitazioni della larghezza
-il coso che stampa il numero verticale è agnostico alla grandezza del numero
 
 un emoji gialla viene usata per indicare la casella selezionata, e le bombe vengono visualizzate se si vince (o perde) con emoji rosse. la bandiera rossa indica una bandiera, una bandiera bianca indica una bandiera posizionata in un posto scorretto (mostrato quando si perde)
+un emoji arancione viene usata per indicare che l'utente ha il tasto cliccato
 
-userInput: valida l'input orizzontale e verticale, chiede conferma e permette di aggiungere bandiera o toglierla
-userInput è un ciclo che viene eseguito fino all'infinito e ascolta gli input dell'utente, gestendo le coordinate e altro. molto ironico ma userInput ha più logica rispetto a main
-cambia il valore della casella selezionata prima di chiamare printBoard (assegnandoli il valore della casella evidenziata)
-
-userInput ha 2 parametri passati per riferimento, uso il return per altro, devo comunque ridare il valore di input a main quindi uso dei valori passati per riferimento
-
-se un tasto qualsiasi viene premuto (eccetto f e freccette) indicando una conferma allora il controllo viene ridato a main
-
-userInput calcola il chording, forse era meglio separare la cosa che calcola il chording ma... funziona
+quando gameMode è diverso da 0, al posto di stampare bandiere, numeri vengono stampati (perchè non esistono emoji contenenti 3 bandiere)
 
 calcAdjacent: calcola la quantità di un determinato tipo di casella attorno ad una casella
 
 calcAdjacent ha pure un selettore modalità, 0 calcola le bombe (coperte con o senza flag), 1 calcola se c'è una casella scoperta (vuota, senza numero), 2 calcola la quantità di bandiere (con o senza bombe) e 3 calcola la quantità di bombe senza flag.
 ritorna la quantità di una determinata casella vicino ad un posto (se modalità == 1 allora ritorna 1 se c'è una casella vuota, 0 se non c'è)
 
-expandBoard: espande la tavola tramite il modo quadrato di cui ho parlato io.
-può abilitare debugBit per capire come funziona, ho creato un foglio excel mentre stavo ragionando a come fare questa funzione, la ho in mente in un modo estremamente visivo ma non riesco a spiegarlo proprio bene
 
-prendiamo un punto centrale, se è uno 0 allora la procedura di expand viene inizializzata.
-in questo momento abbiamo una casella 1x1, ho un counter per espandere la regione inizializzata a 1.
-il counter determina la grandezza della regione, 1x1 + 1 = 3x3, 1+1 + 2 = 5x5 (incrementi di 2 perchè c'è bisogno di un centro)
+wordArt: è una funzione asincrona, e si occupa di 2 robe
+1. di animare la titlebar
+2. di pulire lo schermo se lo schermo è stato ridimensionato, tramite flushBuffer
 
-adesso ho una regione 3x3, controllo tutti i quadrati (coperti) dentro quella regione 3x3 per vedere se accanto c'è una cella scoperta che vale 0, e per controllare questo calcAdjacent viene chiamata con modalità 1. se essa ritorna 1 allora calcAdjacent viene chiamata con modalità 0 per contare la quantità di bombe accanto alla cella, e il numero di bombe viene collocato.
-se accanto alla casella non vengono trovati caselle 0 ma vengono trovate caselle scoperte che valgono 1 o 2 etc allora la casella NON viene scoperta.
+flushBuffer si occupa di ripulire lo schermo, e ha diversi parametri
+i parametri sono necessari per chiamare printBoard dopo avere ripulito lo schermo, altrimenti la tavola scompare e riappare solo quando l'utente esegue un'azione
 
-dopo che tutte le caselle sono state controllate, il counter viene incrementato (conta che la procedura expandBoard non controlla solo il perimetro, controlla tutti gli elementi, quindi nel primo pass controlla 3x3 (9) elementi, nel secondo pass controlla 5x5 (25) elementi. sembra tanto ma in realtà è piuttosto efficiente e implementare un metodo dove solo il nuovo perimetro viene controllato non funzionerebbe)
 
-adesso abbiamo una regione 5x5, controllo tutti i quadrati coperti dentro la regione 5x5 per vedere se accanto c'è uno zero
-adesso abbiamo una regione 7x7, controllo tutti i quadrati coperti dentro la regione 7x7...
-adesso abbiamo una regione 9x9...
+cleanup si occupa di disabilitare:
+il buffer alternativo
+l'input mouse
+e si occupa di riabilitare il cursore
 
-quando una cella viene scoperta una flag viene impostata indicando che la catena non è ancora finita. se nessuna cella viene scoperta allora la flag non viene impostata e il controllo viene ridato a main.
-
+viene chiamato poco prima di uscire dal programma (quando un SIGINT o un SIGTSTP viene intercettato)
+il modo in cui SIGINT e SIGTSTP vengono intercettati è alquanto stupido, adesso lo sistemo perchè mi è appena venuto in mente come sistemarlo

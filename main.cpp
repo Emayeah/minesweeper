@@ -1403,6 +1403,7 @@ void sigtstp_handler(int sig) {
 	sigaddset(&mask, SIGTSTP);
 	sigprocmask(SIG_UNBLOCK, &mask, NULL);
 	signal(SIGTSTP, SIG_DFL);
+	cout << flush;
 	raise(SIGTSTP);
 	signal(SIGTSTP, sigtstp_handler);
 	consoleMutex.unlock();
@@ -1416,5 +1417,6 @@ void sigint_handler(int sig) {
 	sigaddset(&mask, SIGINT);
 	sigprocmask(SIG_UNBLOCK, &mask, NULL);
 	signal(SIGINT, SIG_DFL);
+	cout << flush;
 	raise(SIGINT);
 }

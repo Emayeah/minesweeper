@@ -1140,35 +1140,14 @@ void flushBuffer(int board[], int *width, int *height, int *mineCount, int *game
 	cout << "\e[38;5;16m";
 	cout << " Settings";
 	cout << "\e[0;0m";
+	cout << "\e[2;0H\e[0J";
 	consoleMutex.unlock();
 	if (blockPrintMutex.try_lock()) {							// gemini aided
-		consoleMutex.lock();
-		cout << "\e[0;0m";
-		cout << "\e[2;0H" << flush;
-		for (int i = 0; i < termHeight - 1; i++) {
-			for (int j = 0; j < termWidth; j++) {
-				cout << " ";
-			}
-			if (i <  termHeight - 2) {
-				cout << "\r\n";
-			}
-		}
-		consoleMutex.unlock();
 		printBoard(board, 0, *width, *height, *gameMode);
 		blockPrintMutex.unlock();
 	}
 	else {
 		if (*win == 6 || *win == 1 || *win == 0) {
-			consoleMutex.lock();
-			cout << "\e[0;0m";
-			cout << "\e[2;0H" << flush;
-			for (int i = 1; i < termHeight - 2; i++) {
-				for (int j = 0; j < termWidth; j++) {
-					cout << " ";
-				}
-				cout << "\r\n";
-			}
-			consoleMutex.unlock();
 			/*
 			 * it is not safe to print the board while the menu settings is open: it tries to read out of bounds (if the settings have changed).
 			 * the heap region pointed by board hasn't yet been resized
@@ -1224,12 +1203,11 @@ void printSettingsMenu(int update, int *width, int *height, int *mineCount, int 
 	cout << "\e[48;5;15m";
 	cout << "\e[38;5;16m";
 	cout << " < Back  ";
-	cout << "\e[H";
-	cout << "\e[" << termHeight / 2 - 15 / 2 << "B";
+	cout << "\e[" << termHeight / 2 - 15 / 2 << ";" << termWidth / 2 - 36 / 2  << "H";
 	cout << "\e[48;5;233m";
 	for (int i = 0; i < 14; i++) {
+		cout << "\e[" << termHeight / 2 - 15 / 3 + i << ";" << termWidth / 2 - 36 / 2 + 1 << "H";
 		if (i == 1) {
-			cout << "\e[" << termWidth / 2 - 36 / 2  << "C";
 			for (int k = 0; k < 6; k++) {
 				cout << " ";
 			}
@@ -1254,23 +1232,18 @@ void printSettingsMenu(int update, int *width, int *height, int *mineCount, int 
 			for (int k = 0; k < 4; k++) {
 				cout << " ";
 			}
-			cout << '\r' << endl;
+			cout << "\e[" << termHeight / 2 - 15 / 3 + i << ";" << termWidth / 2 - 36 / 2 + 1 << "H";
 		}
-		cout << "\e[" << termWidth / 2 - 36 / 2  << "C";
 		for (int j = 0; j < 36; j++) {
 			cout << " ";
 		}
-		cout << '\r' << endl;
 	}
 	int tempNum;
 	int divCount;
-	cout << "\e[H";
-	cout << "\e[" << termHeight / 2 - 15 / 2 + 1 << "B";
 	cout << "\e[38;5;16m";
 	cout << "\e[48;5;15m";
-	cout << "\r\e[B";
 	for (int i = 0; i < 4; i++) {
-		cout << "\e[" << termWidth / 2 - 36 / 2 + 1 << "C";
+		cout << "\e[" << termHeight / 2 - 15 / 2 + 3 + i * 4 << ";" << termWidth / 2 - 36 / 2 + 2 << "H";
 		for (int j = 0; j < 3; j++) {
 			if (update != 0) {
 				if (update < 10 && update == (j + 3 * i) + 1) {

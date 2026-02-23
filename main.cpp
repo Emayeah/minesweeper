@@ -75,15 +75,14 @@ int main() {
 //		board[i] = 20;
 //	}
 	int flag;
-	int sigExit;
 	int blockOutput = 0;
 	int timer = 0;
+	int firstInputFlag;
 	//wordArt();
 	std::future<void> idkman = std::async(std::launch::async, wordArt, board2, &width, &height, &mineCount, &gameMode, &win2, &trueMineCount, &flagPlaced, &timer); // gemini aided
 	//std::thread printTitle(wordArt);							// gemini
 	//printTitle.detach();										// gemini
 	do {
-		sigExit = 0;
 		win = userInput(&x, &y, board, blockOutput, 0, &width, &height, &mineCount, &gameMode, &flagPlaced); // win == 1 that means you lose because it's the game that wins against the player lol
 		blockPrintMutex.unlock();
 		if (win == 6) {
@@ -105,13 +104,8 @@ int main() {
 				firstInput = 1;
 			}
 			blockPrintMutex.unlock();
-			if (win == 4) {
-				sigExit = 1;
-			}
-			else {
-				blockOutput = 0;
-				flushBuffer(board, &width, &height, &mineCount, &gameMode, &win2);
-			}
+			blockOutput = 0;
+			flushBuffer(board, &width, &height, &mineCount, &gameMode, &win2);
 		}
 		else if (win == 5) {
 			initBoard(board, width, height, mineCount, gameMode, &trueMineCount);
@@ -134,8 +128,17 @@ int main() {
 				tempx = rand() % width;
 				tempy = rand() % height;
 			} while (board[tempy * width + tempx] / 10 >= 5 && board[tempy * width + tempx] / 10 <= 7 || (tempx == x && tempy == y));
+			if (board[tempy * width + tempx] / 10 == 4) {
+				firstInputFlag = board[tempy * width + tempx] % 10;
+			}
+			else {
+				firstInputFlag = 0;
+			}
 			board[tempy * width + tempx] = board[y * width + x];
 			board[y * width + x] = 10;
+			if (firstInputFlag != 0) {
+				board[tempy * width + tempx] += firstInputFlag;
+			}
 			win = 0;
 			firstInput = 0;
 		}
@@ -165,9 +168,6 @@ int main() {
 					}
 				}
 			}
-		}
-		if (win == 4) {
-			sigExit = 1;
 		}
 		int termWidth;
 		int termHeight;
@@ -205,11 +205,8 @@ int main() {
 			blockOutput = 1;
 			consoleMutex.unlock(); // gemini
 		}
-	} while (sigExit == 0);
+	} while (true);
 	cleanup();
-	if (win == 4) {
-		raise(SIGINT);
-	}
 	exit(EXIT_SUCCESS);
 }
 

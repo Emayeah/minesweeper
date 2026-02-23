@@ -44,6 +44,7 @@ std::mutex blockPrintMutex;
 const int devBit = 0;
 const int debugBit = 0;
 const int showInfoBit = 0;
+volatile sig_atomic_t back_from_sigtstp = 0; // gemini aided, yes global vars bad but i kinda have to do this because signal handlers are limited
 
 int main() {
 	int gameMode = 0; // 0 for monoflag, 1 for biflag and 2 for triflag
@@ -1067,10 +1068,11 @@ void wordArt(int** board, int *width, int *height, int *mineCount, int *gameMode
 		ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 		termWidth = w.ws_col;
 		termHeight = w.ws_row;
-		if (termWidth != oldWidth || termHeight != oldHeight) {
+		if (termWidth != oldWidth || termHeight != oldHeight || back_from_sigtstp == 1) {
 			oldWidth = termWidth;
 			oldHeight = termHeight;
 			flushBuffer(*board, width, height, mineCount, gameMode, win);
+			back_from_sigtstp = 0;
 		}
 		consoleMutex.lock();
 		cout << "\e[H";
@@ -1405,6 +1407,7 @@ void sigtstp_handler(int sig) {
 	signal(SIGTSTP, SIG_DFL);
 	cout << flush;
 	raise(SIGTSTP);
+	back_from_sigtstp = 1;
 	signal(SIGTSTP, sigtstp_handler);
 	consoleMutex.unlock();
 	resume();

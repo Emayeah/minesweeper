@@ -68,15 +68,18 @@ int main() {
 	int adjacent;
 	int *board = new int[width * height];						// straight into the heap and not the stack, i need to free the heap to change the size (gemini aided)
 	int **board2 = &board;
-	initBoard(board, width, height, mineCount, gameMode);
+	int trueMineCount = 0;
+	int flagPlaced = 0;
+	initBoard(board, width, height, mineCount, gameMode, &trueMineCount);
 //	for (int i = width * height - (width * 2); i < width * height; i++) {
 //		board[i] = 20;
 //	}
 	int flag;
 	int sigExit;
 	int blockOutput = 0;
+	int timer = 0;
 	//wordArt();
-	std::future<void> idkman = std::async(std::launch::async, wordArt, board2, &width, &height, &mineCount, &gameMode, &win2); // gemini aided
+	std::future<void> idkman = std::async(std::launch::async, wordArt, board2, &width, &height, &mineCount, &gameMode, &win2, &trueMineCount, &flagPlaced, &timer); // gemini aided
 	//std::thread printTitle(wordArt);							// gemini
 	//printTitle.detach();										// gemini
 	do {
@@ -95,7 +98,8 @@ int main() {
 				//width += 10;
 				//height += 10;
 				board = new int[width * height];
-				initBoard(board, width, height, mineCount, gameMode);
+				initBoard(board, width, height, mineCount, gameMode, &trueMineCount);
+				timer = 0;
 				arrayChangeMutex.unlock();
 				firstInput = 1;
 			}
@@ -109,10 +113,17 @@ int main() {
 			}
 		}
 		else if (win == 5) {
-			initBoard(board, width, height, mineCount, gameMode);
+			initBoard(board, width, height, mineCount, gameMode, &trueMineCount);
+			timer = 0;
 			flushBuffer(board, &width, &height, &mineCount, &gameMode, &win2);
 			blockOutput = 0;
 			firstInput = 1;
+		}
+		else if (win == 2) {
+			flagPlaced += 1;
+		}
+		else if (win == 8) {
+			flagPlaced -= 1 + gameMode;
 		}
 		if (firstInput == 1 && win == 1) {			// first input is always safe
 			srand(time(NULL));
@@ -200,8 +211,9 @@ int main() {
 	exit(EXIT_SUCCESS);
 }
 
-void initBoard(int board[], int width, int height, int mineCount, int gameMode) {
+void initBoard(int board[], int width, int height, int mineCount, int gameMode, int *trueMineCount) {
 	int x, y, flag;
+	*trueMineCount = mineCount;
 	for (int i = 0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
 			board[i * width + j] = 10;
@@ -219,6 +231,7 @@ void initBoard(int board[], int width, int height, int mineCount, int gameMode) 
 			else if (board[y * width + x] == 10) {
 				board[y * width + x] = 51;
 				flag = rand() % (gameMode + 1);
+				*trueMineCount += flag;
 				board[y * width + x] += flag * 10;
 				flag = 0;
 			}
@@ -794,7 +807,7 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 							}
 						}
 					}
-					else if (tempVal == 2) {
+					else if (tempVal == 2) { // right click
 						mouseValx = getMouseVal(&pressed);
 						mouseValx--;
 						mouseValx -= (termWidth / 2) - *width;
@@ -918,7 +931,7 @@ void expandBoard(int x, int y, int board[], int width, int height, int gameMode)
 		flag = 0;
 		for (int i = -count; i <= count; i++) {
 			for (int j = -count; j <= count; j++) {
-				if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) { //&& board[x + i * width + y + j] != 9 && board[(y + j) * width + (x + i)] != 19) { // check for out of bounds blah blah
+				if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) { // check for out of bounds blah blah
 					temp2 = board[(y + j) * width + (x + i)];
 					adjacent = calcAdjacent(x + i, y + j, board, 1, width, height);
 					if (adjacent == 1) {
@@ -1036,9 +1049,11 @@ int clickLogic(int* x, int* y, int board[], int flag, int width, int height, int
 					board[*y * width + *x] /= 10;
 					board[*y * width + *x] *= 10;
 					board[*y * width + *x] += 1;
+					return 8;
 				}
 				else if (board[*y * width + *x] / 10 == 4) {
 					board[*y * width + *x] = 10;
+					return 8;
 				}
 			}
 		}
@@ -1054,7 +1069,7 @@ int clickLogic(int* x, int* y, int board[], int flag, int width, int height, int
 	}
 	return 3;
 }
-void wordArt(int** board, int *width, int *height, int *mineCount, int *gameMode, int *win) {
+void wordArt(int** board, int *width, int *height, int *mineCount, int *gameMode, int *win, int *trueMineCount, int *flagPlaced, int *timer) {
 	char word[] = "minesweeper";
 	int Art = 0, termWidth, termHeight, flip = 0, oldWidth = 0, oldHeight = 0;
 	do {
@@ -1091,6 +1106,8 @@ void wordArt(int** board, int *width, int *height, int *mineCount, int *gameMode
 		else {
 			cout << word;
 		}
+		cout << "\e[0;" << termWidth / 4 << "H" << *trueMineCount - *flagPlaced;
+		cout << "\e[0;" << termWidth - (termWidth / 4) << "H" << *timer;
 		cout << "\e[0;0m\e[22m\r" << endl;
 		consoleMutex.unlock();
 		if (Art < 11) {
@@ -1103,6 +1120,7 @@ void wordArt(int** board, int *width, int *height, int *mineCount, int *gameMode
 		flip %= 8;
 		if (flip == 0) {
 			Art++;
+			*timer += 1;
 		}
 		if (Art >= 30) {
 			Art = 0;

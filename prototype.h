@@ -1,4 +1,4 @@
-void initBoard(int[], int, int, int, int);
+void initBoard(int[], int, int, int, int, int*);
 void printBoard(int[], int, int, int, int);
 int userInput(int*, int*, int[], int, int, int*, int*, int*, int*);
 int calcAdjacent(int, int, int[], int, int, int);
@@ -7,7 +7,7 @@ void cleanup();
 void resume();
 int getMouseVal(int*);
 int clickLogic(int*, int*, int[], int, int, int, int);
-void wordArt(int**, int*, int*, int*, int*, int*);
+void wordArt(int**, int*, int*, int*, int*, int*, int*, int*, int*);
 void flushBuffer(int[], int*, int*, int*, int*, int*);
 void printSettingsMenu(int, int*, int*, int*, int*);
 void sigtstp_handler(int sig);

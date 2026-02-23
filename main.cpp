@@ -1145,11 +1145,13 @@ void flushBuffer(int board[], int *width, int *height, int *mineCount, int *game
 		consoleMutex.lock();
 		cout << "\e[0;0m";
 		cout << "\e[2;0H" << flush;
-		for (int i = 0; i < termHeight - 2; i++) {
+		for (int i = 0; i < termHeight - 1; i++) {
 			for (int j = 0; j < termWidth; j++) {
 				cout << " ";
 			}
-			cout << "\r\n";
+			if (i <  termHeight - 2) {
+				cout << "\r\n";
+			}
 		}
 		consoleMutex.unlock();
 		printBoard(board, 0, *width, *height, *gameMode);

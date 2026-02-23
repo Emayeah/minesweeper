@@ -48,11 +48,9 @@ const int showInfoBit = 0;
 int main() {
 	int gameMode = 0; // 0 for monoflag, 1 for biflag and 2 for triflag
 	int width = 20, height = 20, mineCount = 30;
-	cout << "\e[?1049h";		// alternate screen buffer
-	cout << "\e[?1003h\e[?1006h";	// set any-event to high and sgr to high for the mouse button release
-	cout << "\e[?25l";			// set cursor to low
-	cout << "\e[H";				// set cursor to home position
-	enable_raw_mode();
+	signal(SIGINT, sigint_handler);
+	signal(SIGTSTP, sigtstp_handler);
+	resume();
 	/*
 	 * some sections that weren't covered by the teacher were partially done by google gemini
 	 * my stance on ai for programming is very clear: it's a tool for learning.
@@ -81,13 +79,6 @@ int main() {
 	//std::thread printTitle(wordArt);							// gemini
 	//printTitle.detach();										// gemini
 	do {
-		consoleMutex.lock();									// gemini aided
-		cout << "\e[H";
-		cout << "\e[48;5;15m";
-		cout << "\e[38;5;16m";
-		cout << " Settings";
-		cout << "\e[0;0m";
-		consoleMutex.unlock();									// gemini aided
 		sigExit = 0;
 		win = userInput(&x, &y, board, blockOutput, 0, &width, &height, &mineCount, &gameMode); // win == 1 that means you lose because it's the game that wins against the player lol
 		blockPrintMutex.unlock();
@@ -878,25 +869,6 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 				}
 			}
 		}
-		else if (input == '\x03') { // sigint
-			return 4;
-		}
-		else if (input == '\x1a') { // sigtstp
-			cleanup();
-			signal(SIGTSTP, SIG_DFL);				// gemini aided
-			raise(SIGTSTP);
-			enable_raw_mode();
-			consoleMutex.lock();
-			cout << "\e[?1049h";		// alternate screen buffer
-			cout << "\e[?1003h\e[?1006h";	// set any-event to high and sgr to high for the mouse button release
-			cout << "\e[?25l" << flush;
-			cout << "\e[H";				// set cursor to home position
-			cout << "\e[48;5;15m";
-			cout << "\e[38;5;16m";
-			cout << " Settings";
-			cout << "\e[0;0m";
-			consoleMutex.unlock();
-		}
 		else if (input == 'd' && lose == 0) {
 			logicTemp = clickLogic(x, y, board, 0, *width, *height, *gameMode);
 			if (logicTemp != 3) {
@@ -978,6 +950,19 @@ void cleanup() {
 	cout << "\e[?25h" << flush;
 	disable_raw_mode();
 	cout << "\e[A" << flush;
+	consoleMutex.unlock();
+}
+void resume() {
+	consoleMutex.lock();
+	cout << "\e[?1003h\e[?1006h" << flush;
+	cout << "\e[?1049h" << flush;
+	cout << "\e[?25l" << flush;
+	cout << "\e[H";				// set cursor to home position
+	cout << "\e[48;5;15m";
+	cout << "\e[38;5;16m";
+	cout << " Settings";
+	cout << "\e[0;0m";
+	enable_raw_mode();
 	consoleMutex.unlock();
 }
 
@@ -1409,4 +1394,27 @@ void printSettingsMenu(int update, int *width, int *height, int *mineCount, int 
 	}
 	cout << "\e[0;0m";
 	consoleMutex.unlock();
+}
+void sigtstp_handler(int sig) {
+	cleanup();
+	consoleMutex.lock();
+	sigset_t mask;
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGTSTP);
+	sigprocmask(SIG_UNBLOCK, &mask, NULL);
+	signal(SIGTSTP, SIG_DFL);
+	raise(SIGTSTP);
+	signal(SIGTSTP, sigtstp_handler);
+	consoleMutex.unlock();
+	resume();
+}
+void sigint_handler(int sig) {
+	cleanup();
+	consoleMutex.lock();
+	sigset_t mask;
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGINT);
+	sigprocmask(SIG_UNBLOCK, &mask, NULL);
+	signal(SIGINT, SIG_DFL);
+	raise(SIGINT);
 }

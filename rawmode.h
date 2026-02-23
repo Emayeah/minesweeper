@@ -13,7 +13,7 @@ void enable_raw_mode() {
 	// ICANON: line-by-line mode
 	// ECHO: prints characters as you type
 	// ISIG: disables Ctrl-C/Ctrl-Z signals
-	raw.c_lflag &= ~(ICANON | IEXTEN | ECHO | ISIG); // ! ~ is a bitwise not operator
+	raw.c_lflag &= ~(ICANON | IEXTEN | ECHO); //ISIG); // ! ~ is a bitwise not operator
 
 	// 3. Disable other input/output processing
 	// ! icrnl lowkey useful ('\n' acting as a line feed and not as a carriage return and a line feed)

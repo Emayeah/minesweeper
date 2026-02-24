@@ -4,7 +4,7 @@
 #include "rawmode.h"
 //#include <termios.h>
 //#include <unistd.h>
-#include <csignal>			// throwing sigint if ctrl-c, sigtstp for ctrl-z
+#include <csignal>			// throwing sigshort if ctrl-c, sigtstp for ctrl-z
 #include <sys/ioctl.h>		// for terminal size
 #include <future>			// for async
 #include <mutex>			// race condition! i was experimenting with the async stuff but of course i got a race condition
@@ -41,14 +41,13 @@ using namespace std;
 std::mutex consoleMutex;
 std::mutex arrayChangeMutex;
 std::mutex blockPrintMutex;
-const int devBit = 0;
-const int debugBit = 0;
-const int showInfoBit = 0;
+const short devBit = 0;
+const short showInfoBit = 0;
 volatile sig_atomic_t back_from_sigtstp = 0; // gemini aided, yes global vars bad but i kinda have to do this because signal handlers are limited
 
 int main() {
-	int gameMode = 0; // 0 for monoflag, 1 for biflag and 2 for triflag
-	int width = 20, height = 20, mineCount = 30;
+	short gameMode = 0; // 0 for monoflag, 1 for biflag and 2 for triflag
+	short width = 20, height = 20, mineCount = 30;
 	signal(SIGINT, sigint_handler);
 	signal(SIGTERM, sigint_handler);
 	signal(SIGTSTP, sigtstp_handler);
@@ -63,29 +62,23 @@ int main() {
 	 * the other is for people willing to learn new things.
 	 * also the actual logic and handling raw code is fully gonna be made by me
 	 */
-	int firstInput = 1;
-	int win2 = 0;
-	int win, x = 0, y = 0;
-	int adjacent;
-	int *board = new int[width * height];						// straight into the heap and not the stack, i need to free the heap to change the size (gemini aided)
-	int **board2 = &board;
-	int trueMineCount = 0;
-	int flagPlaced = 0;
+	short firstInput = 1;
+	short win2 = 0;
+	short win, x = 0, y = 0;
+	short adjacent;
+	short *board = new short[width * height];						// straight into the heap and not the stack, i need to free the heap to change the size (gemini aided)
+	short **board2 = &board;
+	short trueMineCount = 0;
+	short flagPlaced = 0;
 	initBoard(board, width, height, mineCount, gameMode, &trueMineCount);
-//	for (int i = width * height - (width * 2); i < width * height; i++) {
-//		board[i] = 20;
-//	}
-	int flag;
-	int blockOutput = 0;
-	int timer = 0;
-	int firstInputFlag;
-	int termWidth;
-	int termHeight;
+	short flag;
+	short blockOutput = 0;
+	short timer = 0;
+	short firstInputFlag;
+	short termWidth;
+	short termHeight;
 	struct winsize w;											// gemini
-	//wordArt();
 	std::future<void> idkman = std::async(std::launch::async, wordArt, board2, &width, &height, &mineCount, &gameMode, &win2, &trueMineCount, &flagPlaced, &timer); // gemini aided
-	//std::thread printTitle(wordArt);							// gemini
-	//printTitle.detach();										// gemini
 	do {
 		win = userInput(&x, &y, board, blockOutput, 0, &width, &height, &mineCount, &gameMode, &flagPlaced); // win == 1 that means you lose because it's the game that wins against the player lol
 		ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);						// gemini
@@ -94,7 +87,7 @@ int main() {
 		cout << "\e[1m";				// bold
 		cout << "\e[48;5;15m";
 		cout << "\e[38;5;16m";
-		cout << "\e[0;" << termWidth / 4 << "H" << trueMineCount - flagPlaced;		// why print here if it's printed in wordArt? to avoid the very small delay
+		cout << "\e[0;" << termWidth / 4 << "H" << trueMineCount - flagPlaced;		// why prshort here if it's printed in wordArt? to avoid the very small delay
 		cout << "\e[0;0m";
 		if (win == 6) {
 			win2 = 6;
@@ -107,7 +100,7 @@ int main() {
 				delete[] board;
 				//width += 10;
 				//height += 10;
-				board = new int[width * height];
+				board = new short[width * height];
 				initBoard(board, width, height, mineCount, gameMode, &trueMineCount);
 				flagPlaced = 0;
 				timer = 0;
@@ -134,7 +127,7 @@ int main() {
 		}
 		if (firstInput == 1 && win == 1) {			// first input is always safe
 			srand(time(NULL));
-			int tempx, tempy;
+			short tempx, tempy;
 			do {
 				tempx = rand() % width;
 				tempy = rand() % height;
@@ -172,8 +165,8 @@ int main() {
 		flag = 2;
 		if (win == 0) {
 			flag = 0;
-			for (int i = 0; i < width && flag != 1; i++) {
-				for (int j = 0; j < height && flag != 1; j++) {
+			for (short i = 0; i < width && flag != 1; i++) {
+				for (short j = 0; j < height && flag != 1; j++) {
 					if (board[j * width + i] == 10 || board[j * width + i] / 10 == 4) {
 						flag = 1;
 					}
@@ -218,16 +211,16 @@ int main() {
 	exit(EXIT_SUCCESS);
 }
 
-void initBoard(int board[], int width, int height, int mineCount, int gameMode, int *trueMineCount) {
-	int x, y, flag;
+void initBoard(short board[], short width, short height, short mineCount, short gameMode, short *trueMineCount) {
+	short x, y, flag;
 	*trueMineCount = mineCount;
-	for (int i = 0; i < height; i++) {
-		for (int j = 0; j < width; j++) {
+	for (short i = 0; i < height; i++) {
+		for (short j = 0; j < width; j++) {
 			board[i * width + j] = 10;
 		}
 	}
 	srand(time(NULL));
-	for (int i = 0; i < mineCount; i++) {						// this assumes that mineCount < height * width
+	for (short i = 0; i < mineCount; i++) {						// this assumes that mineCount < height * width
 		flag = 1;
 		do {
 			x = rand() % width;
@@ -246,32 +239,24 @@ void initBoard(int board[], int width, int height, int mineCount, int gameMode, 
 	}
 }
 
-void printBoard(int board[], int lose, int width, int height, int gameMode) {
-	int termWidth;
-	int termHeight;
+void printBoard(short board[], short lose, short width, short height, short gameMode) {
+	short termWidth;
+	short termHeight;
 	struct winsize w;											// gemini
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);						// gemini
 	termWidth = w.ws_col;									 	// gemini aided
 	termHeight = w.ws_row;										// gemini aided	
-//	cout << "\e[48;5;15m";
-//	for (int i = 0; i < termWidth; i++) {
-//		cout << " ";
-//	}
-//	cout << '\r';
-//	cout << "\e[" << (termWidth / 2) - (11 / 2) /* 11 is the length of the word "minesweeper" */ << "C"; 
-//	cout << "\e[1m\e[38;5;16mMinesweeper";
-//	cout << "\e[0;0m\e[22m\r" << endl;
 	consoleMutex.lock(); // gemini
 	cout << "\e[H";
 	cout << "\e[" << ((termHeight - 1) / 2) - (height / 2) - 1 << "B";		// move to the center
 	cout << "\e[" << (termWidth / 2) - width << "C";						// move to the center, again, an emoji takes up 2 spaces!
-	for (int i = 0; i < width; i++) {
+	for (short i = 0; i < width; i++) {
 		cout << "🟩";
 	}
 	cout << "\r\n";
-	for (int i = 0; i < height; i++) {
+	for (short i = 0; i < height; i++) {
 		cout << "\e[" << (termWidth / 2) - width - 2 << "C";				// move to the center, again, an emoji takes up 2 spaces!
-		for (int j = 0; j < width; j++) {
+		for (short j = 0; j < width; j++) {
 			// cout << board[i * width + j] << " ";
 			if (j == 0) {
 				cout << "🟩";
@@ -364,16 +349,16 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 			else {
 				if ((board[i * width + j] > 100 && board[i * width + j] <= 200)) {
 					board[i * width + j] -= 100;
-					cout << "\e[3";
+					cout << "\e[3";							// foreground
 				}
 				else if (board[i * width + j] > 200) {
 					board[i * width + j] -= 200;
 					if (board[i * width + j] >= 10) {
 						cout << "\e[38;5;232m";					// white on white is unreadable, but for some reason setting the color to 16m (pitch black) doesn't work
 					}
-					cout << "\e[4";
+					cout << "\e[4";							// background
 				}
-				switch (board[i * width + j]) {				// print with colors, filled in colors for selected (background)
+				switch (board[i * width + j]) {				// prshort with colors, filled in colors for selected (background)
 					case 1:	
 						cout << "8;5;4m";					// light blue
 						break;
@@ -399,7 +384,7 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 						cout << "8;5;245m";				// gray
 						break;
 					default:
-						cout << "8;5;15m";
+						cout << "8;5;15m";				// white
 						break;
 				}
 				cout << board[i * width + j];
@@ -415,7 +400,7 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 		cout << "\r" << endl;
 	}
 	cout << "\e[" << (termWidth / 2) - width << "C"; // move to the center, again, an emoji takes up 2 spaces!
-	for (int i = 0; i < width; i++) {
+	for (short i = 0; i < width; i++) {
 		cout << "🟩";
 	}
 	cout << "\e[H";
@@ -423,22 +408,22 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 	consoleMutex.unlock();
 }
 
-int userInput(int* x, int* y, int board[], int lose, int openSettings, int *width, int *height, int *mineCount, int *gameMode, int *flagPlaced) {
+short userInput(short* x, short* y, short board[], short lose, short openSettings, short *width, short *height, short *mineCount, short *gameMode, short *flagPlaced) {
 	char flag;
-	int valBak;
-	int *cellPos;
-	int validChord;
+	short valBak;
+	short *cellPos;
+	short validChord;
 	char input;
-	int tempVal;
-	int mouseValx;
-	int mouseValy;
-	int pressed = 1;
-	int logicTemp;
-	int termWidth;
-	int termHeight;
-	int printId;
+	short tempVal;
+	short mouseValx;
+	short mouseValy;
+	short pressed = 1;
+	short logicTemp;
+	short termWidth;
+	short termHeight;
+	short printId;
 	struct winsize w;												// disclosing the same lines as gemini is very redundant
-	do {
+	while (true) {
 		ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);						// just know that the code that gets the terminal size is not done by me
 		// The ioctl call returns 0 on success, -1 on error			// but if i need to get the terminal size in a future project
 		termWidth = w.ws_col;										// i won't have to use gemini because i learned how to do so
@@ -855,15 +840,15 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 				return logicTemp;
 			}
 		}
-	} while (true);//(*x < 0 || *x > *width);
+	}
 	return 0;
 }
 
-int calcAdjacent(int x, int y, int board[], int mode, int width, int height) {
-	int count = 0, tempCount;
-	int* temp;
-	for (int i = -1; i < 2; i++) {
-		for (int j = -1; j < 2; j++) {
+short calcAdjacent(short x, short y, short board[], short mode, short width, short height) {
+	short count = 0, tempCount;
+	short* temp;
+	for (short i = -1; i < 2; i++) {
+		for (short j = -1; j < 2; j++) {
 			if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) { // check for out of bounds
 				temp = &board[(y + j) * width + (x + i)];
 				if (*temp < 100) {		// to avoid checking numbers
@@ -887,14 +872,14 @@ int calcAdjacent(int x, int y, int board[], int mode, int width, int height) {
 	return count;
 }
 
-void expandBoard(int x, int y, int board[], int width, int height, int *flagPlaced) {	
-	int flag, count = 1, adjacent, temp;
-	int* temp2;
+void expandBoard(short x, short y, short board[], short width, short height, short *flagPlaced) {	
+	short flag, count = 1, adjacent, temp;
+	short* temp2;
 	char asdf;
 	do {
 		flag = 0;
-		for (int i = -count; i <= count; i++) {
-			for (int j = -count; j <= count; j++) {
+		for (short i = -count; i <= count; i++) {
+			for (short j = -count; j <= count; j++) {
 				if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) { // check for out of bounds blah blah
 					temp2 = &board[(y + j) * width + (x + i)];
 					adjacent = calcAdjacent(x + i, y + j, board, 1, width, height);
@@ -944,8 +929,8 @@ void resume() {
 	consoleMutex.unlock();
 }
 
-int getMouseVal(int *pressed) {
-	int tempVal = 0;
+short getMouseVal(short *pressed) {
+	short tempVal = 0;
 	char input;
 	do {
 		cin >> input;
@@ -965,9 +950,9 @@ int getMouseVal(int *pressed) {
 	return tempVal;
 }
 
-int clickLogic(int* x, int* y, int board[], int flag, int width, int height, int gameMode, int *flagPlaced) {
-	int validChord;
-	int *temp2;
+short clickLogic(short* x, short* y, short board[], short flag, short width, short height, short gameMode, short *flagPlaced) {
+	short validChord;
+	short *temp2;
 	temp2 = &board[*y * width + *x];
 	if (flag == 0) {														// are you trying to place a flag? flag = 0 -> no (either that is chording or normal clicking), flag = 1 -> flagging
 		if (*temp2 != 0 && *temp2 < 100) {									// are you trying to chord? if you're trying to chord then temp2 would be > 100
@@ -989,9 +974,9 @@ int clickLogic(int* x, int* y, int board[], int flag, int width, int height, int
 				if (validChord != 0) {
 					return 1;			// you chorded near an unflagged mine!
 				}
-				int temp;
-				for (int i = -1; i < 2; i++) {
-					for (int j = -1; j < 2; j++) {
+				short temp;
+				for (short i = -1; i < 2; i++) {
+					for (short j = -1; j < 2; j++) {
 						if (*x + i >= 0 && *x + i < width && *y + j >= 0 && *y + j < height) {
 							if (board[(*y + j) * width + (*x + i)] == 10) {
 								temp = calcAdjacent(*x + i, *y + j, board, 0, width, height);
@@ -1027,17 +1012,17 @@ int clickLogic(int* x, int* y, int board[], int flag, int width, int height, int
 				*temp2 = 42;
 			}
 			else {
-				return 0;											// just in case
+				return 0;						// just in case
 			}
 		}
-		return 2;
+		return 2;								// flagged succesfully
 	}
-	return 3;
+	return 3;									// can't flag
 }
 
-void wordArt(int** board, int *width, int *height, int *mineCount, int *gameMode, int *win, int *trueMineCount, int *flagPlaced, int *timer) {
+void wordArt(short** board, short *width, short *height, short *mineCount, short *gameMode, short *win, short *trueMineCount, short *flagPlaced, short *timer) {
 	char word[] = "minesweeper";
-	int Art = 0, termWidth, termHeight, flip = 0, oldWidth = 0, oldHeight = 0;
+	short Art = 0, termWidth, termHeight, flip = 0, oldWidth = 0, oldHeight = 0;
 	do {
 		if (Art < 11) {
 			word[Art] -= 32;
@@ -1059,7 +1044,7 @@ void wordArt(int** board, int *width, int *height, int *mineCount, int *gameMode
 		cout << "\e[0;10H";	// to not overlap the "settings"
 		cout << "\e[48;5;15m";
 		cout << "\e[38;5;16m";
-		for (int i = 0; i < termWidth - 9; i++) {
+		for (short i = 0; i < termWidth - 9; i++) {
 			cout << " ";
 		}
 		cout << "\e[0;" << (termWidth / 2) - (11 / 2)	/* 11 is the length of the word "minesweeper" */ << "H";
@@ -1093,11 +1078,11 @@ void wordArt(int** board, int *width, int *height, int *mineCount, int *gameMode
 	} while (true);
 }
 
-void flushBuffer(int board[], int *width, int *height, int *mineCount, int *gameMode, int *win) {
+void flushBuffer(short board[], short *width, short *height, short *mineCount, short *gameMode, short *win) {
 	struct winsize w;
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-	int termWidth = w.ws_col;
-	int termHeight = w.ws_row;
+	short termWidth = w.ws_col;
+	short termHeight = w.ws_row;
 	arrayChangeMutex.lock();
 	consoleMutex.lock();
 	cout << "\e[H";
@@ -1114,7 +1099,7 @@ void flushBuffer(int board[], int *width, int *height, int *mineCount, int *game
 	else {
 		if (*win == 6 || *win == 1 || *win == 0) {
 			/*
-			 * it is not safe to print the board while the menu settings is open: it tries to read out of bounds (if the settings have changed).
+			 * it is not safe to prshort the board while the menu settings is open: it tries to read out of bounds (if the settings have changed).
 			 * the heap region pointed by board hasn't yet been resized
 			 * instead of going for an extremely convoluted (and dumb) workaround, i just disabled the printing if the menu pane is open
 			 */
@@ -1123,7 +1108,6 @@ void flushBuffer(int board[], int *width, int *height, int *mineCount, int *game
 			}
 		}
 		consoleMutex.lock();
-		cout << flush;
 		if (*win == 0) {
 			cout << "\e[" << termHeight / 2 << ";" << termWidth / 2 - 4 << "H";
 			cout << " YOU WIN!\r" << endl;
@@ -1154,11 +1138,11 @@ void flushBuffer(int board[], int *width, int *height, int *mineCount, int *game
 	arrayChangeMutex.unlock();
 }
 
-void printSettingsMenu(int update, int *width, int *height, int *mineCount, int *gameMode) {
+void printSettingsMenu(short update, short *width, short *height, short *mineCount, short *gameMode) {
 	struct winsize w;
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-	int termWidth = w.ws_col;
-	int termHeight = w.ws_row;
+	short termWidth = w.ws_col;
+	short termHeight = w.ws_row;
 	// menu wide 36 and tall 15
 	consoleMutex.lock();
 	cout << "\e[H";
@@ -1166,48 +1150,48 @@ void printSettingsMenu(int update, int *width, int *height, int *mineCount, int 
 	cout << "\e[38;5;16m";
 	cout << " < Back  ";
 	cout << "\e[48;5;233m";
-	int temp = 0;
-	for (int i = 0; i < 15; i++) {
+	short temp = 0;
+	for (short i = 0; i < 15; i++) {
 		cout << "\e[" << termHeight / 2 - 15 / 2 + i + temp << ";" << termWidth / 2 - 36 / 2 + 1 << "H";
 		if (i == 1) {
-			for (int k = 0; k < 6; k++) {
+			for (short k = 0; k < 6; k++) {
 				cout << " ";
 			}
 			cout << "\e[38;5;16m";
 			cout << "\e[48;5;15m";
 			cout << "Width";
 			cout << "\e[48;5;233m";
-			for (int k = 0; k < 3; k++) {
+			for (short k = 0; k < 3; k++) {
 				cout << " ";
 			}
 			cout << "\e[38;5;16m";
 			cout << "\e[48;5;15m";
 			cout << "Height";
 			cout << "\e[48;5;233m";
-			for (int k = 0; k < 2; k++) {
+			for (short k = 0; k < 2; k++) {
 				cout << " ";
 			}
 			cout << "\e[38;5;16m";
 			cout << "\e[48;5;15m";
 			cout << "Mine count";
 			cout << "\e[48;5;233m";
-			for (int k = 0; k < 4; k++) {
+			for (short k = 0; k < 4; k++) {
 				cout << " ";
 			}
 			temp = 1;
 			cout <<  "\e[" << termHeight / 2 - 15 / 2 + i + 1 << ";" << termWidth / 2 - 36 / 2 + 1 << "H";
 		}
-		for (int j = 0; j < 36; j++) {
+		for (short j = 0; j < 36; j++) {
 			cout << " ";
 		}
 	}
-	int tempNum;
-	int divCount;
+	short tempNum;
+	short divCount;
 	cout << "\e[38;5;16m";
 	cout << "\e[48;5;15m";
-	for (int i = 0; i < 4; i++) {
+	for (short i = 0; i < 4; i++) {
 		cout << "\e[" << termHeight / 2 - 15 / 2 + 3 + i * 4 << ";" << termWidth / 2 - 36 / 2 + 2 << "H";
-		for (int j = 0; j < 3; j++) {
+		for (short j = 0; j < 3; j++) {
 			if (update != 0) {
 				if (update < 10 && update == (j + 3 * i) + 1) {
 					cout << "\e[48;5;82m";

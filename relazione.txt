@@ -65,12 +65,13 @@ perchè main fa così poco? c'è stato un po' di scope creep e feature creep (la
 
 
 initBoard:
-serve un modo per creare la tavola e piazzare le bombe
+serve un modo per creare la tavola e piazzare le bombe, e ha come parametro trueMineCount
 inizializza la tavola e sceglie dove mettere le bombe, usando 2 coordinate prese a caso per posizionare la bomba. usa un generatore casuale per decidere se mettere 1, 2 o 3 bombe (in base al valore di gameMode). se gameMode >= 1 allora userà un generatore casuale per prendere un numero, poi il risultato di numero % (gameMode + 1) viene moltiplicato per dieci e aggiunto alla bomba che è stata appena piazzata (almeno, lo farà anche se gamemode == 0 ma il numero casuale generato sarà sempre 0)
 lo stesso succede se gameMode == 3 (lo stesso succede per qualsiasi valore di gameMode, però il resto del programma non risponde correttamente se un posto ha più di 3 bombe)
 ha diversi parametri, ovvero le dimensioni e la tavola in se, mineCount e gameMode
 tutte queste necessarie per inizializzare la tavola
 invece trueMineCount contiene la vera quantità di bombe che sono state posizionate, serve a wordArt per stampare la quantità di bandiere rimanenti
+anche se mineCount == 30, se gameMode != 0 allora non è garantito che la tavola abbia 30 bombe, trueMineCount contiene la quantità reale di bombe
 
 
 
@@ -84,7 +85,7 @@ perchè ho voluto usare emoji? Fedora 44 includerà kmscon rimpiazzando il datat
 visto che la maggior parte di terminal emulator hanno il supporto per unicode e kmscon rimpiazzerà fbcon, ho optato per i caratteri unicode per rendere il gioco più giocabile e più bello. si, non sarà 100% compatibile ma preferisco avere un gioco giocabile
 
 un emoji gialla viene usata per indicare la casella selezionata, e le bombe vengono visualizzate se si vince (o perde) con emoji rosse. la bandiera rossa indica una bandiera, una bandiera bianca indica una bandiera posizionata in un posto scorretto (mostrato quando si perde)
-un emoji arancione viene usata per indicare che l'utente ha il tasto cliccato
+un emoji arancione viene usata per indicare che l'utente ha il tasto cliccato, ho aggiunto l'emoji arancione per dare un feedback visivo all'utente segnalando che il programma ha ricevuto il click
 
 quando gameMode è diverso da 0, certi elementi come la quantità di bandiere e altro vengono stampati in modi diversi, per esempio al posto di stampare bandiere, numeri vengono stampati (perchè non esistono emoji contenenti 3 bandiere)
 
@@ -93,6 +94,8 @@ usando le dimensioni del terminale la tavola viene posta al centro (non ho volut
 
 cosa fa userInput (il vero main)
 userInput gestisce l'input dell'utente, facendo il parsing delle sequenza di escape ANSI per l'input mouse E tastiera
+perchè ho voluto aggiungere il supporto per il mouse? è un po' scomodo giocare a prato fiorito con la tastiera (immaginati invece selezionando manualmente le coordinate)
+ho impostato il any event tracking e il SGR (esc[?1003 e esc[?1006) a high, il primo per ricevere in input lo stato del mouse (click e non click) e altri eventi, il secondo per impostare le sequenze con un formato diverso (usando numeri leggibili tipo 12, 35 piuttosto che caratteri ASCII con il valore corrispondente che si fermano a 255).
 ha mooolti parametri
 x e y servono per indicare a main quale è la cella selezionata (in realtà piuttosto inutile, main usa x e y solo 2 volte tipo)
 board...
@@ -106,7 +109,7 @@ mouse: prima di tutto controlla se si tratta di input mouse (se inizia con esc[<
 esempio: se l'utente ha cliccato il tasto destro (se input == 2), il programma fa questo
 prende le coordinate (x e y) (sempre grazie a getMouseVal)
 grazie ad una variabile passata per riferimento, getMouseVal ritorna se il tasto è premuto o meno (controllando se m è minuscolo o no)
-se M è maiuscolo (ovvero l'utente non ha premuto il tasto) allora vuol dire che l'utente ha hasciato andare il tasto destro, quindi esegui la logica per la bandiera
+se m è minuscolo (ovvero l'utente ha lasciato andare il tasto) allora esegue la logica per la bandiera
 
 se invece z == 35 allora il programma (rimuovendo i dovuti offset) modifica le coordinate e evidenzia in giallo la cella selezionata, invece se z == 34 o z == 23 allora evidenzia in arancione, indicando l'utente che il mouse è stato cliccato
 
@@ -155,13 +158,14 @@ userInput automaticamente cambia il valore della cella selezionata appena prima 
 printBoard viene chiamata e il valore originale della cella viene ripristinato, x e y indicano la cella evidenziata
 
 dopo aver finito tutto questo, la funzione ritorna ad aspettare per dell'input
-
 è la funzione più "complessa" e la più difficile da navigare (ha molte condizioni), tutte le condizioni servono per vedere quale azione l'utente vuole eseguire
 
+userInput esegue le azioni (tipo mettere una bandiera, cliccare...) quando l'utente lascia andare il tasto, non quando lo preme, non riesco a sopportare tasti o eventi che si attivano quando si preme il tasto e non quando lo si lascia andare
 
 
 calcAdjacent:
 se l'utente clicca su una cella, bisogna in qualche modo capire quante bombe sono vicine a questa cella per poi piazzare un numero (non calcola solo bombe)
+ho voluto usare un selettore della modalità piuttosto che separare la funzione in diverse funzioni perchè i due cicli sono gli stessi, l'unica cosa che cambia è il cosa viene contato
 
 calcola la quantità di un determinato tipo di casella attorno ad una casella
 ha divesi parametri, x, y per la posizione della cella e board... mode è il selettore modalità e width e height invece servono per evitare sbordamenti (se io clicco una casella attaccato ai bordi della tavola)
@@ -171,7 +175,6 @@ calcAdjacent ha pure un selettore modalità, 0 calcola le bombe (coperte con o s
 2 calcola la quantità di bandiere (con o senza bombe), utilizzato da clickLogic per verificare la validità del chording
 infine 3 calcola la quantità di bombe senza flag, sempre utilizzato da clickLogic sempre per verificare la validità del chording (quest'ultima però controlla se hai appena fatto il chording accanto ad una bomba non flaggata risultando in una sconfitta, non se il chording è fattibile o meno)
 ritorna la quantità di una determinata casella vicino ad un posto al chiamante (eccetto per modalità 1, se modalità == 1 allora ritorna 1 se c'è una casella vuota, 0 se non c'è, micro ottimizzazione)
-ho voluto usare un selettore della modalità piuttosto che separare la funzione in diverse funzioni perchè i due cicli sono gli stessi, l'unica cosa che cambia è il cosa viene contato
 
 
 
@@ -195,6 +198,7 @@ poi, con un counter che incrementa la dimensione dell'area che deve essere contr
 tutte le caselle in quel 5x5 (non solo il perimetro, questo metodo NON funzionerebbe se solo il perimetro viene controllato) vengono controllate per vedere se accanto c'è una casella scoperta con valore di 0...
 tutto questo viene ripetuto fin quando un flag (che controlla se il valore di una casella è stato cambiato) rimane di valore 0 (ovvero nessuna casella è stata "scoperta")
 
+ho implementato questo modo perchè mi sembrava molto semplice, effettivo e non stupido da un punto di vista di risorse utilizzate. è (più o meno) un algoritmo O(2n^2) si, ma l'utente non giocherà mai con una tavola più grande di 150x100, non perchè non è pazzo ma perchè la dimensione del terminale diventa una limitazione. poi, preferisco avere un algoritmo semplice ma non il migliore piuttosto che una soluzione complessissima che magari in certi casi strani non funziona
 stavo pensando di fare le recursion all'inizio ma non avendole mai fatte non volevo complicarmi la vita così tanto, ho letteralmente preso un foglio excel (libreoffice), ho ridimensionato le celle rendendole quadrate e ho iniziato a pensare come avrei potuto calcolare tutto questo. 
 
 
@@ -202,30 +206,37 @@ stavo pensando di fare le recursion all'inizio ma non avendole mai fatte non vol
 cleanup si occupa di disabilitare:
 il buffer alternativo
 l'input mouse
+la modalità non canonical
 e si occupa di riabilitare il cursore
+praticamente serve per ripulire le impostazioni impostate dal programma, se il programma per qualsiasi motivo uscisse senza disabilitare queste impostazioni l'utente rimarrebbe in un buffer alternativo con un mouse in grado di inondare lo schermo con caratteri
 
 resume si occupa di abilitare:
 il buffer alternativo
 l'input mouse
+la modalità non canonical
 e si occupa di disabilitare il cursore
+questa invece serve per riabilitare le impostazioni, se per qualche motivo le impostazioni non fossero caricate l'input (sia con il mouse sia con la tastiera) non funzionerebbe
 
 le 2 funzioni sono usati dai 2 handler e da main, ho spostato i due in funzioni separate perchè capire il funzionamento è molto più immediato grazie al nome della funzione
 
 
 
 getMouseVal invece è la funzione che si occupa del parsing dell'input del mouse
-l'input del mouse è strutturato così: esc[<z;x;ym; devo in qualche modo separare i 3 numeri (e la m)
+ritorna un numero e serve per recuperare le coordinate del mouse, la modalità e l'evento del click
+ha una variabile passata per riferimento, serve come un secondo return (per ritornare al chiamante un altro valore)
+
+l'input del mouse è strutturato così: esc[<z;x;ym ; devo in qualche modo separare i 3 numeri (e la m)
 
 si ferma quando incontra un carattere che non è un numero (ascii non compreso tra 48 e 57)
 però se incontra una M o una m allora pressed (l'unico parametro, utilizzato come un 2o return) viene modificato
-M vuol dire che l'utente non ha premuto il tasto o lo ha lasciato andare (dipende dal 1o numero, ovvero 'z')
-m vuol dire che l'utente ha cliccato il tasto (destro o sinistro anche quello dipende da 'z')
+m vuol dire che l'utente non ha premuto il tasto o lo ha lasciato andare (dipende dal 1o numero, ovvero 'z')
+M vuol dire che l'utente ha cliccato il tasto (destro o sinistro anche quello dipende da 'z')
 
-vorrei precisare che M e m non sono due "cliccato o non cliccato" ma sono 2 eventi, ovvero M quando l'utente ha lasciato andare il tasto, m quando l'utente lo ha appena premuto (quando senti il click). se però l'utente muove il mouse quando il tasto è premuto la M sarà maiuscola, ma la lettera M/m non è mai ambigua, perchè possibile capire (in base al primo numero 'z') se il tasto non è premuto o se è premuto, anche se non accade nessun evento
+vorrei precisare che M e m non sono due "cliccato o non cliccato" ma sono 2 eventi, ovvero m quando l'utente ha lasciato andare il tasto, M quando l'utente lo ha appena premuto (quando senti il click). se però l'utente muove il mouse quando il tasto è premuto la M sarà maiuscola, ma la lettera M/m non è mai ambigua, perchè possibile capire (in base al primo numero 'z') se il tasto non è premuto o se è premuto, anche se non accade nessun evento
 se z == 34 allora vuol dire che il tasto destro è premuto e l'utente ha eseguito un movimento con il mouse, ma la M sarà maiuscola indicando che il mouse non è stato premuto (se invece il tasto non è premuto allora z == 35)
-invece se z == 2 allora vuol dire che l'utente ha effettuato l'azione di modificare lo stato del tasto destro, M se lo ha lasciato andare, m se lo ha appena premuto.
+invece se z == 2 allora vuol dire che l'utente ha effettuato l'azione di modificare lo stato del tasto destro, m se lo ha lasciato andare, M se lo ha appena premuto.
 
-getMouseVal non si deve preoccupare dei primi 3 caratteri (esc[<) perchè la funzione viene chiamata da userInput solo se userInput ha stabilito che la sequenza di escape si tratta di una sequenza per il mouse (esc[< non sono più nel buffer)
+getMouseVal non si deve preoccupare dei primi 3 caratteri (esc[<) perchè il chiamante (userInput) chiama getMouseVal solo se ha stabilito che la sequenza di escape si tratta di una sequenza del mouse (esc[< non sono più nel buffer)
 
 
 
@@ -234,6 +245,8 @@ prima di tutto "flag" viene passato e serve per cambiare il flow del programma, 
 x e y indicano la casella che deve essere controllata, e board... credo tutti sappiamo perchè board viene passata
 vengono passati anche flagPlaced, width e height, 2 parametri necessari per il corretto funzionamento di expandBoard
 
+
+se flag == 0
 prima di tutto controlla se hai cliccato un numero o meno per verificare se l'utente sta cercando di fare il chording.
 se non è stato cliccato un numero, dei controlli vengono eseguiti per vedere se hai appena cliccato una bomba o meno
 se si allora viene automaticamente ritornato un 1 indicando una sconfitta, altrimenti un 3 viene ritornato indicando un "niente di importante è successo, proceda pure"
@@ -244,8 +257,8 @@ se il check passa allora calcAdjacent (con modalità 3) viene chiamata per verif
 
 altrimenti tutti i posti accanto alla casella con un area 3x3 vengono "scoperti" (controllando la quantità di bombe affianco alle caselle) e expandBoard viene chiamata nell'eventuale caso ci sia una casella di valore 0 (per iniziare la reazione a catena)
 
-se invece flag == 1 allora l'utente sta cercando di piazzare una bandiera
 
+se flag == 1 allora l'utente sta cercando di piazzare una bandiera
 se la posizione della bandiera è valida (non puoi mettere bandiere su caselle scoperte etc), allora clickLogic controlla se la bandiera deve essere tolta o aggiunta (incrementando la quantità di bandiere se il limite di bandiere (gestito da gameMode) non è stato raggiunto, altrimenti rimuovendo le bandiere)
 clickLogic ritorna un valore diverso da 0 se una bandiera è stata correttamente piazzata / rimossa, e userInput ritornerà a main lo stesso valore che è stato ritornato da clickLogic. se il valore ritornato da clickLogic è uguale a 0, allora userInput continua
 
@@ -271,7 +284,7 @@ originariamente wordArt animava solo la titlebar ed esisteva puramente per motiv
 
 wordArt tiene una copia delle dimensioni, prende le nuove dimensioni del terminale e controlla se sono uguali o meno rispetto alla copia: se sono diverse allora chiama flushBuffer e aggiorna la copia delle dimensioni con le nuove dimensioni
 
-wordArt ha un sleep di 125ms per evitare di saturare completamente il processore (se non fosse per il sleep l'animazione non sarebbe più un'animazione). originariamente aveva uno sleep di 1 secondo, ma lo ho ridotto perchè avere un intervallo di tempo di massimo 1 secondo tra quando l'utente ridimensiona il terminale e quando wordArt risponde aggiornando lo schermo era un po' troppo. però, per mantenere la stessa velocità dell'animazione, uso un counter che viene incrementato con ogni singolo ciclo e se supera il numero 8 (125ms * 8 = 1s) allora incrementa il counter "Art" (ovvero il counter che gestisce lo stato dell'animazione)
+wordArt ha un sleep di 125ms per evitare di saturare completamente il processore (se non fosse per lo sleep l'animazione non sarebbe più un'animazione). originariamente aveva uno sleep di 1 secondo, ma lo ho ridotto perchè avere un intervallo di tempo di massimo 1 secondo tra quando l'utente ridimensiona il terminale e quando wordArt risponde aggiornando lo schermo era un po' troppo. però, per mantenere la stessa velocità dell'animazione, uso un counter che viene incrementato con ogni singolo ciclo e se supera il numero 8 (125ms * 8 = 1s) allora incrementa il counter "Art" (ovvero il counter che gestisce lo stato dell'animazione)
 
 
 

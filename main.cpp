@@ -119,12 +119,6 @@ int main() {
 			blockOutput = 0;
 			firstInput = 1;
 		}
-		else if (win == 2) {
-			flagPlaced += 1;
-		}
-		else if (win == 8) {
-			flagPlaced -= 1 + gameMode;
-		}
 		if (firstInput == 1 && win == 1) {			// first input is always safe
 			srand(time(NULL));
 			short tempx, tempy;
@@ -265,7 +259,7 @@ void printBoard(short board[], short lose, short width, short height, short game
 				cout << "⬜";
 			}
 			else if (
-					devBit == 1 || (board[i * width + j] / 10 >= 5 && board[i * width + j] / 10 <= 7 && lose == 1) &&
+					((board[i * width + j] / 10 >= 5 && board[i * width + j] / 10 <= 7) && devBit == 1 || lose == 1) &&
 					board[i * width + j] < 100 && board[i * width + j] % 10 == 1
 					) {
 				if (gameMode == 0) {
@@ -304,8 +298,13 @@ void printBoard(short board[], short lose, short width, short height, short game
 						cout << "🚩";
 					}
 					else {
-						cout << "\e[48;5;88m";
-						cout << "🏳️";
+						if (board[i * width + j] % 10 - 1 == board[i * width + j] / 10 - 4) {
+							cout << "\e[48;5;88m";
+						}
+						else {
+							cout << "\e[48;5;255m";
+						}
+						cout << "🚩";
 					}
 					cout << "\e[0;0m";
 				}
@@ -892,7 +891,7 @@ void expandBoard(short x, short y, short board[], short width, short height, sho
 							if (temp != 0) {
 								temp += 100;
 							}
-							if (board[(y + j) * width + (x + i)] / 10 == 4) {
+							if (*temp2 / 10 == 4) {
 								*flagPlaced -= *temp2 % 10 - 1;
 							}
 							*temp2 = temp;
@@ -1001,9 +1000,11 @@ short clickLogic(short* x, short* y, short board[], short flag, short width, sho
 					*temp2 /= 10;
 					*temp2 *= 10;
 					*temp2 += 1;
+					*flagPlaced -= gameMode + 2;
 				}
 				else if (*temp2 / 10 == 4) {
 					*temp2 = 10;
+					*flagPlaced -= gameMode + 2;
 				}
 			}
 		}
@@ -1015,6 +1016,7 @@ short clickLogic(short* x, short* y, short board[], short flag, short width, sho
 				return 0;						// just in case
 			}
 		}
+		*flagPlaced += 1;
 		return 2;								// flagged succesfully
 	}
 	return 3;									// can't flag

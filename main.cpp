@@ -944,7 +944,7 @@ void expandBoard(int x, int y, int board[], int width, int height, int gameMode,
 								temp += 100;
 							}
 							if (board[(y + j) * width + (x + i)] / 10 == 4) {
-								*flagPlaced -= board[(y + j) * width + (x + i)] % 10 + 2;
+								*flagPlaced -= board[(y + j) * width + (x + i)] % 10 - 1;
 							}
 							board[(y + j) * width + (x + i)] = temp;
 						}

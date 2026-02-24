@@ -87,7 +87,7 @@ int main() {
 		cout << "\e[1m";				// bold
 		cout << "\e[48;5;15m";
 		cout << "\e[38;5;16m";
-		cout << "\e[0;" << termWidth / 4 << "H" << trueMineCount - flagPlaced;		// why prshort here if it's printed in wordArt? to avoid the very small delay
+		cout << "\e[0;" << termWidth / 4 << "H" << trueMineCount - flagPlaced;		// why print here if it's printed in wordArt? to avoid the very small delay
 		cout << "\e[0;0m";
 		if (win == 6) {
 			win2 = 6;
@@ -358,7 +358,7 @@ void printBoard(short board[], short lose, short width, short height, short game
 					}
 					cout << "\e[4";							// background
 				}
-				switch (board[i * width + j]) {				// prshort with colors, filled in colors for selected (background)
+				switch (board[i * width + j]) {				// print with colors, filled in colors for selected (background)
 					case 1:	
 						cout << "8;5;4m";					// light blue
 						break;
@@ -1099,7 +1099,7 @@ void flushBuffer(short board[], short *width, short *height, short *mineCount, s
 	else {
 		if (*win == 6 || *win == 1 || *win == 0) {
 			/*
-			 * it is not safe to prshort the board while the menu settings is open: it tries to read out of bounds (if the settings have changed).
+			 * it is not safe to print the board while the menu settings is open: it tries to read out of bounds (if the settings have changed).
 			 * the heap region pointed by board hasn't yet been resized
 			 * instead of going for an extremely convoluted (and dumb) workaround, i just disabled the printing if the menu pane is open
 			 */

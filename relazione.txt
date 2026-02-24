@@ -1,10 +1,10 @@
 relazione
 
-le due costanti (devbit e debugbit) scopo debugging
+le tre costanti (devBit, debugBit e showInfoBit) scopo debugging
 
 decisioni prese e perchè
 ho usato un'array monodimensionale e non bidimensionale perchè non volevo usare dei vettori per fare la tavola e mi serviva un modo per ridimensionare la tavola, cosa che non si può fare con le array bidimensionali (il compiler deve sapere al compile time la dimensione)
-ho scelto di implemtare i controlli keyboard driven e mouse driven perchè sono molto più intuitivi rispetto a manualmente scegliere coordinate, però rendendo il programma esclusivo linux / posix compliant (o wsl)
+ho scelto di implemtare i controlli keyboard driven e mouse driven perchè sono molto più intuitivi rispetto a manualmente scegliere coordinate, però rendendo il programma esclusivo linux / posix compliant (o wsl), le sequenze ANSI sono uste molto spesso
 
 ho usato delle emoji per stampare la tavola perchè rende il gioco più giocabile, va bene il non compatibile ma se il tuo terminal emulator non è compatibile allora è il momento di cambiare terminal emulator. è possibile renderlo compatibile con emulatori che non hanno il supporto per unicode / rendering di emoji.
 
@@ -12,7 +12,12 @@ perchè stampo i colori dei numeri? per differenziare più facilmente i numeri t
 
 letteralmente tutti i terminal emulator supportano i colori, pure fbcon. questo programma è stato sviluppato con linux in mente, sono piuttosto sicuro che wsl ha il supporto per ansi. dopotutto tutto questo è puramente grafico e cambiare l'output è questione di modificare condizioni e il contenuto nel blocco di codice contenuto nella funzione printBoard
 
-ho deciso di rendere il programma agnostico alla quantità di bombe e dimensione, che brutto fare il hard code. ho testato il programma con diverse configurazioni di dimensioni.
+ho deciso di rendere il programma agnostico alla quantità di bombe e dimensione, che brutto fare il hard code. ho testato il programma con diverse configurazioni di dimensioni. ho pure aggiunto un menù per cambiare la quantità di bombe e la dimensione della tavola
+
+
+ho aggiunto delle modalità extra, ovvero la "multibomba"
+normalmente ogni singola cella può contenere o 0 bombe o 1 bomba, ma ho implementato un'opzione per fare in modo tale che ogni singola cella può avere 0, 1 o 2 bombe (anche 3 se si vuole)
+questa modalità forza l'utente a pensare di più, perchè il significato dei numeri diventa ambiguo. normalmente, se un "3" affianca 3 celle, ogni singola cella ha una bomba; se invece si attiva la modalità "3 bombe", non è più garantito che ci sia una bomba in 3 celle diverse, potrebbe essere che ci siano 3 bombe in una singola cella o 2 bombe in una e 3 in un altra
 
 
 
@@ -53,6 +58,8 @@ le array associate in generale sono stupidi, o c'è un vero motivo per usarne un
 
 cosa fa main
 main non fa un cavolo in realtà, lo scope di int main si è gradualmente ridotto ed è tipo la quartultima funzione in termini di lunghezza
+oltre a non fare un cavolo, stampa la quantità delle bandiere rimanenti. perchè lo stampo qui anche se viene stampata in wordArt? visto che wordArt va in pausa per 125ms, si può sentire un piccolo delay tra quando si piazza una bandiera e quando il numero viene aggiornato. mettendolo subito dopo la chiamata a userInput (userInput ritorna il controllo a main se succede un evento tipo mettere una bandiera o cliccare una cella), posso garantire che (si, eccetto un piccolo delay per il mutex e per lo scope piuttosto alto tra quando il click viene eseguito e quando userInput ritorna) la quantità viene aggiornata entro 30ms
+
 main stampa certe sequenze di escape ANSI per abilitare il buffer alternativo e l'input mouse tramite resume();
 main inizializza le variabili e chiama le funzioni ed è lo "scheletro" del programma, l'unica cosa che fa è gestire il flow del programma in base a cosa viene ritornato da userInput (ovvero la funzione che ha usurpato main) e assicurarsi che il primo input è sicuro, spostando la prima cella ad un posto casuale se la prima cella	è una bomba 
 se userInput ritorna un valore che indica che l'utente ha messo una bandiera allora salta certi controlli, se userInput ritorna un valore che indica che l'utente ha aperto il menù impostazioni allora quando l'utente esce dal menù il programma (usando delete[]) libera il heap e alloca una nuova regione della ram utilizzando le dimensioni aggiornate
@@ -65,13 +72,15 @@ perchè main fa così poco? c'è stato un po' di scope creep e feature creep (la
 
 
 initBoard:
+ha diversi parametri, ovvero le dimensioni e la tavola in se, mineCount, gameMode e trueMineCount
 serve un modo per creare la tavola e piazzare le bombe, e ha come parametro trueMineCount
-inizializza la tavola e sceglie dove mettere le bombe, usando 2 coordinate prese a caso per posizionare la bomba. usa un generatore casuale per decidere se mettere 1, 2 o 3 bombe (in base al valore di gameMode). se gameMode >= 1 allora userà un generatore casuale per prendere un numero, poi il risultato di numero % (gameMode + 1) viene moltiplicato per dieci e aggiunto alla bomba che è stata appena piazzata (almeno, lo farà anche se gamemode == 0 ma il numero casuale generato sarà sempre 0)
-lo stesso succede se gameMode == 3 (lo stesso succede per qualsiasi valore di gameMode, però il resto del programma non risponde correttamente se un posto ha più di 3 bombe)
-ha diversi parametri, ovvero le dimensioni e la tavola in se, mineCount e gameMode
-tutte queste necessarie per inizializzare la tavola
-invece trueMineCount contiene la vera quantità di bombe che sono state posizionate, serve a wordArt per stampare la quantità di bandiere rimanenti
 anche se mineCount == 30, se gameMode != 0 allora non è garantito che la tavola abbia 30 bombe, trueMineCount contiene la quantità reale di bombe
+
+trueMineCount contiene la vera quantità di bombe che sono state posizionate, serve a wordArt per stampare la quantità di bandiere rimanenti
+se io voglio stampare la quantità di bandiere rimanenti da posizionare, devo in qualche modo trovare il vero numero delle bombe, initBoard automaticamente aggiorna trueMineCount durante l'inizializzazione della tavola
+
+inizializza la tavola e sceglie dove mettere le bombe, usando 2 coordinate prese a caso per posizionare la bomba. usa un generatore casuale per decidere se mettere 1, 2 o 3 bombe (in base al valore di gameMode). se gameMode >= 1 allora userà un generatore casuale per prendere un numero, poi il risultato di numero % (gameMode + 1) viene moltiplicato per dieci e aggiunto alla bomba che è stata appena piazzata (almeno, lo farà anche se gamemode == 0 ma il numero casuale generato sarà sempre 0) (il numero viene aggiunto a trueMineCount)
+lo stesso succede se gameMode == 3 (lo stesso succede per qualsiasi valore di gameMode, però il resto del programma non risponde correttamente se un posto ha più di 3 bombe)
 
 
 
@@ -96,6 +105,7 @@ cosa fa userInput (il vero main)
 userInput gestisce l'input dell'utente, facendo il parsing delle sequenza di escape ANSI per l'input mouse E tastiera
 perchè ho voluto aggiungere il supporto per il mouse? è un po' scomodo giocare a prato fiorito con la tastiera (immaginati invece selezionando manualmente le coordinate)
 ho impostato il any event tracking e il SGR (esc[?1003 e esc[?1006) a high, il primo per ricevere in input lo stato del mouse (click e non click) e altri eventi, il secondo per impostare le sequenze con un formato diverso (usando numeri leggibili tipo 12, 35 piuttosto che caratteri ASCII con il valore corrispondente che si fermano a 255).
+
 ha mooolti parametri
 x e y servono per indicare a main quale è la cella selezionata (in realtà piuttosto inutile, main usa x e y solo 2 volte tipo)
 board...
@@ -266,7 +276,10 @@ clickLogic calcola anche se il click sinistro è valido, se non è valido allora
 
 
 
-wordArt: è una funzione asincrona, e si occupa di 3 robe
+wordArt: è una funzione asincrona
+originariamente wordArt animava solo la titlebar ed esisteva puramente per motivi stilistici ma, essendo un while true asincrono, ho iniziato ad usarlo per altre robe (ovvero ripulire lo schermo, il timer e le bandiere rimanenti) perchè era molto comodo. userInput in realtà passa mooolto tempo aspettando l'input dell'utente; incaricare userInput (o altre funzioni nel 1o thread) non funzionerebbe perchè questi aggiornamenti vengono effettuati solo quando l'utente esegue qualche azione
+
+si occupa di 3 robe
 1. di animare la titlebar (motivi puramente estetici)
 2. di pulire lo schermo se lo schermo è stato ridimensionato tramite flushBuffer
 3. di mostrare la quantità di bandiere rimanenti e quanti secondi sono passati
@@ -274,13 +287,34 @@ ha 9 parametri, 5 di essi (board, width, height, mineCount e gameMode) utilizzat
 board non è un riferimento alla tavola, ma è un riferimento ad un riferimento alla tavola. perchè?
 
 quando il heap viene ripulito e una nuova regione del heap viene allocata, insieme ad esso ci sta anche un nuovo pointer. anche se il pointer della tavola viene cambiato, wordArt ha ancora il pointer della regione della memoria dove ci stAVA la tavola, risultando in un UAF.
-avendo un pointer (che è garantito di stare nella stessa parte della memoria, ovvero board2) che punta a board, posso recuperare il nuovo indirizzo di board tramite board2
+invece, se passo un pointer (che è garantito di stare nella stessa parte della memoria, ovvero board2) che punta all'indirizzo di memoria di board, è possibile recuperare l'indirizzo aggiornato della tavola
+
+esempio
+
+tavola -> 0x00f0
+wordArt punta a 0x00f0
+
+tavola viene aggiornata e 0x00f0 viene liberato
+tavola -> 0xf0f0
+wordArt punta a 0x00f0 !!!!!
+
+
+fix
+
+tavola (che si trova in 0x0ef0) -> 0x00f0
+tavola2 -> 0x0ef0
+wordArt punta a 0x0ef0 che a sua volta punta a 0x00f0
+
+tavola viene aggiornata e 0x00f0 viene liberato
+tavola (che si trova in 0x0ef0) -> 0xf0f0
+tavola2 -> 0x0ef0
+wordArt punta a 0x0ef0 che a sua volta punta a 0xf0f0
+
 
 trueMineCount viene utilizzato per stampare la quantità di bandiere rimanenti, e il motivo perchè uso trueMineCount è perchè se la gameMode non è 0, allora la quantità di bombe effettive sarà diverso da mineCount. trueMineCount contiene la vera quantità di bombe
 flagPlaced invece conta la quantità di bandiere piazzate (sempre usato dall'elemento che mostra la quantità di bandiere mancanti)
 invece timer è... un timer. è un riferimento a una variabile in main perchè se una nuova partita viene iniziata allora in qualche modo devo resettare sto timer
 
-originariamente wordArt animava solo la titlebar ed esisteva puramente per motivi stilistici ma, essendo un while true asincrono, ho iniziato ad usarlo per altre robe (ovvero ripulire lo schermo, il timer e le bandiere rimanenti) perchè era molto comodo. userInput in realtà passa mooolto tempo aspettando l'input dell'utente; incaricare userInput (o altre funzioni nel 1o thread) non funzionerebbe perchè questi aggiornamenti vengono effettuati solo quando l'utente esegue qualche azione
 
 wordArt tiene una copia delle dimensioni, prende le nuove dimensioni del terminale e controlla se sono uguali o meno rispetto alla copia: se sono diverse allora chiama flushBuffer e aggiorna la copia delle dimensioni con le nuove dimensioni
 
@@ -303,6 +337,8 @@ printSettingsMenu:
 stampa il menù delle impostazioni (prima stampando il background e poi gli elementi) e ha 5 parametri
 update: un counter che indica alla funzione quale opzione l'utente ha selezionato (evidenziando la casella in verde chiaro se la casella non è cliccata, verde scuro se è cliccata)
 gli altri 4 parametri (width, height, mineCount e gameMode) servono per stampare all'utente le impostazioni attuali
+
+se però i 4 parametri (width, height, mineCount e gameMode) sono fuori dal range ammesso, printSettingsMenu automaticamente rimette i valori nei range ammessi prima di stampare i numeri
 
 
 

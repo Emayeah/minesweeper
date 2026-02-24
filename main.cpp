@@ -79,13 +79,23 @@ int main() {
 	int blockOutput = 0;
 	int timer = 0;
 	int firstInputFlag;
+	int termWidth;
+	int termHeight;
+	struct winsize w;											// gemini
 	//wordArt();
 	std::future<void> idkman = std::async(std::launch::async, wordArt, board2, &width, &height, &mineCount, &gameMode, &win2, &trueMineCount, &flagPlaced, &timer); // gemini aided
 	//std::thread printTitle(wordArt);							// gemini
 	//printTitle.detach();										// gemini
 	do {
 		win = userInput(&x, &y, board, blockOutput, 0, &width, &height, &mineCount, &gameMode, &flagPlaced); // win == 1 that means you lose because it's the game that wins against the player lol
+		ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);						// gemini
+		termWidth = w.ws_col;									 	// gemini aided
 		blockPrintMutex.unlock();
+		cout << "\e[1m";				// bold
+		cout << "\e[48;5;15m";
+		cout << "\e[38;5;16m";
+		cout << "\e[0;" << termWidth / 4 << "H" << trueMineCount - flagPlaced;		// why print here if it's printed in wordArt? to avoid the very small delay
+		cout << "\e[0;0m";
 		if (win == 6) {
 			win2 = 6;
 			blockOutput = 1;
@@ -156,7 +166,7 @@ int main() {
 			}
 			board[y * width + x] = adjacent;
 			if (adjacent == 0) {
-				expandBoard(x, y, board, width, height, gameMode, &flagPlaced);
+				expandBoard(x, y, board, width, height, &flagPlaced);
 			}
 		}
 		flag = 2;
@@ -170,9 +180,6 @@ int main() {
 				}
 			}
 		}
-		int termWidth;
-		int termHeight;
-		struct winsize w;										// gemini
 		ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);					// gemini
 		termWidth = w.ws_col;									// gemini aided
 		termHeight = w.ws_row;									// gemini aided	
@@ -338,7 +345,6 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 			}
 			else if (board[i * width + j] == 30) {
 				cout << "⬛";
-				board[i * width + j] = 0;
 			}
 			else if (board[i * width + j] / 10 == 8) {
 				if (gameMode == 0) {
@@ -384,7 +390,6 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 							cout << "\e[38;5;245m";
 							break;
 					}
-					board[i * width + j] += 100;
 				}
 				else if (board[i * width + j] > 200) {
 					board[i * width + j] -= 200;
@@ -413,17 +418,20 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 						case 8:
 							cout << "\e[48;5;245m";				// gray
 							break;
+						default:
+							cout << "\e[48;5;15m";
+							break;
 						/*
 						 * i'll need to add color codes for multiflag :)
 						 */
 					}
-					board[i * width + j] += 100;
 				}
-				cout << board[i * width + j] - 100;
-				if (board[i * width + j] - 100 < 10) {
+				cout << board[i * width + j];
+				if (board[i * width + j] < 10) {
 					cout << " ";
 				}
 				cout << "\e[0;0m";
+				board[i * width + j] += 100;
 //				cout << board[i * width + j] << " ";
 			}
 		}
@@ -441,7 +449,8 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 
 int userInput(int* x, int* y, int board[], int lose, int openSettings, int *width, int *height, int *mineCount, int *gameMode, int *flagPlaced) {
 	char flag;
-	int temp;
+	int valBak;
+	int *cellPos;
 	int validChord;
 	char input;
 	int tempVal;
@@ -458,34 +467,28 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 		termWidth = w.ws_col;										// i won't have to use gemini because i learned how to do so
 		termHeight = w.ws_row;
 		if (lose == 0) {
-			temp = board[*y * *width + *x];
-			if (board[*y * *width + *x] > 100) {
-				board[*y * *width + *x] += 100;
-				printBoard(board, 0, *width, *height, *gameMode);
+			valBak = board[*y * *width + *x];
+			cellPos = &board[*y * *width + *x];
+			if (valBak > 100) {
+				*cellPos += 100;
 			}
-			else if (board[*y * *width + *x] % 10 >= 2 && board[*y * *width + *x] % 10 <= 4) {
-				board[*y * *width + *x] = 80 + (temp % 10);
-				printBoard(board, 0, *width, *height, *gameMode);
-				board[*y * *width + *x] = temp;
+			else if (valBak % 10 >= 2 && valBak % 10 <= 4) {
+				*cellPos = 80 + (valBak % 10);
 			}
-			else if (board[*y * *width + *x] == 0) {
-				board[*y * *width + *x] = 30;
-				printBoard(board, 0, *width, *height, *gameMode);
+			else if (valBak == 0) {
+				*cellPos = 30;
 			}
 			else {
 				if (pressed == 1) {
-					board[*y * *width + *x] = 20;
-					printBoard(board, 0, *width, *height, *gameMode);
-					board[*y * *width + *x] = temp;
+					*cellPos = 20;
 				}
 				else if (pressed == 0) {
-					board[*y * *width + *x] = 50;
-					printBoard(board, 0, *width, *height, *gameMode);
-					board[*y * *width + *x] = temp;
+					*cellPos = 50;
 					pressed = 1;
 				}
 			}
-
+			printBoard(board, 0, *width, *height, *gameMode);
+			*cellPos = valBak;
 		}
 		cin >> input;
 		if (input == '\e') {
@@ -900,23 +903,24 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 }
 
 int calcAdjacent(int x, int y, int board[], int mode, int width, int height) {
-	int count = 0, tempCount, temp;
+	int count = 0, tempCount;
+	int* temp;
 	for (int i = -1; i < 2; i++) {
 		for (int j = -1; j < 2; j++) {
 			if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) { // check for out of bounds
-				temp = board[(y + j) * width + (x + i)];
-				if (temp < 100) {		// to avoid checking numbers
-					if (mode == 0 && temp / 10 >= 5 && temp / 10 <= 7) {// this is to check the amount of mines nearby (to place a number)
-						tempCount = (temp / 10 - 4);
+				temp = &board[(y + j) * width + (x + i)];
+				if (*temp < 100) {		// to avoid checking numbers
+					if (mode == 0 && *temp / 10 >= 5 && *temp / 10 <= 7) {// this is to check the amount of mines nearby (to place a number)
+						tempCount = (*temp / 10 - 4);
 						count += tempCount;
 					}
-					else if (mode == 1 && temp == 0) {								// this is to check if there's a nearby blank square, used by expandBoard
+					else if (mode == 1 && *temp == 0) {								// this is to check if there's a nearby blank square, used by expandBoard
 						return 1; // i know, i know, jacopini... va bene che compiler optimization tolgono le altre condizioni ma questo è più semplice da leggere
 					}
-					else if (mode == 2 && temp % 10 >= 2 && temp % 10 <= 5) {		// this is used to check if there's the right amount of flags where you're chording
-						count += board[(y + j) * width + (x + i)] % 10 - 1;
+					else if (mode == 2 && *temp % 10 >= 2 && *temp % 10 <= 5) {		// this is used to check if there's the right amount of flags where you're chording
+						count += *temp % 10 - 1;
 					}
-					else if (mode == 3 && temp % 10 == 1) {							// if you're chording and there's an unflagged mine nearby then you lose
+					else if (mode == 3 && *temp % 10 == 1) {							// if you're chording and there's an unflagged mine nearby then you lose
 						count++;
 					}
 				}
@@ -926,37 +930,34 @@ int calcAdjacent(int x, int y, int board[], int mode, int width, int height) {
 	return count;
 }
 
-void expandBoard(int x, int y, int board[], int width, int height, int gameMode, int *flagPlaced) {	
-	int flag, count = 1, adjacent, temp, temp2;
+void expandBoard(int x, int y, int board[], int width, int height, int *flagPlaced) {	
+	int flag, count = 1, adjacent, temp;
+	int* temp2;
 	char asdf;
 	do {
 		flag = 0;
 		for (int i = -count; i <= count; i++) {
 			for (int j = -count; j <= count; j++) {
 				if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) { // check for out of bounds blah blah
-					temp2 = board[(y + j) * width + (x + i)];
+					temp2 = &board[(y + j) * width + (x + i)];
 					adjacent = calcAdjacent(x + i, y + j, board, 1, width, height);
 					if (adjacent == 1) {
-						if (temp2 == 10 || temp2 / 10 == 4) {				// if you flag a white spot, that flagged spot is overridden when board expansion
+						if (*temp2 == 10 || *temp2 / 10 == 4) {				// if you flag a white spot, that flagged spot is overridden when board expansion
 							flag = 1;
 						}
-						if (temp2 < 100 && !(temp2 / 10 >= 5 && temp2 / 10 <= 7)) {
+						if (*temp2 < 100 && !(*temp2 / 10 >= 5 && *temp2 / 10 <= 7)) {
 							temp = calcAdjacent(x + i, y + j, board, 0, width, height);
 							if (temp != 0) {
 								temp += 100;
 							}
 							if (board[(y + j) * width + (x + i)] / 10 == 4) {
-								*flagPlaced -= board[(y + j) * width + (x + i)] % 10 - 1;
+								*flagPlaced -= *temp2 % 10 - 1;
 							}
-							board[(y + j) * width + (x + i)] = temp;
+							*temp2 = temp;
 						}
 					}
 				}
 			}
-		}
-		if (debugBit == 1) {
-			printBoard(board, 0, width, height, gameMode);
-			cin >> asdf;
 		}
 		count++;
 	} while (flag == 1);
@@ -964,9 +965,9 @@ void expandBoard(int x, int y, int board[], int width, int height, int gameMode,
 
 void cleanup() {
 	consoleMutex.lock();
-	cout << "\e[?1003l\e[?1006l" << flush;
-	cout << "\e[?1049l" << flush;
-	cout << "\e[?25h" << flush;
+	cout << "\e[?1003l\e[?1006l";
+	cout << "\e[?1049l";
+	cout << "\e[?25h";
 	disable_raw_mode();
 	cout << "\e[A" << flush;
 	consoleMutex.unlock();
@@ -974,9 +975,9 @@ void cleanup() {
 
 void resume() {
 	consoleMutex.lock();
-	cout << "\e[?1003h\e[?1006h" << flush;
-	cout << "\e[?1049h" << flush;
-	cout << "\e[?25l" << flush;
+	cout << "\e[?1003h\e[?1006h";
+	cout << "\e[?1049h";
+	cout << "\e[?25l";
 	cout << "\e[H";				// set cursor to home position
 	cout << "\e[48;5;15m";
 	cout << "\e[38;5;16m";
@@ -1008,28 +1009,30 @@ int getMouseVal(int *pressed) {
 }
 
 int clickLogic(int* x, int* y, int board[], int flag, int width, int height, int gameMode, int *flagPlaced) {
-	int validChord, temp, temp2;
-	temp2 = board[*y * width + *x];
+	int validChord;
+	int *temp2;
+	temp2 = &board[*y * width + *x];
 	if (flag == 0) {														// are you trying to place a flag? flag = 0 -> no (either that is chording or normal clicking), flag = 1 -> flagging
-		if (temp2 != 0 && temp2 < 100) {									// are you trying to chord? if you're trying to chord then temp2 would be > 100
-			if (temp2 % 10 == 1 && temp2 / 10 >= 5 && temp2 / 10 <= 7) {			
+		if (*temp2 != 0 && *temp2 < 100) {									// are you trying to chord? if you're trying to chord then temp2 would be > 100
+			if (*temp2 % 10 == 1 && *temp2 / 10 >= 5 && *temp2 / 10 <= 7) {			
 				return 1;													// whoops, you just clicked on a bomb!
 			}
-			else if (temp2 % 10 >= 2 && temp % 10 <= 4) {
+			else if (*temp2 % 10 >= 2 && *temp2 % 10 <= 4) {
 				return 3;													// do nothing, you clicked on a flag
 			}
 			return 0;
 		}
-		else if (temp2 > 100 && temp2 <= 200) {								// chording!
+		else if (*temp2 > 100 && *temp2 <= 200) {								// chording!
 			validChord = calcAdjacent(*x, *y, board, 2, width, height);
 			if (validChord != 0) {
 				validChord += 100;
 			}
-			if (validChord == temp2) {
+			if (validChord == *temp2) {
 				validChord = calcAdjacent(*x, *y, board, 3, width, height);
 				if (validChord != 0) {
 					return 1;			// you chorded near an unflagged mine!
 				}
+				int temp;
 				for (int i = -1; i < 2; i++) {
 					for (int j = -1; j < 2; j++) {
 						if (*x + i >= 0 && *x + i < width && *y + j >= 0 && *y + j < height) {
@@ -1039,7 +1042,7 @@ int clickLogic(int* x, int* y, int board[], int flag, int width, int height, int
 									temp += 100;
 								}
 								board[(*y + j) * width + (*x + i)] = temp; 	
-								expandBoard(*x + i, *y + j, board, width, height, gameMode, flagPlaced);
+								expandBoard(*x + i, *y + j, board, width, height, flagPlaced);
 							} 
 						}
 					}
@@ -1048,25 +1051,23 @@ int clickLogic(int* x, int* y, int board[], int flag, int width, int height, int
 			return 0;
 		}
 	}
-	else if (flag == 1 && temp2 < 100) {							// flagging
-		if (temp2 / 10 >= 4 && temp2 / 10 <= 7) {
-			board[*y * width + *x] += 1;
-			if (board[*y * width + *x] % 10 > gameMode + 2) {		// if you try to add 1 flag while you're at the max, that means you're trying to deflag
-				if (board[*y * width + *x] / 10 >= 5 && board[*y * width + *x] / 10 <= 7) {
-					board[*y * width + *x] /= 10;
-					board[*y * width + *x] *= 10;
-					board[*y * width + *x] += 1;
-					return 8;
+	else if (flag == 1 && *temp2 < 100) {							// flagging
+		if (*temp2 / 10 >= 4 && *temp2 / 10 <= 7) {
+			*temp2 += 1;
+			if (*temp2 % 10 > gameMode + 2) {		// if you try to add 1 flag while you're at the max, that means you're trying to deflag
+				if (*temp2 / 10 >= 5 && *temp2 / 10 <= 7) {
+					*temp2 /= 10;
+					*temp2 *= 10;
+					*temp2 += 1;
 				}
-				else if (board[*y * width + *x] / 10 == 4) {
-					board[*y * width + *x] = 10;
-					return 8;
+				else if (*temp2 / 10 == 4) {
+					*temp2 = 10;
 				}
 			}
 		}
 		else {
-			if (board[*y * width + *x] == 10) {
-				board[*y * width + *x] = 42;
+			if (*temp2 == 10) {
+				*temp2 = 42;
 			}
 			else {
 				return 0;											// just in case
@@ -1104,8 +1105,7 @@ void wordArt(int** board, int *width, int *height, int *mineCount, int *gameMode
 		for (int i = 0; i < termWidth - 9; i++) {
 			cout << " ";
 		}
-		cout << '\r';
-		cout << "\e[" << (termWidth / 2) - (11 / 2)	/* 11 is the length of the word "minesweeper" */ << "C";
+		cout << "\e[0;" << (termWidth / 2) - (11 / 2)	/* 11 is the length of the word "minesweeper" */ << "H";
 		cout << "\e[1m\e[38;5;16m";
 		if (Art == 11 || Art == 13 || Art == 26 || Art == 28) {
 			cout << "           ";					// that's 11 spaces
@@ -1113,7 +1113,7 @@ void wordArt(int** board, int *width, int *height, int *mineCount, int *gameMode
 		else {
 			cout << word;
 		}
-		cout << "\e[0;" << termWidth / 4 << "H" << *trueMineCount - *flagPlaced;
+		cout << "\e[0;" << termWidth / 4 << "H" << *trueMineCount - *flagPlaced; // why is it also printed here if it's printed in main? to avoid displacements if the terminal is resized
 		cout << "\e[0;" << termWidth - (termWidth / 4) << "H" << *timer;
 		cout << "\e[0;0m\e[22m\r" << endl;
 		consoleMutex.unlock();
@@ -1272,7 +1272,7 @@ void printSettingsMenu(int update, int *width, int *height, int *mineCount, int 
 				*mineCount = 1;
 			}
 			if (i == 1) {
-				if (j == 0) {
+				if (j == 0) {			// all of this is way more complex than it should be
 					tempNum = *width;
 					divCount = 0;
 					do {

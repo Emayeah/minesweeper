@@ -364,67 +364,43 @@ void printBoard(int board[], int lose, int width, int height, int gameMode) {
 			else {
 				if ((board[i * width + j] > 100 && board[i * width + j] <= 200)) {
 					board[i * width + j] -= 100;
-					switch (board[i * width + j]) {			// print number with colors (non selected)
-						case 1:
-							cout << "\e[0;34m";
-							break;
-						case 2:
-							cout << "\e[0;32m";
-							break;
-						case 3:
-							cout << "\e[38;5;196m";
-							break;
-						case 4:
-							cout << "\e[38;5;21m";
-							break;
-						case 5:
-							cout << "\e[38;5;88m";
-							break;
-						case 6:
-							cout << "\e[0;36m";
-							break;
-						case 7:
-							cout << "\e[38;5;240m";
-							break;
-						case 8:
-							cout << "\e[38;5;245m";
-							break;
-					}
+					cout << "\e[3";
 				}
 				else if (board[i * width + j] > 200) {
 					board[i * width + j] -= 200;
-					switch (board[i * width + j]) {				// print with colors, filled in colors for selected (background)
-						case 1:
-							cout << "\e[0;44m";					// light blue
-							break;
-						case 2:
-							cout << "\e[0;42m";					// green
-							break;
-						case 3:
-							cout << "\e[48;5;196m";				// red
-							break;
-						case 4:
-							cout << "\e[48;5;21m";				// blue, deep blue on the purplish side
-							break;
-						case 5:
-							cout << "\e[48;5;88m";				// maroon red
-							break;
-						case 6:
-							cout << "\e[0;46m";					// light blue
-							break;
-						case 7:
-							cout << "\e[48;5;240m";				// black			
-							break;
-						case 8:
-							cout << "\e[48;5;245m";				// gray
-							break;
-						default:
-							cout << "\e[48;5;15m";
-							break;
-						/*
-						 * i'll need to add color codes for multiflag :)
-						 */
+					if (board[i * width + j] >= 10) {
+						cout << "\e[38;5;232m";					// white on white is unreadable, but for some reason setting the color to 16m (pitch black) doesn't work
 					}
+					cout << "\e[4";
+				}
+				switch (board[i * width + j]) {				// print with colors, filled in colors for selected (background)
+					case 1:	
+						cout << "8;5;4m";					// light blue
+						break;
+					case 2:
+						cout << "8;5;2m";					// green
+						break;
+					case 3:
+						cout << "8;5;196m";				// red
+						break;
+					case 4:
+						cout << "8;5;21m";				// blue, deep blue on the purplish side
+						break;
+					case 5:
+						cout << "8;5;88m";				// maroon red
+						break;
+					case 6:
+						cout << "8;5;6m";					// light blue
+						break;
+					case 7:
+						cout << "8;5;240m";				// black			
+						break;
+					case 8:
+						cout << "8;5;245m";				// gray
+						break;
+					default:
+						cout << "8;5;15m";
+						break;
 				}
 				cout << board[i * width + j];
 				if (board[i * width + j] < 10) {
@@ -460,6 +436,7 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 	int logicTemp;
 	int termWidth;
 	int termHeight;
+	int printId;
 	struct winsize w;												// disclosing the same lines as gemini is very redundant
 	do {
 		ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);						// just know that the code that gets the terminal size is not done by me
@@ -569,48 +546,38 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 						mouseValy = getMouseVal(&pressed);
 						mouseValy--; // for some reason the menu settings does not want to play ball unless i do this jankery
 						if (openSettings == 1) {
+							printId = 0;
 							if (mouseValy - (termHeight / 2 - 15 / 2) == 2)  {
 								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
-									printSettingsMenu(1, width, height, mineCount, gameMode);
+									printId = 1;
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 16 && mouseValx - (termWidth / 2 - 36 / 2) < 19) {
-									printSettingsMenu(2, width, height, mineCount, gameMode);
+									printId = 2;
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
-									printSettingsMenu(3, width, height, mineCount, gameMode);
-								}
-								else {
-									printSettingsMenu(0, width, height, mineCount, gameMode);
+									printId = 3;
 								}
 							}
 							else if (mouseValy - (termHeight / 2 - 15 / 2) == 10) {
 								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
-									printSettingsMenu(7, width, height, mineCount, gameMode);
+									printId = 7;
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 16 && mouseValx - (termWidth / 2 - 36 / 2) < 19) {
-									printSettingsMenu(8, width, height, mineCount, gameMode);
+									printId = 8;
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
-									printSettingsMenu(9, width, height, mineCount, gameMode);
+									printId = 9;
 								}
-								else {
-									printSettingsMenu(0, width, height, mineCount, gameMode);
-								}						
 							}
 							else if (mouseValy - (termHeight / 2 - 15 / 2) == 13) {
 								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
-									printSettingsMenu(21, width, height, mineCount, gameMode);
+									printId = 21;
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
-									printSettingsMenu(22, width, height, mineCount, gameMode);
+									printId = 22;
 								}
-								else {
-									printSettingsMenu(0, width, height, mineCount, gameMode);
-								}						
 							}
-							else {
-								printSettingsMenu(0, width, height, mineCount, gameMode);
-							}
+							printSettingsMenu(printId, width, height, mineCount, gameMode);
 						}
 						mouseValy++; // i mean i guess it does the trick
 						if (termHeight % 2 != 0) {
@@ -658,120 +625,110 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 						}
 						mouseValy--;
 						if (openSettings == 1) {
+							printId = 0;
 							if (mouseValy - (termHeight / 2 - 15 / 2) == 2)  {
 								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
 									if (pressed == 0) {
-										printSettingsMenu(11, width, height, mineCount, gameMode);
+										printId = 11;
 									}
 									else {
 										if (tempVal == 16) {
 											*width += 9;
 										}
 										*width += 1;
-										printSettingsMenu(1, width, height, mineCount, gameMode);
+										printId = 1;
 									}
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 16 && mouseValx - (termWidth / 2 - 36 / 2) < 19) {
 									if (pressed == 0) {
-										printSettingsMenu(12, width, height, mineCount, gameMode);
+										printId = 12;
 									}
 									else {
 										if (tempVal == 16) {
 											*height += 9;
 										}
 										*height += 1;
-										printSettingsMenu(2, width, height, mineCount, gameMode);
+										printId = 2;
 									}
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
 									if (pressed == 0) {
-										printSettingsMenu(13, width, height, mineCount, gameMode);
+										printId = 13;
 									}
 									else {
 										if (tempVal == 16) {
 											*mineCount += 9;
 										}
 										*mineCount += 1;
-										printSettingsMenu(3, width, height, mineCount, gameMode);
+										printId = 3;
 									}
-								}
-								else {
-									printSettingsMenu(0, width, height, mineCount, gameMode);
 								}
 							}
 							else if (mouseValy - (termHeight / 2 - 15 / 2) == 10) {
 								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
 									if (pressed == 0) {
-										printSettingsMenu(17, width, height, mineCount, gameMode);
+										printId = 17;
 									}
 									else {
 										if (tempVal == 16) {
 											*width -= 9;
 										}
 											*width -= 1;
-										printSettingsMenu(7, width, height, mineCount, gameMode);
+										printId = 7;
 									}
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 16 && mouseValx - (termWidth / 2 - 36 / 2) < 19) {
 									if (pressed == 0) {
-										printSettingsMenu(18, width, height, mineCount, gameMode);
+										printId = 18;
 									}
 									else {
 										if (tempVal == 16) {
 											*height -= 9;
 										}
 										*height -= 1;
-										printSettingsMenu(8, width, height, mineCount, gameMode);
+										printId = 8;
 									}
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
 									if (pressed == 0) {
-										printSettingsMenu(19, width, height, mineCount, gameMode);
+										printId = 19;
 									}
 									else {
 										if (tempVal == 16) {
 											*mineCount -= 9;
 										}
 										*mineCount -= 1;
-										printSettingsMenu(9, width, height, mineCount, gameMode);
+										printId = 9;
 									}
 								}
-								else {
-									printSettingsMenu(0, width, height, mineCount, gameMode);
-								}						
 							}
 							else if (mouseValy - (termHeight / 2 - 15 / 2) == 13) {
 								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
 									if (pressed == 0) {
-										printSettingsMenu(31, width, height, mineCount, gameMode);
+										printId = 31;
 									}
 									else {
 										if (tempVal == 16) {
 											*gameMode -= 9;
 										}
 										*gameMode -= 1;
-										printSettingsMenu(21, width, height, mineCount, gameMode);
+										printId = 21;
 									}
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
 									if (pressed == 0) {
-										printSettingsMenu(32, width, height, mineCount, gameMode);
+										printId = 32;
 									}
 									else {
 										if (tempVal == 16) {
 											*gameMode += 9;
 										}
 										*gameMode += 1;
-										printSettingsMenu(22, width, height, mineCount, gameMode);
+										printId = 22;
 									}
 								}
-								else {
-									printSettingsMenu(0, width, height, mineCount, gameMode);
-								}						
 							}
-							else {
-								printSettingsMenu(0, width, height, mineCount, gameMode);
-							}
+							printSettingsMenu(printId, width, height, mineCount, gameMode);
 						}
 						mouseValy++;
 						if (termHeight % 2 != 0) {

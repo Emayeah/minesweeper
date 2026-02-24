@@ -52,7 +52,7 @@ le array associate in generale sono stupidi, o c'è un vero motivo per usarne un
 
 
 cosa fa main
-main non fa un cavolo in realtà, lo scope di int main si è gradualmente ridotto e ironicamente è tipo la quartultima funzione in termini di lunghezza
+main non fa un cavolo in realtà, lo scope di int main si è gradualmente ridotto ed è tipo la quartultima funzione in termini di lunghezza
 main stampa certe sequenze di escape ANSI per abilitare il buffer alternativo e l'input mouse tramite resume();
 main inizializza le variabili e chiama le funzioni ed è lo "scheletro" del programma, l'unica cosa che fa è gestire il flow del programma in base a cosa viene ritornato da userInput (ovvero la funzione che ha usurpato main) e assicurarsi che il primo input è sicuro, spostando la prima cella ad un posto casuale se la prima cella	è una bomba 
 se userInput ritorna un valore che indica che l'utente ha messo una bandiera allora salta certi controlli, se userInput ritorna un valore che indica che l'utente ha aperto il menù impostazioni allora quando l'utente esce dal menù il programma (usando delete[]) libera il heap e alloca una nuova regione della ram utilizzando le dimensioni aggiornate
@@ -64,7 +64,9 @@ perchè main fa così poco? c'è stato un po' di scope creep e feature creep (la
 
 
 
-initBoard: inizializza la tavola e sceglie dove mettere le bombe, usando 2 coordinate prese a caso per posizionare la bomba. usa un generatore casuale per decidere se mettere 1, 2 o 3 bombe (in base al valore di gameMode). se gameMode >= 1 allora userà un generatore casuale per prendere un numero, poi il risultato di numero % (gameMode + 1) viene moltiplicato per dieci e aggiunto alla bomba che è stata appena piazzata (almeno, lo farà anche se gamemode == 0 ma il numero casuale generato sarà sempre 0)
+initBoard:
+serve un modo per creare la tavola e piazzare le bombe
+inizializza la tavola e sceglie dove mettere le bombe, usando 2 coordinate prese a caso per posizionare la bomba. usa un generatore casuale per decidere se mettere 1, 2 o 3 bombe (in base al valore di gameMode). se gameMode >= 1 allora userà un generatore casuale per prendere un numero, poi il risultato di numero % (gameMode + 1) viene moltiplicato per dieci e aggiunto alla bomba che è stata appena piazzata (almeno, lo farà anche se gamemode == 0 ma il numero casuale generato sarà sempre 0)
 lo stesso succede se gameMode == 3 (lo stesso succede per qualsiasi valore di gameMode, però il resto del programma non risponde correttamente se un posto ha più di 3 bombe)
 ha diversi parametri, ovvero le dimensioni e la tavola in se, mineCount e gameMode
 tutte queste necessarie per inizializzare la tavola
@@ -72,7 +74,7 @@ invece trueMineCount contiene la vera quantità di bombe che sono state posizion
 
 
 
-printBoard: stampa la tavola
+printBoard: stampa la tavola, altrimenti come fa l'utente a sapere cosa sta facendo?
 ha diversi parametri, width, height e board (altrimenti cosa stampi), lose e gameMode
 se lose == 1 allora le bombe (anche coperte) vengono stampate in ross e stampa le bandiere posizionate in posti errati in colori diversi, indicando l'utente che ha appena perso cosa ha sbagliato
 gameMode invece serve per modificare la stampa in caso la modalità selezionata non è quella standard
@@ -158,7 +160,10 @@ dopo aver finito tutto questo, la funzione ritorna ad aspettare per dell'input
 
 
 
-calcAdjacent: calcola la quantità di un determinato tipo di casella attorno ad una casella
+calcAdjacent:
+se l'utente clicca su una cella, bisogna in qualche modo capire quante bombe sono vicine a questa cella per poi piazzare un numero (non calcola solo bombe)
+
+calcola la quantità di un determinato tipo di casella attorno ad una casella
 ha divesi parametri, x, y per la posizione della cella e board... mode è il selettore modalità e width e height invece servono per evitare sbordamenti (se io clicco una casella attaccato ai bordi della tavola)
 
 calcAdjacent ha pure un selettore modalità, 0 calcola le bombe (coperte con o senza flag), utilizzato per calcolare il numero che deve essere posizionato
@@ -171,6 +176,8 @@ ho voluto usare un selettore della modalità piuttosto che separare la funzione 
 
 
 expandBoard
+se l'utente clicca su una casella con valore 0 allora bisogna in qualche modo fare questa reazione a catena di zeri
+
 vengono passati x, y, board, width height, gameMode e flagPlaced
 x e y indicano la casella che è stata cliccata, e board... non credo io debba spiegarlo
 width e height sono i limiti della tavola per evitare eventuali sbordamenti
@@ -207,7 +214,8 @@ le 2 funzioni sono usati dai 2 handler e da main, ho spostato i due in funzioni 
 
 
 getMouseVal invece è la funzione che si occupa del parsing dell'input del mouse
-l'input del mouse è strutturato così: esc[<z;x;ym
+l'input del mouse è strutturato così: esc[<z;x;ym; devo in qualche modo separare i 3 numeri (e la m)
+
 si ferma quando incontra un carattere che non è un numero (ascii non compreso tra 48 e 57)
 però se incontra una M o una m allora pressed (l'unico parametro, utilizzato come un 2o return) viene modificato
 M vuol dire che l'utente non ha premuto il tasto o lo ha lasciato andare (dipende dal 1o numero, ovvero 'z')
@@ -241,13 +249,12 @@ se invece flag == 1 allora l'utente sta cercando di piazzare una bandiera
 se la posizione della bandiera è valida (non puoi mettere bandiere su caselle scoperte etc), allora clickLogic controlla se la bandiera deve essere tolta o aggiunta (incrementando la quantità di bandiere se il limite di bandiere (gestito da gameMode) non è stato raggiunto, altrimenti rimuovendo le bandiere)
 clickLogic ritorna un valore diverso da 0 se una bandiera è stata correttamente piazzata / rimossa, e userInput ritornerà a main lo stesso valore che è stato ritornato da clickLogic. se il valore ritornato da clickLogic è uguale a 0, allora userInput continua
 
-
 clickLogic calcola anche se il click sinistro è valido, se non è valido allora al posto di ritornare 0 ritorna 3
 
 
 
 wordArt: è una funzione asincrona, e si occupa di 3 robe
-1. di animare la titlebar
+1. di animare la titlebar (motivi puramente estetici)
 2. di pulire lo schermo se lo schermo è stato ridimensionato tramite flushBuffer
 3. di mostrare la quantità di bandiere rimanenti e quanti secondi sono passati
 ha 9 parametri, 5 di essi (board, width, height, mineCount e gameMode) utilizzati da flushBuffer quando deve stampare la tavola
@@ -260,10 +267,17 @@ trueMineCount viene utilizzato per stampare la quantità di bandiere rimanenti, 
 flagPlaced invece conta la quantità di bandiere piazzate (sempre usato dall'elemento che mostra la quantità di bandiere mancanti)
 invece timer è... un timer. è un riferimento a una variabile in main perchè se una nuova partita viene iniziata allora in qualche modo devo resettare sto timer
 
+originariamente wordArt animava solo la titlebar ed esisteva puramente per motivi stilistici ma, essendo un while true asincrono, ho iniziato ad usarlo per altre robe (ovvero ripulire lo schermo, il timer e le bandiere rimanenti) perchè era molto comodo. userInput in realtà passa mooolto tempo aspettando l'input dell'utente; incaricare userInput (o altre funzioni nel 1o thread) non funzionerebbe perchè questi aggiornamenti vengono effettuati solo quando l'utente esegue qualche azione
+
+wordArt tiene una copia delle dimensioni, prende le nuove dimensioni del terminale e controlla se sono uguali o meno rispetto alla copia: se sono diverse allora chiama flushBuffer e aggiorna la copia delle dimensioni con le nuove dimensioni
+
+wordArt ha un sleep di 125ms per evitare di saturare completamente il processore (se non fosse per il sleep l'animazione non sarebbe più un'animazione). originariamente aveva uno sleep di 1 secondo, ma lo ho ridotto perchè avere un intervallo di tempo di massimo 1 secondo tra quando l'utente ridimensiona il terminale e quando wordArt risponde aggiornando lo schermo era un po' troppo. però, per mantenere la stessa velocità dell'animazione, uso un counter che viene incrementato con ogni singolo ciclo e se supera il numero 8 (125ms * 8 = 1s) allora incrementa il counter "Art" (ovvero il counter che gestisce lo stato dell'animazione)
 
 
-flushBuffer si occupa di ripulire lo schermo e ha diversi parametri
-i parametri (board, width, height, mineCount, gameMode) sono necessari per chiamare printBoard dopo avere ripulito lo schermo, altrimenti la tavola scompare e riappare solo quando l'utente esegue un'azione
+
+flushBuffer si occupa di ripulire lo schermo: quando si ridimensiona il terminale, le coordinate della tavola cambiano (per tenerla centrata allo schermo); la tavola che è stata stampata nelle coordinate vecchie persiste, risultando in una tavola "fantasma" dislocata dal centro
+flushBuffer rimuove questa tavola fantasma
+ha diversi parametri, board, width, height, mineCount, gameMode sono necessari per chiamare printBoard dopo avere ripulito lo schermo, altrimenti la tavola scompare e riappare solo quando l'utente esegue un'azione
 mentre win viene utilizzato per capire se l'utente è nelle impostazioni, disabilitando la stampa della tavola se win == 6 (l'utente è nelle impostazioni)
 width e height vengono modificati immediatamente al click e le modifiche sono effettive anche se l'utente non ha premuto back per uscire dal menu. il heap non è ancora stato ridimensionato, ma i parametri che ne controllano la dimensione si, risultando in lettura di regioni di memoria invalide e/o SIGSEGV (segmentation fault). non posso garantire la sicurezza della stampa, quindi piuttosto di riscrivere completamente parte della logica, disabilito la stampa
 

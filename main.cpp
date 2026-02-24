@@ -4,7 +4,7 @@
 #include "rawmode.h"
 //#include <termios.h>
 //#include <unistd.h>
-#include <csignal>			// throwing sigshort if ctrl-c, sigtstp for ctrl-z
+#include <csignal>			// throwing sigint if ctrl-c, sigtstp for ctrl-z
 #include <sys/ioctl.h>		// for terminal size
 #include <future>			// for async
 #include <mutex>			// race condition! i was experimenting with the async stuff but of course i got a race condition

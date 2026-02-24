@@ -1208,10 +1208,10 @@ void printSettingsMenu(int update, int *width, int *height, int *mineCount, int 
 	cout << "\e[48;5;15m";
 	cout << "\e[38;5;16m";
 	cout << " < Back  ";
-	cout << "\e[" << termHeight / 2 - 15 / 2 << ";" << termWidth / 2 - 36 / 2  << "H";
 	cout << "\e[48;5;233m";
-	for (int i = 0; i < 14; i++) {
-		cout << "\e[" << termHeight / 2 - 15 / 3 + i << ";" << termWidth / 2 - 36 / 2 + 1 << "H";
+	int temp = 0;
+	for (int i = 0; i < 15; i++) {
+		cout << "\e[" << termHeight / 2 - 15 / 2 + i + temp << ";" << termWidth / 2 - 36 / 2 + 1 << "H";
 		if (i == 1) {
 			for (int k = 0; k < 6; k++) {
 				cout << " ";
@@ -1237,7 +1237,8 @@ void printSettingsMenu(int update, int *width, int *height, int *mineCount, int 
 			for (int k = 0; k < 4; k++) {
 				cout << " ";
 			}
-			cout << "\e[" << termHeight / 2 - 15 / 3 + i << ";" << termWidth / 2 - 36 / 2 + 1 << "H";
+			temp = 1;
+			cout <<  "\e[" << termHeight / 2 - 15 / 2 + i + 1 << ";" << termWidth / 2 - 36 / 2 + 1 << "H";
 		}
 		for (int j = 0; j < 36; j++) {
 			cout << " ";

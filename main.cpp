@@ -259,7 +259,7 @@ void printBoard(short board[], short lose, short width, short height, short game
 				cout << "⬜";
 			}
 			else if (
-					((board[i * width + j] / 10 >= 5 && board[i * width + j] / 10 <= 7) && devBit == 1 || lose == 1) &&
+					(board[i * width + j] / 10 >= 5 && board[i * width + j] / 10 <= 7) && (devBit == 1 || lose == 1) &&
 					board[i * width + j] < 100 && board[i * width + j] % 10 == 1
 					) {
 				if (gameMode == 0) {

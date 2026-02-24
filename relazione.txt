@@ -15,16 +15,56 @@ letteralmente tutti i terminal emulator supportano i colori, pure fbcon. questo 
 ho deciso di rendere il programma agnostico alla quantità di bombe e dimensione, che brutto fare il hard code. ho testato il programma con diverse configurazioni di dimensioni.
 
 
+
+i codici (ovvero quale numero equivale a quale casella)
+0 scoperto
+10 coperto
+20 evidenziato giallo
+30 evidenziato nero (evidenziato una casella scoperta)
+40 evidenziato arancione (cliccato)
+
+51 (o 42 o quello che è)
+1o numero = quantità di bombe + 4
+51 = ha (5 - 4 = 1) bombe
+71 = ha (7 - 4 = 3) bombe
+2o numero = quantità di bandiere + 1
+42 = ha (4 - 4 = 0) bombe e (2 - 1 = 1) bandiere
+63 = ha (6 - 4 = 2) bombe e (3 - 1 = 2) bandiere
+
+8x = bandiera evidenziata, x = quantità di bandiere + 1
+
+>100 e <=200 numeri
+>200 numeri evidenziati
+
+
+perchè sti codici altamente stupidi? i codici li ho fatti *dopo* che ho finito il programma (ovvero avevo già finito il menù delle impostazioni)
+avevo rifatto dei codici e modificato il programma con questi nuovi codici, però dopo avere finito mi sono reso conto che i codici non solo erano stupidissimi, non andavano bene affatto e avevano problemi seri (per esempio: il programma non aveva modo per sapere se la cella aveva 2 bandiere e 2 bombe, poteva solo sapere se una cella aveva o una certa quantità di bandiere o una certa quantità di bombe. piazzando una bandiera sovrascriveva la quantità di bombe e... eh)
+quindi ho dovuto rifare i codici per le bombe da 0, piuttosto che rifare TUTTI i codici da 0 per renderli puliti ho rifatto i codici per le bombe cercando di mantenere retrocompatibilità (tenendo il 10 per coperto, 0 per scoperto, 20 per evidenziato giallo)
+
+i codici sono piuttosto stupidi e si potrebbero migliorare, per esempio trasformare l'evidenziato giallo con id 80 (0 bandiere) e fare in modo tale che i numeri dei codici delle bombeequivalgono alla quantità effettiva di bombe e bandiere senza strani offset (ovvero 21 = 1 bomba 1 bandiera, 0 riservato per la cella scoperta, è meglio che un offset di 1 per la bomba rimanga)
+(in poche parole non avevo tantissimo tempo)
+
+
+non ho usato un'array associata per le bombe, usarne una PUÒ rendeere il compito più semplice se si parla di 100 righe ma sto programma ha superato la soglia dei 1400.
+avevo iniziato senza un'array associata, non aveva alcun senso aggiungerne una perchè potrebbe introdurre desync tra le due tavole e l'uso della ram è pure duplicato.
+le array associate in generale sono stupidi, o c'è un vero motivo per usarne una (quando NON avere un array associata è la decision più stupida) o non la si usa.
+
+
+
 cosa fa main
 main non fa un cavolo in realtà, lo scope di int main si è gradualmente ridotto e ironicamente è tipo la quartultima funzione in termini di lunghezza
-main stampa certe sequenze di escape ANSI per abilitare il buffer alternativo e l'input mouse
-main inizializza le variabili e chiama le funzioni ed è lo "scheletro" del programma, l'unica cosa che fa è gestire il flow del programma in base a cosa viene ritornato da userInput (ovvero la funzione che ha usurpato main)
-ovvero se userInput ritorna un valore che indica che l'utente ha messo una bandiera allora salta certi controlli
-main però calcola se l'utente ha vinto (ovvero se non tutte le caselle senza bombe sono state scoperte), e mostra un messaggio di vittoria o sconfitta
+main stampa certe sequenze di escape ANSI per abilitare il buffer alternativo e l'input mouse tramite resume();
+main inizializza le variabili e chiama le funzioni ed è lo "scheletro" del programma, l'unica cosa che fa è gestire il flow del programma in base a cosa viene ritornato da userInput (ovvero la funzione che ha usurpato main) e assicurarsi che il primo input è sicuro, spostando la prima cella ad un posto casuale se la prima cella	è una bomba 
+se userInput ritorna un valore che indica che l'utente ha messo una bandiera allora salta certi controlli, se userInput ritorna un valore che indica che l'utente ha aperto il menù impostazioni allora quando l'utente esce dal menù il programma (usando delete[]) libera il heap e alloca una nuova regione della ram utilizzando le dimensioni aggiornate
+perchè la tavola è nel heap? altrimenti come faccio a ridimensionare la memoria con malloc? lol
+
+devo in qualche modo allocare una nuova regione della ram, non è fattibile se le funzioni sono nello stack perchè non posso liberare la memoria per poi riallocare una nuova tavola.
+main calcola se l'utente ha vinto (ovvero se non tutte le caselle senza bombe sono state scoperte), e mostra un messaggio di vittoria o sconfitta
+perchè main fa così poco? c'è stato un po' di scope creep e feature creep (la cella evidenziata in giallo, supporto per la tastiera e il mouse...) e molta logica che controlla il flow è stata collocata in userInput (perchè? perchè mi pareva il modo più semplice. era la decisione migliore? probabilmente no, ma funziona assai bene)
 
 
 
-initBoard: inizializza la tavola e sceglie dove mettere le bombe, usando 2 coordinate prese a caso per posizionare la bomba. usa un generatore casuale per decidere se mettere 1, 2 o 3 bombe (in base al valore di gameMode). se gameMode == 1 allora userà un generatore casuale per prendere un numero, poi il risultato di numero % (gameMode + 1) viene aggiunto alla bomba che è stata appena piazzata
+initBoard: inizializza la tavola e sceglie dove mettere le bombe, usando 2 coordinate prese a caso per posizionare la bomba. usa un generatore casuale per decidere se mettere 1, 2 o 3 bombe (in base al valore di gameMode). se gameMode >= 1 allora userà un generatore casuale per prendere un numero, poi il risultato di numero % (gameMode + 1) viene moltiplicato per dieci e aggiunto alla bomba che è stata appena piazzata (almeno, lo farà anche se gamemode == 0 ma il numero casuale generato sarà sempre 0)
 lo stesso succede se gameMode == 3 (lo stesso succede per qualsiasi valore di gameMode, però il resto del programma non risponde correttamente se un posto ha più di 3 bombe)
 ha diversi parametri, ovvero le dimensioni e la tavola in se, mineCount e gameMode
 tutte queste necessarie per inizializzare la tavola
@@ -41,12 +81,12 @@ perchè ho voluto usare emoji? Fedora 44 includerà kmscon rimpiazzando il datat
 
 visto che la maggior parte di terminal emulator hanno il supporto per unicode e kmscon rimpiazzerà fbcon, ho optato per i caratteri unicode per rendere il gioco più giocabile e più bello. si, non sarà 100% compatibile ma preferisco avere un gioco giocabile
 
-
 un emoji gialla viene usata per indicare la casella selezionata, e le bombe vengono visualizzate se si vince (o perde) con emoji rosse. la bandiera rossa indica una bandiera, una bandiera bianca indica una bandiera posizionata in un posto scorretto (mostrato quando si perde)
 un emoji arancione viene usata per indicare che l'utente ha il tasto cliccato
 
 quando gameMode è diverso da 0, certi elementi come la quantità di bandiere e altro vengono stampati in modi diversi, per esempio al posto di stampare bandiere, numeri vengono stampati (perchè non esistono emoji contenenti 3 bandiere)
 
+usando le dimensioni del terminale la tavola viene posta al centro (non ho voluto fare il hard-code, questo permette il gioco di rispondere correttamente casomai ci siano eventuali ridimensionamenti del terminale)
 
 
 cosa fa userInput (il vero main)
@@ -71,16 +111,50 @@ se invece z == 35 allora il programma (rimuovendo i dovuti offset) modifica le c
 flow:
 il programma aspetta dell'input, e appena riceve dell'input inizia immediatamente ad eseguire vari passi
 
-userInput automaticamente cambia il valore della cella selezionata appena prima di chiamare printBoard per indicare la cella evidenziata (il valore cambia in base alla cella selezionata, se è un numero allora += 100; altrimenti a 10 (giallo), c'è un numero anche per la bandiera), printBoard viene chiamata e il valore originale della cella viene ripristinato, x e y indicano la cella evidenziata
+userInput fa il parsing dell'input, se l'input è una freccia (esc[X):
+FRECCIA:
+prendi la il carattere X
+se il carattere è uguale ad A allora è una freccia su
+controlla se ci sono eventuali sbordamenti e modifica le coordinate x e y
+B allora freccia giù
+C allora freccia destra
+D allora freccia sinistra
+5 allora pagina su (incrementa di 5 verticalmente e non di 1, rende il movimento con la tastiera più veloce)
+5 allora pagina giù (decrementa di 5 verticalmente)
+F allora end (fine), (incrementa 5 orizzontalmente)
+H allora home (inizio), (decrementa 5 orizzontalmente)
 
-userInput fa il parsing dell'input (aiutato da getMouseVal), per estrarre le coordinate del mouse (o se una freccia è stata premuta)
+invece se l'input inizia con "esc[<":
+MOUSE:
+con l'aiuto di getMouseVal, estrae lo stato del mouse e le coordinate del mouse (o se una freccia è stata premuta)
 
-gli offset delle coordinate del mouse vengono rimossi
+la funzione getMouseVal viene chiamata per estrarre il primo numero (lo stato del mouse)
+userInput, grazie a diverse condizioni, cambia il flow in base a cosa l'utente vuole fare
+0 = tasto sinistro è stato premuto o rilasciato
+2 = tasto destro è stato premuto o rilasciato
+35 = il mouse è stato mosso
+34 = il mouse è stato mosso mentre il tasto destro era premuto
+23 = il mouse è stato mosso mentre il tasto sinistro era premuto
+
+poi, dopo avere controllato quale azione è stata eseguita dall'utente, le coordinate vengono estratte chiamando getMouseVal 2 volte
+
+gli offset delle coordinate del mouse vengono rimossi usando le dimensioni del terminale (sapendo che la tavola è centrata in mezzo allo schermo)
 
 se openSettings è uguale a 1 allora chiama printSettingsMenu passando l'id della cella evidenziata / cliccata
-altrimenti x e y vengono aggiornati e se l'utente ha appena lasciato andare il tasto destro o sinistro chiama clickLogic per verificare la validità dell'azione (ovvero se l'utente ha cliccato su una bomba o se ha cliccato (tasto sinistro) su una bandiera, se l'utente vuole mettere una bandiera...)
+altrimenti x e y vengono aggiornati con le coordinate
 
-dopo aver finito il tutto questo la funzione ritorna ad aspettare per dell'input
+in base all'evento del mouse, userInput esegue azioni diverse
+se l'utente ha appena lasciato andare il tasto destro o sinistro chiama clickLogic per verificare la validità dell'azione (ovvero se l'utente ha cliccato su una bomba o se ha cliccato (tasto sinistro) su una bandiera, se l'utente vuole mettere una bandiera...)
+se l'utente non ha il tasto premuto allora userInput aggiorna le coordinate per poi stampare la cella evidenziata in giallo tramite printBoard
+se l'utente ha mosso il mouse mentre uno dei due tasti erano premuti allora le coordinate vengono aggiornate però al posto di evidenziare in giallo viene evidenziato in arancione
+lo stesso succede se l'utente ha appena cliccato uno dei due tasti (in aggiunta però il flag "pressed" viene aggiornato, segnalando al componente che chiama userInput dicendogli di evidenziare in arancione) 
+
+userInput automaticamente cambia il valore della cella selezionata appena prima di chiamare printBoard per indicare la cella evidenziata (il valore cambia in base alla cella selezionata, se è un numero allora += 100; altrimenti a 10 (giallo), c'è un numero anche per la bandiera)
+printBoard viene chiamata e il valore originale della cella viene ripristinato, x e y indicano la cella evidenziata
+
+dopo aver finito tutto questo, la funzione ritorna ad aspettare per dell'input
+
+è la funzione più "complessa" e la più difficile da navigare (ha molte condizioni), tutte le condizioni servono per vedere quale azione l'utente vuole eseguire
 
 
 
@@ -92,6 +166,7 @@ calcAdjacent ha pure un selettore modalità, 0 calcola le bombe (coperte con o s
 2 calcola la quantità di bandiere (con o senza bombe), utilizzato da clickLogic per verificare la validità del chording
 infine 3 calcola la quantità di bombe senza flag, sempre utilizzato da clickLogic sempre per verificare la validità del chording (quest'ultima però controlla se hai appena fatto il chording accanto ad una bomba non flaggata risultando in una sconfitta, non se il chording è fattibile o meno)
 ritorna la quantità di una determinata casella vicino ad un posto al chiamante (eccetto per modalità 1, se modalità == 1 allora ritorna 1 se c'è una casella vuota, 0 se non c'è, micro ottimizzazione)
+ho voluto usare un selettore della modalità piuttosto che separare la funzione in diverse funzioni perchè i due cicli sono gli stessi, l'unica cosa che cambia è il cosa viene contato
 
 
 
@@ -106,11 +181,14 @@ il metodo in cui il programma fa la reazione a catena nel caso in cui una casell
 può abilitare "debugBit" trovata in riga ~35 per vedere step by step come il programma auto-scopre le caselle, premendo un tasto a caso e poi invio per continuare
 
 abbiamo un'area 3x3 (il centro è la casella cliccata)
-tutte le caselle (non solo il preimetro) vengono controllate per vedere se accanto ad essa c'è una casella scoperta (con uno zero), se si allora la quantità di bombe adiacenti alla casella viene calcolata, e il numero viene posizionato sovrascrivendo il valore della casella che viene controllata (se la casella che viene controllata è una bomba allora per forza ci sarà accanto un numero diverso da zero, se questo non è il caso allora il programma contiene un bug)
+tutte le caselle (non solo il preimetro) vengono controllate per vedere se accanto ad essa c'è una casella scoperta (con uno zero), se si allora la quantità di bombe adiacenti alla casella viene calcolata, e il numero viene posizionato sovrascrivendo il valore della casella che viene controllata
+(se la casella che viene controllata è una bomba allora è impossibile che accanto ci sia un numero con valore zero, se questo non è il caso allora il programma contiene un bug)
 
 poi, con un counter che incrementa la dimensione dell'area che deve essere controllata, l'area che deve essere controllata diventa 5x5
 tutte le caselle in quel 5x5 (non solo il perimetro, questo metodo NON funzionerebbe se solo il perimetro viene controllato) vengono controllate per vedere se accanto c'è una casella scoperta con valore di 0...
 tutto questo viene ripetuto fin quando un flag (che controlla se il valore di una casella è stato cambiato) rimane di valore 0 (ovvero nessuna casella è stata "scoperta")
+
+stavo pensando di fare le recursion all'inizio ma non avendole mai fatte non volevo complicarmi la vita così tanto, ho letteralmente preso un foglio excel (libreoffice), ho ridimensionato le celle rendendole quadrate e ho iniziato a pensare come avrei potuto calcolare tutto questo. 
 
 
 
@@ -123,6 +201,8 @@ resume si occupa di abilitare:
 il buffer alternativo
 l'input mouse
 e si occupa di disabilitare il cursore
+
+le 2 funzioni sono usati dai 2 handler e da main, ho spostato i due in funzioni separate perchè capire il funzionamento è molto più immediato grazie al nome della funzione
 
 
 
@@ -137,10 +217,12 @@ vorrei precisare che M e m non sono due "cliccato o non cliccato" ma sono 2 even
 se z == 34 allora vuol dire che il tasto destro è premuto e l'utente ha eseguito un movimento con il mouse, ma la M sarà maiuscola indicando che il mouse non è stato premuto (se invece il tasto non è premuto allora z == 35)
 invece se z == 2 allora vuol dire che l'utente ha effettuato l'azione di modificare lo stato del tasto destro, M se lo ha lasciato andare, m se lo ha appena premuto.
 
+getMouseVal non si deve preoccupare dei primi 3 caratteri (esc[<) perchè la funzione viene chiamata da userInput solo se userInput ha stabilito che la sequenza di escape si tratta di una sequenza per il mouse (esc[< non sono più nel buffer)
+
 
 
 clickLogic viene chiamato per controllare la validità di certe azioni e ha diversi parametri
-prima di tutto "flag" viene usato per cambiare il flow del programma, se flag == 0 allora l'utente sta cercando di fare il chording o di scoprire una cella
+prima di tutto "flag" viene passato e serve per cambiare il flow del programma, se flag == 0 allora l'utente sta cercando di fare il chording o di scoprire una cella
 x e y indicano la casella che deve essere controllata, e board... credo tutti sappiamo perchè board viene passata
 vengono passati anche flagPlaced, width e height, 2 parametri necessari per il corretto funzionamento di expandBoard
 
@@ -185,10 +267,13 @@ i parametri (board, width, height, mineCount, gameMode) sono necessari per chiam
 mentre win viene utilizzato per capire se l'utente è nelle impostazioni, disabilitando la stampa della tavola se win == 6 (l'utente è nelle impostazioni)
 width e height vengono modificati immediatamente al click e le modifiche sono effettive anche se l'utente non ha premuto back per uscire dal menu. il heap non è ancora stato ridimensionato, ma i parametri che ne controllano la dimensione si, risultando in lettura di regioni di memoria invalide e/o SIGSEGV (segmentation fault). non posso garantire la sicurezza della stampa, quindi piuttosto di riscrivere completamente parte della logica, disabilito la stampa
 
+ma perchè flushBuffer deve stampare la tavola? non è che "deve" (infatti in alcune versioni più vecchie non lo faceva), ma avere una funzione che automaticamente esegue un'altra azione piuttosto che avere il chiamante che esegue manualmente l'altra azione è piuttosto comodo.
+a parte i motivi di sicurezza di cui ho parlato prima, se flushBuffer viene chiamato allora il chiamante vuole che la tavola venga ristampata
+
 
 
 printSettingsMenu:
-stampa il menu impostazioni (prima stampando il background e poi gli elementi)e ha 5 parametri
+stampa il menù delle impostazioni (prima stampando il background e poi gli elementi) e ha 5 parametri
 update: un counter che indica alla funzione quale opzione l'utente ha selezionato (evidenziando la casella in verde chiaro se la casella non è cliccata, verde scuro se è cliccata)
 gli altri 4 parametri (width, height, mineCount e gameMode) servono per stampare all'utente le impostazioni attuali
 
@@ -202,4 +287,5 @@ sigint_handler (^C, anche SIGTERM) invece ripulisce il tutto, disabilita la moda
 
 questi 2 handler esistono per non lasciare l'utente con un buffer mezzo rotto dove ogni singolo movimento del mouse riesce a ricoprire l'intero schermo con sequenze di escape
 
-ciascuno di essi ha un parametro (il parametro non viene mai usato, potrei condensare i due handler in un singolo handler usando il parametro ma onesto sbatti)
+ciascuno di essi ha un parametro (il parametro non viene mai usato, potrei condensare i due handler in un singolo handler usando il parametro e una condizione ma onesto sbatti)
+

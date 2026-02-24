@@ -898,6 +898,7 @@ int userInput(int* x, int* y, int board[], int lose, int openSettings, int *widt
 	} while (true);//(*x < 0 || *x > *width);
 	return 0;
 }
+
 int calcAdjacent(int x, int y, int board[], int mode, int width, int height) {
 	int count = 0, tempCount, temp;
 	for (int i = -1; i < 2; i++) {
@@ -924,6 +925,7 @@ int calcAdjacent(int x, int y, int board[], int mode, int width, int height) {
 	}
 	return count;
 }
+
 void expandBoard(int x, int y, int board[], int width, int height, int gameMode, int *flagPlaced) {	
 	int flag, count = 1, adjacent, temp, temp2;
 	char asdf;
@@ -969,6 +971,7 @@ void cleanup() {
 	cout << "\e[A" << flush;
 	consoleMutex.unlock();
 }
+
 void resume() {
 	consoleMutex.lock();
 	cout << "\e[?1003h\e[?1006h" << flush;
@@ -1003,6 +1006,7 @@ int getMouseVal(int *pressed) {
 	} while ((int)(input - 48) >= 0 && (int)(input - 48) <= 9);
 	return tempVal;
 }
+
 int clickLogic(int* x, int* y, int board[], int flag, int width, int height, int gameMode, int *flagPlaced) {
 	int validChord, temp, temp2;
 	temp2 = board[*y * width + *x];
@@ -1072,6 +1076,7 @@ int clickLogic(int* x, int* y, int board[], int flag, int width, int height, int
 	}
 	return 3;
 }
+
 void wordArt(int** board, int *width, int *height, int *mineCount, int *gameMode, int *win, int *trueMineCount, int *flagPlaced, int *timer) {
 	char word[] = "minesweeper";
 	int Art = 0, termWidth, termHeight, flip = 0, oldWidth = 0, oldHeight = 0;
@@ -1130,6 +1135,7 @@ void wordArt(int** board, int *width, int *height, int *mineCount, int *gameMode
 		std::this_thread::sleep_for(std::chrono::milliseconds(125));	// gemini aided
 	} while (true);
 }
+
 void flushBuffer(int board[], int *width, int *height, int *mineCount, int *gameMode, int *win) {
 	struct winsize w;
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
@@ -1190,6 +1196,7 @@ void flushBuffer(int board[], int *width, int *height, int *mineCount, int *game
 	consoleMutex.unlock();
 	arrayChangeMutex.unlock();
 }
+
 void printSettingsMenu(int update, int *width, int *height, int *mineCount, int *gameMode) {
 	struct winsize w;
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
@@ -1388,6 +1395,7 @@ void printSettingsMenu(int update, int *width, int *height, int *mineCount, int 
 	cout << "\e[0;0m";
 	consoleMutex.unlock();
 }
+
 void sigtstp_handler(int sig) {
 	cleanup();
 	consoleMutex.lock();
@@ -1403,6 +1411,7 @@ void sigtstp_handler(int sig) {
 	consoleMutex.unlock();
 	resume();
 }
+
 void sigint_handler(int sig) {
 	cleanup();
 	consoleMutex.lock();

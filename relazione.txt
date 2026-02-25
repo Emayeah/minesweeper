@@ -72,7 +72,7 @@ perchè la tavola è nel heap? altrimenti come faccio a ridimensionare la memori
 
 devo in qualche modo allocare una nuova regione della ram, non è fattibile se le funzioni sono nello stack perchè non posso liberare la memoria per poi riallocare una nuova tavola.
 main calcola se l'utente ha vinto (ovvero se non tutte le caselle senza bombe sono state scoperte), e mostra un messaggio di vittoria o sconfitta
-perchè main fa così poco? c'è stato un po' di scope creep e feature creep (la cella evidenziata in giallo, supporto per la tastiera e il mouse...) e molta logica che controlla il flow è stata collocata in userInput (perchè? perchè mi pareva il modo più semplice. era la decisione migliore? probabilmente no, ma funziona assai bene)
+perchè main fa così poco? c'è stato un po' di scope creep e feature creep (la cella evidenziata in giallo, supporto per la tastiera e il mouse...) e molta logica che controlla il flow è stata collocata in userInput (perchè mi pareva il modo più semplice. era la decisione migliore? probabilmente no, ma funziona assai bene)
 
 
 
@@ -115,7 +115,7 @@ ha mooolti parametri
 x e y servono per indicare a main quale è la cella selezionata (in realtà piuttosto inutile, main usa x e y solo 2 volte tipo)
 board...
 vengono passati anche width e height, mineCount e gameMode, e anche openSettings e flagPlaced
-gameMode viene utilizzato da clickLogic, e quasi tutti i parametri vengono utilizzati da printBoard
+gameMode viene utilizzato da clickLogic (per sapere quale è la massima quantità di bandiere), e quasi tutti i parametri vengono utilizzati da printBoard
 openSettings serve per modificare il flow del programma in base a se il menù delle impostazioni è aperto o meno e flagPlaced viene passato perchè ci sono altre funzioni chiamate da userInput che effettivamente modificano flagPlaced (perchè per riferimento? la funzione asincrona wordArt è il motivo perchè flagPlaced esiste, non ha senso passarlo per valore)
 
 tastiera: se l'input è uguale a freccia giù (esc[B) allora incrementa y e così via
@@ -144,6 +144,12 @@ D allora freccia sinistra
 F allora end (fine), (incrementa 5 orizzontalmente)
 H allora home (inizio), (decrementa 5 orizzontalmente)
 
+ho aggiunto fine, inizio, pgsu e pggiù per rendere più veloce navigare la tavola, li ho aggiunti prima che abbia implementato il supporto per il mouse ma ho deciso di tenere il supporto per la tastiera
+non tuttissimi i terminali supportano l'input (kmscon supporta l'input con il mouse) e non è tanto bello eliminare del lavoro che non interferisce con altri pezzi
+
+originariamente per "liberare" una cella era possibile premere qualsiasi tasto, al posto di fare qualsiasi tasto lo ho cambiato a "d" (delete, accanto a flag in una tastiera qwerty)
+ci sono alcune modalità del mouse che non ho implementato (tipo il middle click e altri) risultando in click possibilmente involontari. al posto di implementare ogni singola modalità del mouse (anche di quelle di cui non ne ho bisogno) ho fatto in modo tale che solo d riesce a liberare una cella (parlando di tastiera, anche il click sinistro del mouse funziona)
+
 invece se l'input inizia con "esc[<":
 MOUSE:
 con l'aiuto di getMouseVal, estrae lo stato del mouse e le coordinate del mouse (o se una freccia è stata premuta)
@@ -155,12 +161,17 @@ userInput, grazie a diverse condizioni, cambia il flow in base a cosa l'utente v
 35 = il mouse è stato mosso
 34 = il mouse è stato mosso mentre il tasto destro era premuto
 23 = il mouse è stato mosso mentre il tasto sinistro era premuto
+ce ne sono altre
 
 poi, dopo avere controllato quale azione è stata eseguita dall'utente, le coordinate vengono estratte chiamando getMouseVal 2 volte
 
 gli offset delle coordinate del mouse vengono rimossi usando le dimensioni del terminale (sapendo che la tavola è centrata in mezzo allo schermo)
 
-se openSettings è uguale a 1 allora chiama printSettingsMenu passando l'id della cella evidenziata / cliccata
+visto che la tavola è sempre centrata, il mouse, per puntare alla prima cella in cima a sinistra, deve puntare a (sparo) 30 x e 20 y. rimuovo alle coordinate del mouse gli stessi offset che ho aggiunto alla stampa della tavola per centrarla
+però devo dividere le y (le orizzontali) per 2 perchè un'emoji occupa 2 spazi (ogni singolo carattere è tipo 8x16 pixel di default? 2 caratteri fanno un quadrato)
+se non divido per 2 allora se il mouse punta alla cella in mezzo orizzontalmente, la cella a destra attaccata al bordo è evidenziata
+
+se openSettings è uguale a 1 allora l'id della cella viene salvata in una variabile e printSettingsMenu viene chiamata passando l'id dell'opzione evidenziata / cliccata
 altrimenti x e y vengono aggiornati con le coordinate
 
 in base all'evento del mouse, userInput esegue azioni diverse
@@ -180,12 +191,13 @@ userInput esegue le azioni (tipo mettere una bandiera, cliccare...) quando l'ute
 
 calcAdjacent:
 se l'utente clicca su una cella, bisogna in qualche modo capire quante bombe sono vicine a questa cella per poi piazzare un numero (non calcola solo bombe)
-ho voluto usare un selettore della modalità piuttosto che separare la funzione in diverse funzioni perchè i due cicli sono gli stessi, l'unica cosa che cambia è il cosa viene contato
 
 calcola la quantità di un determinato tipo di casella attorno ad una casella
 ha divesi parametri, x, y per la posizione della cella e board... mode è il selettore modalità e width e height invece servono per evitare sbordamenti (se io clicco una casella attaccato ai bordi della tavola)
 
 calcAdjacent ha pure un selettore modalità, 0 calcola le bombe (coperte con o senza flag), utilizzato per calcolare il numero che deve essere posizionato
+ho voluto usare un selettore della modalità piuttosto che separare la funzione in diverse funzioni perchè i due cicli sono gli stessi, l'unica cosa che cambia è il cosa viene contato
+
 1 calcola se c'è una casella scoperta (vuota, senza numero), usato da expandBoard per continuare la reazione a catena
 2 calcola la quantità di bandiere (con o senza bombe), utilizzato da clickLogic per verificare la validità del chording
 infine 3 calcola la quantità di bombe senza flag, sempre utilizzato da clickLogic sempre per verificare la validità del chording (quest'ultima però controlla se hai appena fatto il chording accanto ad una bomba non flaggata risultando in una sconfitta, non se il chording è fattibile o meno)
@@ -195,15 +207,13 @@ ritorna la quantità di una determinata casella vicino ad un posto al chiamante 
 
 expandBoard
 se l'utente clicca su una casella con valore 0 allora bisogna in qualche modo fare questa reazione a catena di zeri
-
+(ho deciso di deprecare il debugBit perchè mi sembra piuttosto inutile ormai)
 vengono passati x, y, board, width height, gameMode e flagPlaced
 x e y indicano la casella che è stata cliccata, e board... non credo io debba spiegarlo
 width e height sono i limiti della tavola per evitare eventuali sbordamenti
-gameMode è utilizzato da printBoard (è un parametro "inutile", viene utilizzato solo se debugBit è abilitato)
 invece flagPlaced viene passato perchè se l'utente piazza una bandiera su un posto che non contiene una bomba e expandBoard elimina la bandiera seguendo una reazione a catena, expandBoard modifica flagPlaced perchè a tutti gli effetti... una bandiera è stata rimossa
 
 il metodo in cui il programma fa la reazione a catena nel caso in cui una casella contenente uno 0 viene scoperta (quando tutte le caselle adiacenti alla casella cliccata non contengono bombe):
-può abilitare "debugBit" trovata in riga ~35 per vedere step by step come il programma auto-scopre le caselle, premendo un tasto a caso e poi invio per continuare
 
 abbiamo un'area 3x3 (il centro è la casella cliccata)
 tutte le caselle (non solo il preimetro) vengono controllate per vedere se accanto ad essa c'è una casella scoperta (con uno zero), se si allora la quantità di bombe adiacenti alla casella viene calcolata, e il numero viene posizionato sovrascrivendo il valore della casella che viene controllata
@@ -334,6 +344,14 @@ update: un counter che indica alla funzione quale opzione l'utente ha selezionat
 gli altri 4 parametri (width, height, mineCount e gameMode) servono per stampare all'utente le impostazioni attuali
 
 se però i 4 parametri (width, height, mineCount e gameMode) sono fuori dal range ammesso, printSettingsMenu automaticamente rimette i valori nei range ammessi prima di stampare i numeri
+
+printSettingsMenu ha un id come input e l'id ha un certo significato:
+1-9 indica la cella da evidenziare (non cliccato), 1-3 sono le 3 celle in cima (i più), 4-6 solo le 3 celle in mezzo (i numeri), 7-9 sono le 3 celle in fondo (i meno)
+11-19 sono la stessa roba però evidenziata
+4-6 non vengono mai utilizzati
+0 = nessuna evidenziata / cliccata
+
+ho implementato il multi bombe dopo che ho finalizzato il menù delle impostazioni e, piuttosto che rifare gran parte di printSettingsMenu per cambiare gli id, ho creato 4 nuovi id per la selezione delle multi bombe
 
 
 

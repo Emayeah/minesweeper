@@ -407,8 +407,7 @@ void printBoard(short board[], short lose, short width, short height, short game
 	consoleMutex.unlock();
 }
 
-short userInput(short* x, short* y, short board[], short lose, short openSettings, short *width, short *height, short *mineCount, short *gameMode, short *flagPlaced) {
-	char flag;
+short userInput(short *x, short *y, short board[], short lose, short openSettings, short *width, short *height, short *mineCount, short *gameMode, short *flagPlaced) {
 	short valBak;
 	short *cellPos;
 	short validChord;
@@ -599,7 +598,7 @@ short userInput(short* x, short* y, short board[], short lose, short openSetting
 						mouseValx = getMouseVal(&pressed);
 						mouseValx--;
 						mouseValy = getMouseVal(&pressed);
-						if ((mouseValy == 0 || mouseValy == 1) && pressed == 1) {
+						if (mouseValy == 1 && pressed == 1) {
 							if (mouseValx >= 9) {
 								return 5;
 							}
@@ -844,16 +843,15 @@ short userInput(short* x, short* y, short board[], short lose, short openSetting
 }
 
 short calcAdjacent(short x, short y, short board[], short mode, short width, short height) {
-	short count = 0, tempCount;
-	short* temp;
+	short count = 0;
+	short *temp;
 	for (short i = -1; i < 2; i++) {
 		for (short j = -1; j < 2; j++) {
 			if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) { // check for out of bounds
 				temp = &board[(y + j) * width + (x + i)];
 				if (*temp < 100) {		// to avoid checking numbers
 					if (mode == 0 && *temp / 10 >= 5 && *temp / 10 <= 7) {// this is to check the amount of mines nearby (to place a number)
-						tempCount = (*temp / 10 - 4);
-						count += tempCount;
+						count += (*temp / 10 - 4);
 					}
 					else if (mode == 1 && *temp == 0) {								// this is to check if there's a nearby blank square, used by expandBoard
 						return 1; // i know, i know, jacopini... va bene che compiler optimization tolgono le altre condizioni ma questo è più semplice da leggere
@@ -872,29 +870,27 @@ short calcAdjacent(short x, short y, short board[], short mode, short width, sho
 }
 
 void expandBoard(short x, short y, short board[], short width, short height, short *flagPlaced) {	
-	short flag, count = 1, adjacent, temp;
-	short* temp2;
-	char asdf;
+	short flag, count = 1, adjacent;
+	short *cellVal;
 	do {
 		flag = 0;
 		for (short i = -count; i <= count; i++) {
 			for (short j = -count; j <= count; j++) {
 				if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) { // check for out of bounds blah blah
-					temp2 = &board[(y + j) * width + (x + i)];
+					cellVal = &board[(y + j) * width + (x + i)];
 					adjacent = calcAdjacent(x + i, y + j, board, 1, width, height);
 					if (adjacent == 1) {
-						if (*temp2 == 10 || *temp2 / 10 == 4) {				// if you flag a white spot, that flagged spot is overridden when board expansion
+						if (*cellVal == 10 || *cellVal / 10 == 4) {				// if you flag a white spot, that flagged spot is overridden when board expansion
 							flag = 1;
 						}
-						if (*temp2 < 100 && !(*temp2 / 10 >= 5 && *temp2 / 10 <= 7)) {
-							temp = calcAdjacent(x + i, y + j, board, 0, width, height);
-							if (temp != 0) {
-								temp += 100;
+						if (*cellVal < 100 && !(*cellVal / 10 >= 5 && *cellVal / 10 <= 7)) {
+							if (*cellVal / 10 == 4) {
+								*flagPlaced -= *cellVal % 10 - 1;
 							}
-							if (*temp2 / 10 == 4) {
-								*flagPlaced -= *temp2 % 10 - 1;
+							*cellVal = calcAdjacent(x + i, y + j, board, 0, width, height);
+							if (*cellVal != 0) {
+								*cellVal += 100;
 							}
-							*temp2 = temp;
 						}
 					}
 				}
@@ -933,9 +929,9 @@ short getMouseVal(short *pressed) {
 	char input;
 	do {
 		cin >> input;
-		if ((int)(input - 48) >= 0 && (int)(input - 48) <= 9) {
+		if ((short)(input - 48) >= 0 && (short)(input - 48) <= 9) {
 			tempVal *= 10;
-			tempVal += (int)(input - 48);
+			tempVal += (short)(input - 48);
 		}
 		else {
 			if (input == 'M') {
@@ -945,30 +941,30 @@ short getMouseVal(short *pressed) {
 				*pressed = 1;
 			}
 		}
-	} while ((int)(input - 48) >= 0 && (int)(input - 48) <= 9);
+	} while ((short)(input - 48) >= 0 && (short)(input - 48) <= 9);
 	return tempVal;
 }
 
-short clickLogic(short* x, short* y, short board[], short flag, short width, short height, short gameMode, short *flagPlaced) {
+short clickLogic(short *x, short *y, short board[], short flag, short width, short height, short gameMode, short *flagPlaced) {
 	short validChord;
-	short *temp2;
-	temp2 = &board[*y * width + *x];
+	short *cellVal;
+	cellVal = &board[*y * width + *x];
 	if (flag == 0) {														// are you trying to place a flag? flag = 0 -> no (either that is chording or normal clicking), flag = 1 -> flagging
-		if (*temp2 != 0 && *temp2 < 100) {									// are you trying to chord? if you're trying to chord then temp2 would be > 100
-			if (*temp2 % 10 == 1 && *temp2 / 10 >= 5 && *temp2 / 10 <= 7) {			
+		if (*cellVal != 0 && *cellVal < 100) {									// are you trying to chord? if you're trying to chord then *cellVal would be > 100
+			if (*cellVal % 10 == 1 && *cellVal / 10 >= 5 && *cellVal / 10 <= 7) {			
 				return 1;													// whoops, you just clicked on a bomb!
 			}
-			else if (*temp2 % 10 >= 2 && *temp2 % 10 <= 4) {
+			else if (*cellVal % 10 >= 2 && *cellVal % 10 <= 4) {
 				return 3;													// do nothing, you clicked on a flag
 			}
 			return 0;
 		}
-		else if (*temp2 > 100 && *temp2 <= 200) {								// chording!
+		else if (*cellVal > 100 && *cellVal <= 200) {								// chording!
 			validChord = calcAdjacent(*x, *y, board, 2, width, height);
 			if (validChord != 0) {
 				validChord += 100;
 			}
-			if (validChord == *temp2) {
+			if (validChord == *cellVal) {
 				validChord = calcAdjacent(*x, *y, board, 3, width, height);
 				if (validChord != 0) {
 					return 1;			// you chorded near an unflagged mine!
@@ -977,12 +973,12 @@ short clickLogic(short* x, short* y, short board[], short flag, short width, sho
 				for (short i = -1; i < 2; i++) {
 					for (short j = -1; j < 2; j++) {
 						if (*x + i >= 0 && *x + i < width && *y + j >= 0 && *y + j < height) {
-							if (board[(*y + j) * width + (*x + i)] == 10) {
-								temp = calcAdjacent(*x + i, *y + j, board, 0, width, height);
-								if (temp != 0) {
-									temp += 100;
+							cellVal = &board[(*y + j) * width + (*x + i)];
+							if (*cellVal == 10) {
+								*cellVal = calcAdjacent(*x + i, *y + j, board, 0, width, height);
+								if (*cellVal != 0) {
+									*cellVal += 100;
 								}
-								board[(*y + j) * width + (*x + i)] = temp; 	
 								expandBoard(*x + i, *y + j, board, width, height, flagPlaced);
 							} 
 						}
@@ -992,25 +988,25 @@ short clickLogic(short* x, short* y, short board[], short flag, short width, sho
 			return 0;
 		}
 	}
-	else if (flag == 1 && *temp2 < 100) {							// flagging
-		if (*temp2 / 10 >= 4 && *temp2 / 10 <= 7) {
-			*temp2 += 1;
-			if (*temp2 % 10 > gameMode + 2) {		// if you try to add 1 flag while you're at the max, that means you're trying to deflag
-				if (*temp2 / 10 >= 5 && *temp2 / 10 <= 7) {
-					*temp2 /= 10;
-					*temp2 *= 10;
-					*temp2 += 1;
+	else if (flag == 1 && *cellVal < 100) {							// flagging
+		if (*cellVal / 10 >= 4 && *cellVal / 10 <= 7) {
+			*cellVal += 1;
+			if (*cellVal % 10 > gameMode + 2) {		// if you try to add 1 flag while you're at the max, that means you're trying to deflag
+				if (*cellVal / 10 >= 5 && *cellVal / 10 <= 7) {
+					*cellVal /= 10;
+					*cellVal *= 10;
+					*cellVal += 1;
 					*flagPlaced -= gameMode + 2;
 				}
-				else if (*temp2 / 10 == 4) {
-					*temp2 = 10;
+				else if (*cellVal / 10 == 4) {
+					*cellVal = 10;
 					*flagPlaced -= gameMode + 2;
 				}
 			}
 		}
 		else {
-			if (*temp2 == 10) {
-				*temp2 = 42;
+			if (*cellVal == 10) {
+				*cellVal = 42;
 			}
 			else {
 				return 0;						// just in case

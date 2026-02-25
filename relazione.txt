@@ -290,7 +290,7 @@ ha 9 parametri, 5 di essi (board, width, height, mineCount e gameMode) utilizzat
 board non è un riferimento alla tavola, ma è un riferimento ad un riferimento alla tavola. perchè?
 
 quando il heap viene ripulito e una nuova regione del heap viene allocata, insieme ad esso ci sta anche un nuovo pointer. anche se il pointer della tavola viene cambiato, wordArt ha ancora il pointer della regione della memoria dove ci stAVA la tavola, risultando in un UAF.
-invece, se passo un pointer (che è garantito di stare nella stessa parte della memoria, ovvero board2) che punta all'indirizzo di memoria di board, è possibile recuperare l'indirizzo aggiornato della tavola
+invece, se passo un riferimento (che è garantito di stare nella stessa parte della memoria) che punta all'indirizzo di memoria di board, è possibile recuperare l'indirizzo aggiornato della tavola tramite il riferimento
 
 esempio
 
@@ -314,7 +314,7 @@ tavola2 -> 0x0ef0
 wordArt punta a 0x0ef0 che a sua volta punta a 0xf0f0
 
 
-è forse possibile passare la posizione della tavola senza tavola2, non ho provato e non voglio testarlo ora
+tavola2 è un'analogia al riferimento al pointer
 
 trueMineCount viene utilizzato per stampare la quantità di bandiere rimanenti, e il motivo perchè uso trueMineCount è perchè se la gameMode non è 0, allora la quantità di bombe effettive sarà diverso da mineCount. trueMineCount contiene la vera quantità di bombe
 flagPlaced invece conta la quantità di bandiere piazzate (sempre usato dall'elemento che mostra la quantità di bandiere mancanti)

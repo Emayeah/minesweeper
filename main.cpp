@@ -130,7 +130,7 @@ int main() {
 				tempy = rand() % height;
 			} while (board[tempy * width + tempx] / 10 >= 5 && board[tempy * width + tempx] / 10 <= 7 || (tempx == x && tempy == y));
 			if (board[tempy * width + tempx] / 10 == 4) {
-				firstInputFlag = board[tempy * width + tempx] % 10;
+				firstInputFlag = board[tempy * width + tempx] % 10; // we somehow gotta move the mine without overwriting the flag amount
 			}
 			else {
 				firstInputFlag = 0;
@@ -179,12 +179,10 @@ int main() {
 			printBoard(board, 0, width, height, gameMode);
 			win2 = 0;
 			consoleMutex.lock();								// gemini aided
-			cout << "\e[H";
-			cout << "\e[" << termHeight / 2 << "B";
-			cout << "\e[" << termWidth / 2 - 4 <<"C";
-			cout << " YOU WIN!\r" << endl;
-			cout << "\e[B";
-			cout << "\r\e[" << termWidth / 2 - 22 << "C";
+			cout << "\e[" << termHeight / 2 - 1 << ";" << termWidth / 2 - 4 << "H";
+			cout << " YOU WIN!";
+			cout << "\e[2B";
+			cout << "\e[" << termWidth / 2 - 21 << "G";
 			cout << " Click titlebar for new game or ^C to exit!";
 			blockOutput = 1;
 			consoleMutex.unlock();								// gemini aided
@@ -194,15 +192,13 @@ int main() {
 			printBoard(board, 1, width, height, gameMode);
 			win2 = 1;
 			consoleMutex.lock();								// gemini aided
-			cout << "\e[H";
-			cout << "\e[" << termHeight / 2 <<"B";
-			cout << "\e[" << termWidth / 2 - 12 <<"C";
-			cout << " YOU LOSE!!!!!!!!!!!!!!!!\r" << endl;
-			cout << "\e[B";
-			cout << "\r\e[" << termWidth / 2 - 22 << "C";
+			cout << "\e[" << termHeight / 2 - 1 << ";" << termWidth / 2 - 12 << "H";
+			cout << " YOU LOSE!!!!!!!!!!!!!!!!";
+			cout << "\e[2B";
+			cout << "\e[" << termWidth / 2 - 21 << "G";
 			cout << " Click titlebar for new game or ^C to exit!";
 			blockOutput = 1;
-			consoleMutex.unlock(); // gemini
+			consoleMutex.unlock(); 								// gemini aided
 		}
 	}
 	cleanup();

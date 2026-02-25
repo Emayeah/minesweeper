@@ -32,9 +32,9 @@ using namespace std;
  * 54 = single mine with triple flag
  * 64 = double mine with triple flag
  * 74 = triple mine with triple flag
- * 82 = selected mine with single flag
- * 83 = selected mine with double flag
- * 84 = selected mine with triple flag
+ * 2 = selected mine with single flag
+ * 3 = selected mine with double flag
+ * 4 = selected mine with triple flag
  * 101 - 124 = selection number
  * 201 - 224 = uncovered (bomb nearby)
  */
@@ -128,7 +128,7 @@ int main() {
 			do {
 				tempx = rand() % width;
 				tempy = rand() % height;
-			} while (board[tempy * width + tempx] / 10 >= 5 && board[tempy * width + tempx] / 10 <= 7 || (tempx == x && tempy == y));
+			} while (board[tempy * width + tempx] / 10 >= 5 && board[tempy * width + tempx] / 10 <= 9 || (tempx == x && tempy == y));
 			if (board[tempy * width + tempx] / 10 == 4) {
 				firstInputFlag = board[tempy * width + tempx] % 10; // we somehow gotta move the mine without overwriting the flag amount
 			}
@@ -236,6 +236,12 @@ void initBoard(short board[], short width, short height, short mineCount, short 
 void printBoard(short board[], short lose, short width, short height, short gameMode) {
 	short termWidth;
 	short termHeight;
+	short colors[40] = {
+		4, 2, 196, 21, 88, 6, 240, 245, 56, 154,
+		116, 202, 111, 5, 201, 214, 30, 77, 199, 171,
+		23, 220, 105, 87, 248, 67, 62, 121, 29, 110,
+		208, 190, 135, 123, 161, 41, 169, 159, 69, 99
+	};
 	struct winsize w;											// gemini
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);						// gemini
 	termWidth = w.ws_col;									 	// gemini aided
@@ -259,7 +265,7 @@ void printBoard(short board[], short lose, short width, short height, short game
 				cout << "⬜";
 			}
 			else if (
-					(board[i * width + j] / 10 >= 5 && board[i * width + j] / 10 <= 7) && (devBit == 1 || lose == 1) &&
+					(board[i * width + j] / 10 >= 5 && board[i * width + j] / 10 <= 9) && (devBit == 1 || lose == 1) &&
 					board[i * width + j] < 100 && board[i * width + j] % 10 == 1
 					) {
 				if (gameMode == 0) {
@@ -288,7 +294,7 @@ void printBoard(short board[], short lose, short width, short height, short game
 			else if (board[i * width + j] == 0) {
 				cout << "  ";
 			}
-			else if (board[i * width + j] % 10 >= 2 && board[i * width + j] < 100 && board[i * width + j] % 10 <= 4 && board[i * width + j] / 10 != 8) {
+			else if (board[i * width + j] % 10 >= 2 && board[i * width + j] < 100 && board[i * width + j] % 10 <= 6 && (board[i * width + j] > 9 || board[i * width + j] < 2)) {
 				/*
 				 * basically all of the (non clicked / hovered) flags
 				 */
@@ -330,7 +336,7 @@ void printBoard(short board[], short lose, short width, short height, short game
 			else if (board[i * width + j] == 30) {
 				cout << "⬛";
 			}
-			else if (board[i * width + j] / 10 == 8) {
+			else if (board[i * width + j] <= 9 && board[i * width + j] >= 2) {
 				if (gameMode == 0) {
 					cout << "\e[48;5;220m";
 					cout << "🚩";
@@ -338,7 +344,7 @@ void printBoard(short board[], short lose, short width, short height, short game
 				}
 				else {
 					cout << "\e[48;5;242m";
-					cout << board[i * width + j] % 10 - 1 << "F";
+					cout << board[i * width + j] - 1 << "F";
 					cout << "\e[0;0m";
 				}
 			}
@@ -348,44 +354,25 @@ void printBoard(short board[], short lose, short width, short height, short game
 			else {
 				if ((board[i * width + j] > 100 && board[i * width + j] <= 200)) {
 					board[i * width + j] -= 100;
-					cout << "\e[38;";							// foreground
+					cout << "\e[38;5;";							// foreground
 				}
 				else if (board[i * width + j] > 200) {
 					board[i * width + j] -= 200;
-					if (board[i * width + j] >= 10) {
-						cout << "\e[38;5;232m";			// white on white is unreadable, but for some reason setting the color to 16m (pitch black) doesn't work
+					if (board[i * width + j] > 40) {
+						cout << "\e[38;5;202m";			// white on white is unreadable, but for some reason setting the color to 16m (pitch black) doesn't work
 					}
-					cout << "\e[48;";					// background
+					else {
+						cout << "\e[38;5;16m";
+					}
+					cout << "\e[48;5;";					// background
 				}
-				switch (board[i * width + j]) {			// print with colors, filled in colors for selected (background)
-					case 1:	
-						cout << "5;4m";					// light blue
-						break;
-					case 2:
-						cout << "5;2m";					// green
-						break;
-					case 3:
-						cout << "5;196m";				// red
-						break;
-					case 4:
-						cout << "5;21m";				// blue, deep blue on the purplish side
-						break;
-					case 5:
-						cout << "5;88m";				// maroon red
-						break;
-					case 6:
-						cout << "5;6m";					// light blue
-						break;
-					case 7:
-						cout << "5;240m";				// black			
-						break;
-					case 8:
-						cout << "5;245m";				// gray
-						break;
-					default:
-						cout << "5;15m";				// white
-						break;
+				if (board[i * width + j] <= 40) {
+					cout << colors[board[i * width + j] - 1];
 				}
+				else {
+					cout << "15";
+				}
+				cout << "m";
 				cout << board[i * width + j];
 				if (board[i * width + j] < 10) {
 					cout << " ";
@@ -427,8 +414,8 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 			if (valBak > 100) {
 				*cellPos += 100;
 			}
-			else if (valBak % 10 >= 2 && valBak % 10 <= 4) {
-				*cellPos = 80 + (valBak % 10);
+			else if (valBak % 10 >= 2 && valBak % 10 <= 6) {
+				*cellPos = valBak % 10;
 			}
 			else if (valBak == 0) {
 				*cellPos = 30;
@@ -662,10 +649,10 @@ short calcAdjacent(short x, short y, short board[], short mode, short width, sho
 			if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) { // check for out of bounds
 				cellVal = &board[(y + j) * width + (x + i)];
 				if (*cellVal < 100) {		// to avoid checking numbers
-					if (mode == 0 && *cellVal / 10 >= 5 && *cellVal / 10 <= 7) {// this is to check the amount of mines nearby (to place a number)
+					if (mode == 0 && *cellVal / 10 >= 5 && *cellVal / 10 <= 9) {// this is to check the amount of mines nearby (to place a number)
 						count += (*cellVal / 10 - 4);
 					}
-					else if (mode == 2 && *cellVal % 10 >= 2 && *cellVal % 10 <= 5) {		// this is used to check if there's the right amount of flags where you're chording
+					else if (mode == 2 && *cellVal % 10 >= 2 && *cellVal % 10 <= 6) {		// this is used to check if there's the right amount of flags where you're chording
 						count += *cellVal % 10 - 1;
 					}
 					else if ((mode == 3 && *cellVal % 10 == 1) || (mode == 1 && *cellVal == 0)) {
@@ -696,7 +683,7 @@ void expandBoard(short x, short y, short board[], short width, short height, sho
 						if (*cellVal == 10 || *cellVal / 10 == 4) {				// if you flag a white spot, that flagged spot is overridden when board expansion
 							flag = 1;
 						}
-						if (*cellVal < 100 && !(*cellVal / 10 >= 5 && *cellVal / 10 <= 7)) {
+						if (*cellVal < 100 && !(*cellVal / 10 >= 5 && *cellVal / 10 <= 9)) {
 							if (*cellVal / 10 == 4) {
 								*flagPlaced -= *cellVal % 10 - 1;
 							}
@@ -764,10 +751,10 @@ short clickLogic(short *x, short *y, short board[], short flag, short width, sho
 	cellVal = &board[*y * width + *x];
 	if (flag == 0) {														// are you trying to place a flag? flag = 0 -> no (either that is chording or normal clicking), flag = 1 -> flagging
 		if (*cellVal != 0 && *cellVal < 100) {								// are you trying to chord? if you're trying to chord then *cellVal would be > 100
-			if (*cellVal % 10 == 1 && *cellVal / 10 >= 5 && *cellVal / 10 <= 7) {			
+			if (*cellVal % 10 == 1 && *cellVal / 10 >= 5 && *cellVal / 10 <= 9) {			
 				return 1;													// whoops, you just clicked on a bomb!
 			}
-			else if (*cellVal % 10 >= 2 && *cellVal % 10 <= 4) {
+			else if (*cellVal % 10 >= 2 && *cellVal % 10 <= 6) {
 				return 3;													// do nothing, you clicked on a flag
 			}
 			return 0;
@@ -802,10 +789,10 @@ short clickLogic(short *x, short *y, short board[], short flag, short width, sho
 		}
 	}
 	else if (flag == 1 && *cellVal < 100) {			// flagging
-		if (*cellVal / 10 >= 4 && *cellVal / 10 <= 7) {
+		if (*cellVal / 10 >= 4 && *cellVal / 10 <= 9) {
 			*cellVal += 1;
 			if (*cellVal % 10 > gameMode + 2) {		// if you try to add 1 flag while you're at the max, that means you're trying to deflag
-				if (*cellVal / 10 >= 5 && *cellVal / 10 <= 7) {
+				if (*cellVal / 10 >= 5 && *cellVal / 10 <= 9) {
 					*cellVal /= 10;
 					*cellVal *= 10;
 					*cellVal += 1;
@@ -1020,8 +1007,8 @@ void printSettingsMenu(short update, short *width, short *height, short *mineCou
 			if (*gameMode < 0) {
 				*gameMode = 0;
 			}
-			else if (*gameMode > 2) {
-				*gameMode = 2;
+			else if (*gameMode > 4) {
+				*gameMode = 4;
 			}
 			cout << "\e[6C";
 			if (i == 1) {

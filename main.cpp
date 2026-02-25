@@ -79,7 +79,7 @@ int main() {
 	short termHeight;
 	struct winsize w;											// gemini
 	std::future<void> idkman = std::async(std::launch::async, wordArt, board2, &width, &height, &mineCount, &gameMode, &win2, &trueMineCount, &flagPlaced, &timer); // gemini aided
-	do {
+	while (true) {
 		win = userInput(&x, &y, board, blockOutput, 0, &width, &height, &mineCount, &gameMode, &flagPlaced); // win == 1 that means you lose because it's the game that wins against the player lol
 		ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);						// gemini
 		termWidth = w.ws_col;									 	// gemini aided
@@ -107,6 +107,9 @@ int main() {
 				arrayChangeMutex.unlock();
 				firstInput = 1;
 			}
+			ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);					// gemini
+			termWidth = w.ws_col;									// gemini aided
+			termHeight = w.ws_row;									// gemini aided	
 			blockPrintMutex.unlock();
 			blockOutput = 0;
 			flushBuffer(board, &width, &height, &mineCount, &gameMode, &win2);
@@ -158,6 +161,10 @@ int main() {
 		}
 		flag = 2;
 		if (win == 0) {
+			/*
+			 * calculate if the player has won
+			 * if the loop finds any flagged or unflagged cells that do not have mines then the player hasn't yet won
+			 */
 			flag = 0;
 			for (short i = 0; i < width && flag != 1; i++) {
 				for (short j = 0; j < height && flag != 1; j++) {
@@ -167,9 +174,6 @@ int main() {
 				}
 			}
 		}
-		ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);					// gemini
-		termWidth = w.ws_col;									// gemini aided
-		termHeight = w.ws_row;									// gemini aided	
 		if (flag == 0) {
 			blockPrintMutex.lock();
 			printBoard(board, 0, width, height, gameMode);
@@ -200,7 +204,7 @@ int main() {
 			blockOutput = 1;
 			consoleMutex.unlock(); // gemini
 		}
-	} while (true);
+	}
 	cleanup();
 	exit(EXIT_SUCCESS);
 }
@@ -416,10 +420,8 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 	short mouseValx;
 	short mouseValy;
 	short pressed = 1;
-	short logicTemp;
 	short termWidth;
 	short termHeight;
-	short printId;
 	struct winsize w;												// disclosing the same lines as gemini is very redundant
 	while (true) {
 		ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);						// just know that the code that gets the terminal size is not done by me
@@ -524,43 +526,41 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 					 */
 					tempVal = getMouseVal(&pressed);
 					if (tempVal == 35 || tempVal == 51) {	// unpressed || unpressed + ctrl
-						mouseValx = getMouseVal(&pressed);
-						mouseValx--;
-						mouseValy = getMouseVal(&pressed);
-						mouseValy--; // for some reason the menu settings does not want to play ball unless i do this jankery
+						mouseValx = getMouseVal(&pressed) - 1;
+						mouseValy = getMouseVal(&pressed) - 1; // for some reason the menu settings does not want to play ball unless i do this jankery
 						if (openSettings == 1) {
-							printId = 0;
+							valBak = 0;
 							if (mouseValy - (termHeight / 2 - 15 / 2) == 2)  {
 								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
-									printId = 1;
+									valBak = 1;
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 16 && mouseValx - (termWidth / 2 - 36 / 2) < 19) {
-									printId = 2;
+									valBak = 2;
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
-									printId = 3;
+									valBak = 3;
 								}
 							}
 							else if (mouseValy - (termHeight / 2 - 15 / 2) == 10) {
 								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
-									printId = 7;
+									valBak = 7;
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 16 && mouseValx - (termWidth / 2 - 36 / 2) < 19) {
-									printId = 8;
+									valBak = 8;
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
-									printId = 9;
+									valBak = 9;
 								}
 							}
 							else if (mouseValy - (termHeight / 2 - 15 / 2) == 13) {
 								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
-									printId = 21;
+									valBak = 21;
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
-									printId = 22;
+									valBak = 22;
 								}
 							}
-							printSettingsMenu(printId, width, height, mineCount, gameMode);
+							printSettingsMenu(valBak, width, height, mineCount, gameMode);
 						}
 						mouseValy++; // i mean i guess it does the trick
 						if (termHeight % 2 != 0) {
@@ -608,110 +608,110 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 						}
 						mouseValy--;
 						if (openSettings == 1) {
-							printId = 0;
+							valBak = 0;
 							if (mouseValy - (termHeight / 2 - 15 / 2) == 2)  {
 								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
 									if (pressed == 0) {
-										printId = 11;
+										valBak = 11;
 									}
 									else {
 										if (tempVal == 16) {
 											*width += 9;
 										}
 										*width += 1;
-										printId = 1;
+										valBak = 1;
 									}
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 16 && mouseValx - (termWidth / 2 - 36 / 2) < 19) {
 									if (pressed == 0) {
-										printId = 12;
+										valBak = 12;
 									}
 									else {
 										if (tempVal == 16) {
 											*height += 9;
 										}
 										*height += 1;
-										printId = 2;
+										valBak = 2;
 									}
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
 									if (pressed == 0) {
-										printId = 13;
+										valBak = 13;
 									}
 									else {
 										if (tempVal == 16) {
 											*mineCount += 9;
 										}
 										*mineCount += 1;
-										printId = 3;
+										valBak = 3;
 									}
 								}
 							}
 							else if (mouseValy - (termHeight / 2 - 15 / 2) == 10) {
 								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
 									if (pressed == 0) {
-										printId = 17;
+										valBak = 17;
 									}
 									else {
 										if (tempVal == 16) {
 											*width -= 9;
 										}
-											*width -= 1;
-										printId = 7;
+										*width -= 1;
+										valBak = 7;
 									}
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 16 && mouseValx - (termWidth / 2 - 36 / 2) < 19) {
 									if (pressed == 0) {
-										printId = 18;
+										valBak = 18;
 									}
 									else {
 										if (tempVal == 16) {
 											*height -= 9;
 										}
 										*height -= 1;
-										printId = 8;
+										valBak = 8;
 									}
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
 									if (pressed == 0) {
-										printId = 19;
+										valBak = 19;
 									}
 									else {
 										if (tempVal == 16) {
 											*mineCount -= 9;
 										}
 										*mineCount -= 1;
-										printId = 9;
+										valBak = 9;
 									}
 								}
 							}
 							else if (mouseValy - (termHeight / 2 - 15 / 2) == 13) {
 								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
 									if (pressed == 0) {
-										printId = 31;
+										valBak = 31;
 									}
 									else {
 										if (tempVal == 16) {
 											*gameMode -= 9;
 										}
 										*gameMode -= 1;
-										printId = 21;
+										valBak = 21;
 									}
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
 									if (pressed == 0) {
-										printId = 32;
+										valBak = 32;
 									}
 									else {
 										if (tempVal == 16) {
 											*gameMode += 9;
 										}
 										*gameMode += 1;
-										printId = 22;
+										valBak = 22;
 									}
 								}
 							}
-							printSettingsMenu(printId, width, height, mineCount, gameMode);
+							printSettingsMenu(valBak, width, height, mineCount, gameMode);
 						}
 						mouseValy++;
 						if (termHeight % 2 != 0) {
@@ -742,11 +742,10 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 								*y = *height - 1;
 							}
 						}
-
 						if (pressed == 1 && lose == 0) {
-							logicTemp = clickLogic(x, y, board, 0, *width, *height, *gameMode, flagPlaced);
-							if (logicTemp != 3) {
-								return logicTemp;
+							valBak = clickLogic(x, y, board, 0, *width, *height, *gameMode, flagPlaced);
+							if (valBak != 3) {
+								return valBak;
 							}
 						}
 					}
@@ -782,11 +781,10 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 								*y = *height - 1;
 							}
 						}
-
 						if (pressed == 1 && lose == 0) {
-							logicTemp = clickLogic(x, y, board, 1, *width, *height, *gameMode, flagPlaced);
-							if (logicTemp != 0) {
-								return logicTemp;
+							valBak = clickLogic(x, y, board, 1, *width, *height, *gameMode, flagPlaced);
+							if (valBak != 0) {
+								return valBak;
 							}
 						}
 					}
@@ -827,15 +825,15 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 			}
 		}
 		else if (input == 'd' && lose == 0) {
-			logicTemp = clickLogic(x, y, board, 0, *width, *height, *gameMode, flagPlaced);
-			if (logicTemp != 3) {
-				return logicTemp;
+			valBak = clickLogic(x, y, board, 0, *width, *height, *gameMode, flagPlaced);
+			if (valBak != 3) {
+				return valBak;
 			}
 		}
 		else if (input == 'f' && !(board[*y * *width + *x] >= 100 && board[*y * *width + *x] <= 200) && lose == 0) {
-			logicTemp = clickLogic(x, y, board, 1, *width, *height, *gameMode, flagPlaced);
-			if (logicTemp != 0) {
-				return logicTemp;
+			valBak = clickLogic(x, y, board, 1, *width, *height, *gameMode, flagPlaced);
+			if (valBak != 0) {
+				return valBak;
 			}
 		}
 	}
@@ -1021,7 +1019,7 @@ short clickLogic(short *x, short *y, short board[], short flag, short width, sho
 void wordArt(short** board, short *width, short *height, short *mineCount, short *gameMode, short *win, short *trueMineCount, short *flagPlaced, short *timer) {
 	char word[] = "minesweeper";
 	short Art = 0, termWidth, termHeight, flip = 0, oldWidth = 0, oldHeight = 0;
-	do {
+	while (true) {
 		if (Art < 11) {
 			word[Art] -= 32;
 		}
@@ -1073,7 +1071,7 @@ void wordArt(short** board, short *width, short *height, short *mineCount, short
 			Art = 0;
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(125));	// gemini aided
-	} while (true);
+	}
 }
 
 void flushBuffer(short board[], short *width, short *height, short *mineCount, short *gameMode, short *win) {

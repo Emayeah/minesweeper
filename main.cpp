@@ -547,12 +547,9 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 								plusOrMinus = 1;
 							}
 							if (valBak != 0) {
-								if ((tempVal == 0 || tempVal == 16) && pressed == 0) {
-									valBak += 20;
-								}
 								if (mouseValx - (termWidth / 2 - 36 / 2) > 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
 									if ((tempVal == 0 || tempVal == 16) && pressed == 0) {
-										if (valBak == 10 || valBak == 30) {
+										if (valBak == 10) {
 											*gameMode -= 1;
 										}
 										else {
@@ -564,7 +561,7 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 									}
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 16 && mouseValx - (termWidth / 2 - 36 / 2) < 19) {
-									if ((valBak != 10 && valBak != 30) && (tempVal == 0 || tempVal == 16) && pressed == 0) {
+									if (valBak != 10 && (tempVal == 0 || tempVal == 16) && pressed == 0) {
 										if (tempVal == 16) {
 											*height += 9 * plusOrMinus;
 										}
@@ -574,7 +571,7 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
 									if ((tempVal == 0 || tempVal == 16) && pressed == 0) {
-										if (valBak == 10 || valBak == 30) {
+										if (valBak == 10) {
 											*gameMode += 1;
 										}
 										else {
@@ -589,10 +586,13 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 								else {
 									valBak = 0;
 								}
+								if ((tempVal == 0 || tempVal == 16) && pressed == 0 && valBak != 0) {
+									valBak += 20;
+								}
 								printSettingsMenu(valBak, width, height, mineCount, gameMode);
 							}
 							else {
-								printSettingsMenu(valBak, width, height, mineCount, gameMode);
+								printSettingsMenu(0, width, height, mineCount, gameMode);
 							}
 						}
 						if (termHeight % 2 == 0) {

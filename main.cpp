@@ -236,7 +236,7 @@ void initBoard(short board[], short width, short height, short mineCount, short 
 void printBoard(short board[], short lose, short width, short height, short gameMode) {
 	short termWidth;
 	short termHeight;
-	short colors[40] = {
+	short colors[40] = { // color associative array
 		4, 2, 196, 21, 88, 6, 240, 245, 56, 154,
 		116, 202, 111, 5, 201, 214, 30, 77, 199, 171,
 		23, 220, 105, 87, 248, 67, 62, 121, 29, 110,
@@ -247,9 +247,7 @@ void printBoard(short board[], short lose, short width, short height, short game
 	termWidth = w.ws_col;									 	// gemini aided
 	termHeight = w.ws_row;										// gemini aided	
 	consoleMutex.lock(); // gemini
-	cout << "\e[H";
-	cout << "\e[" << ((termHeight - 1) / 2) - (height / 2) - 1 << "B";		// move to the center
-	cout << "\e[" << (termWidth / 2) - width << "C";						// move to the center, again, an emoji takes up 2 spaces!
+	cout << "\e[" << ((termHeight - 1) / 2) - (height / 2) + 1 << ";" << (termWidth / 2) - width + 1 << "H";						// move to the center, again, an emoji takes up 2 spaces!
 	for (short i = 0; i < width; i++) {
 		cout << "🟩";
 	}
@@ -297,6 +295,7 @@ void printBoard(short board[], short lose, short width, short height, short game
 			else if (board[i * width + j] % 10 >= 2 && board[i * width + j] < 100 && board[i * width + j] % 10 <= 6 && (board[i * width + j] > 9 || board[i * width + j] < 2)) {
 				/*
 				 * basically all of the (non clicked / hovered) flags
+				 * the hovered flags are printed below (together with the yellow background)
 				 */
 				if (gameMode == 0) {
 					if (lose != 1) {
@@ -343,7 +342,7 @@ void printBoard(short board[], short lose, short width, short height, short game
 					cout << "\e[0;0m";
 				}
 				else {
-					cout << "\e[48;5;242m";
+					cout << "\e[48;5;220m";
 					cout << board[i * width + j] - 1 << "F";
 					cout << "\e[0;0m";
 				}
@@ -507,8 +506,8 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 					tempVal = getMouseVal(&pressed);
 					if (tempVal == 0 || tempVal == 16 || tempVal == 35 || tempVal == 51 || tempVal == 2 || tempVal == 34 || tempVal == 32) {	// unpressed || unpressed + ctrl
 						mouseValx = getMouseVal(&pressed) - 1;
-						mouseValy = getMouseVal(&pressed) - 1; // for some reason the menu settings does not want to play ball unless i do this jankery
-						if (mouseValy == 0 && pressed == 1 && (tempVal == 0 || tempVal == 16)) {
+						mouseValy = getMouseVal(&pressed); // for some reason the menu settings does not want to play ball unless i do this jankery
+						if (mouseValy == 1 && pressed == 1 && (tempVal == 0 || tempVal == 16)) {
 							if (mouseValx >= 9) {
 								return 5;
 							}
@@ -516,6 +515,7 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 								return 6;
 							}
 						}
+						mouseValy -= 2;
 						if (openSettings == 1) {
 							valBak = 0;
 							if (mouseValy - (termHeight / 2 - 16 / 2) == 2) {
@@ -528,7 +528,6 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 							}
 							else if (mouseValy - (termHeight / 2 - 16 / 2) == 14) {
 								valBak = 10;
-								plusOrMinus = 1;
 							}
 							if (valBak != 0) {
 								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
@@ -644,13 +643,13 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 short calcAdjacent(short x, short y, short board[], short mode, short width, short height) {
 	short count = 0;
 	short *cellVal;
-	for (short i = -1; i < 2; i++) {
-		for (short j = -1; j < 2; j++) {
-			if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) { // check for out of bounds
-				cellVal = &board[(y + j) * width + (x + i)];
+	for (short i = x - 1; i <= x + 1; i++) {
+		for (short j = y - 1; j <= y + 1; j++) {
+			if (i >= 0 && i < width && j >= 0 && j < height) { // check for out of bounds
+				cellVal = &board[j * width + i];
 				if (*cellVal < 100) {		// to avoid checking numbers
 					if (mode == 0 && *cellVal / 10 >= 5 && *cellVal / 10 <= 9) {// this is to check the amount of mines nearby (to place a number)
-						count += (*cellVal / 10 - 4);
+						count += *cellVal / 10 - 4;
 					}
 					else if (mode == 2 && *cellVal % 10 >= 2 && *cellVal % 10 <= 6) {		// this is used to check if there's the right amount of flags where you're chording
 						count += *cellVal % 10 - 1;
@@ -674,11 +673,11 @@ void expandBoard(short x, short y, short board[], short width, short height, sho
 	short *cellVal;
 	do {
 		flag = 0;
-		for (short i = -count; i <= count; i++) {
-			for (short j = -count; j <= count; j++) {
-				if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) { // check for out of bounds blah blah
-					cellVal = &board[(y + j) * width + (x + i)];
-					adjacent = calcAdjacent(x + i, y + j, board, 1, width, height);
+		for (short i = x - count; i <= x + count; i++) {
+			for (short j = y - count; j <= y + count; j++) {
+				if (i >= 0 && i < width && j >= 0 && j < height) { // check for out of bounds blah blah
+					cellVal = &board[j * width + i];
+					adjacent = calcAdjacent(i, j, board, 1, width, height);
 					if (adjacent != 0) {
 						if (*cellVal == 10 || *cellVal / 10 == 4) {				// if you flag a white spot, that flagged spot is overridden when board expansion
 							flag = 1;
@@ -687,7 +686,7 @@ void expandBoard(short x, short y, short board[], short width, short height, sho
 							if (*cellVal / 10 == 4) {
 								*flagPlaced -= *cellVal % 10 - 1;
 							}
-							*cellVal = calcAdjacent(x + i, y + j, board, 0, width, height);
+							*cellVal = calcAdjacent(i, j, board, 0, width, height);
 							if (*cellVal != 0) {
 								*cellVal += 100;
 							}
@@ -741,7 +740,7 @@ short getMouseVal(short *pressed) {
 				*pressed = 1;
 			}
 		}
-	} while ((short)(input - 48) >= 0 && (short)(input - 48) <= 9);
+	} while (input >= 48 && input <= 57);
 	return tempVal;
 }
 
@@ -770,16 +769,16 @@ short clickLogic(short *x, short *y, short board[], short flag, short width, sho
 					return 1;			// you chorded near an unflagged mine!
 				}
 				short temp;
-				for (short i = -1; i < 2; i++) {
-					for (short j = -1; j < 2; j++) {
-						if (*x + i >= 0 && *x + i < width && *y + j >= 0 && *y + j < height) {
-							cellVal = &board[(*y + j) * width + (*x + i)];
+				for (short i = *x - 1; i <= *x + 1; i++) {
+					for (short j = *y - 1; j <= *y + 1; j++) {
+						if (i >= 0 && i < width && j >= 0 && j < height) {
+							cellVal = &board[j * width + i];
 							if (*cellVal == 10) {
-								*cellVal = calcAdjacent(*x + i, *y + j, board, 0, width, height);
+								*cellVal = calcAdjacent(i, j, board, 0, width, height);
 								if (*cellVal != 0) {
 									*cellVal += 100;
 								}
-								expandBoard(*x + i, *y + j, board, width, height, flagPlaced);
+								expandBoard(i, j, board, width, height, flagPlaced);
 							} 
 						}
 					}
@@ -941,7 +940,7 @@ void printSettingsMenu(short update, short *width, short *height, short *mineCou
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 	short termWidth = w.ws_col;
 	short termHeight = w.ws_row;
-	// menu wide 36 and tall 15
+	// menu wide 36 and tall 16
 	consoleMutex.lock();
 	cout << "\e[H";
 	cout << "\e[48;5;15m";

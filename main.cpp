@@ -410,7 +410,6 @@ void printBoard(short board[], short lose, short width, short height, short game
 short userInput(short *x, short *y, short board[], short lose, short openSettings, short *width, short *height, short *mineCount, short *gameMode, short *flagPlaced) {
 	short valBak;
 	short *cellPos;
-	short validChord;
 	char input;
 	short tempVal;
 	short mouseValx;
@@ -418,6 +417,7 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 	short pressed = 1;
 	short termWidth;
 	short termHeight;
+	short plusOrMinus;
 	struct winsize w;												// disclosing the same lines as gemini is very redundant
 	while (true) {
 		ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);						// just know that the code that gets the terminal size is not done by me
@@ -526,41 +526,33 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 						mouseValy = getMouseVal(&pressed) - 1; // for some reason the menu settings does not want to play ball unless i do this jankery
 						if (openSettings == 1) {
 							valBak = 0;
-							if (mouseValy - (termHeight / 2 - 15 / 2) == 2)  {
-								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
-									valBak = 1;
-								}
-								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 16 && mouseValx - (termWidth / 2 - 36 / 2) < 19) {
-									valBak = 2;
+							if (mouseValy - (termHeight / 2 - 16 / 2) == 2) {
+								valBak = 1;
+							}
+							else if (mouseValy - (termHeight / 2 - 16 / 2) == 10) {
+								valBak = 7;
+							}
+							else if (mouseValy - (termHeight / 2 - 16 / 2) == 14) {
+								valBak = 10;
+							}
+							if (valBak != 0) {
+								if (mouseValx - (termWidth / 2 - 36 / 2) >= 16 && mouseValx - (termWidth / 2 - 36 / 2) < 19) {
+									valBak += 1;
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
-									valBak = 3;
+									valBak += 2;
 								}
+								else if (mouseValx - (termWidth / 2 - 36 / 2) < 7 || mouseValx - (termWidth / 2 - 36 / 2) >= 10){
+									valBak = 0;
+								}
+								printSettingsMenu(valBak, width, height, mineCount, gameMode);
 							}
-							else if (mouseValy - (termHeight / 2 - 15 / 2) == 10) {
-								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
-									valBak = 7;
-								}
-								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 16 && mouseValx - (termWidth / 2 - 36 / 2) < 19) {
-									valBak = 8;
-								}
-								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
-									valBak = 9;
-								}
+							else {
+								printSettingsMenu(valBak, width, height, mineCount, gameMode);
 							}
-							else if (mouseValy - (termHeight / 2 - 15 / 2) == 13) {
-								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
-									valBak = 21;
-								}
-								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
-									valBak = 22;
-								}
-							}
-							printSettingsMenu(valBak, width, height, mineCount, gameMode);
 						}
-						mouseValy++; // i mean i guess it does the trick
-						if (termHeight % 2 != 0) {
-							mouseValy--;
+						if (termHeight % 2 == 0) {
+							mouseValy++;	// i mean i guess it does the trick
 						}
 						mouseValy -= termHeight / 2 - *height / 2;
 						mouseValx -= (termWidth / 2) - *width;
@@ -587,14 +579,12 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 								*y = *height - 1;
 							}
 						}
-
 						pressed = 1;
 					}
-					else if (tempVal == 0 || tempVal == 16) { // left click || left click + ctrl
-						mouseValx = getMouseVal(&pressed);
-						mouseValx--;
-						mouseValy = getMouseVal(&pressed);
-						if (mouseValy == 1 && pressed == 1) {
+					else if (tempVal == 0 || tempVal == 16) {		// left click || left click + ctrl
+						mouseValx = getMouseVal(&pressed) - 1;
+						mouseValy = getMouseVal(&pressed) - 1;
+						if (mouseValy == 0 && pressed == 1) {
 							if (mouseValx >= 9) {
 								return 5;
 							}
@@ -602,116 +592,77 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 								return 6;
 							}
 						}
-						mouseValy--;
 						if (openSettings == 1) {
 							valBak = 0;
-							if (mouseValy - (termHeight / 2 - 15 / 2) == 2)  {
+							if (mouseValy - (termHeight / 2 - 16 / 2) == 2) {
+								plusOrMinus = 1;
+							}
+							else if (mouseValy - (termHeight / 2 - 16 / 2) == 10) {
+								valBak = 6;
+								plusOrMinus = -1;
+							}
+							else if (mouseValy - (termHeight / 2 - 16 / 2) == 14) {
+								valBak = 9;
+								plusOrMinus = 1;
+							}
+							else {
+								plusOrMinus = 0;
+							}
+							if (plusOrMinus != 0) {
 								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
 									if (pressed == 0) {
-										valBak = 11;
+										valBak += 21;
 									}
 									else {
-										if (tempVal == 16) {
-											*width += 9;
+										if (valBak == 9) {
+											*gameMode -= 1;
 										}
-										*width += 1;
-										valBak = 1;
+										else {
+											if (tempVal == 16) {
+												*width += 9 * plusOrMinus;
+											}
+											*width += 1 * plusOrMinus;
+										}
+										valBak += 1;
 									}
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 16 && mouseValx - (termWidth / 2 - 36 / 2) < 19) {
 									if (pressed == 0) {
-										valBak = 12;
+										valBak += 22;
 									}
-									else {
+									else if (valBak != 9) {
 										if (tempVal == 16) {
-											*height += 9;
+											*height += 9 * plusOrMinus;
 										}
-										*height += 1;
-										valBak = 2;
+										*height += 1 * plusOrMinus;
+										valBak += 2;
 									}
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
 									if (pressed == 0) {
-										valBak = 13;
+										valBak += 23;
 									}
 									else {
-										if (tempVal == 16) {
-											*mineCount += 9;
+										if (valBak == 9) {
+											*gameMode += 1;
 										}
-										*mineCount += 1;
-										valBak = 3;
+										else {
+											if (tempVal == 16) {
+												*mineCount += 9 * plusOrMinus;
+											}
+											*mineCount += 1 * plusOrMinus;
+										}
+										valBak += 3;
 									}
 								}
-							}
-							else if (mouseValy - (termHeight / 2 - 15 / 2) == 10) {
-								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
-									if (pressed == 0) {
-										valBak = 17;
-									}
-									else {
-										if (tempVal == 16) {
-											*width -= 9;
-										}
-										*width -= 1;
-										valBak = 7;
-									}
-								}
-								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 16 && mouseValx - (termWidth / 2 - 36 / 2) < 19) {
-									if (pressed == 0) {
-										valBak = 18;
-									}
-									else {
-										if (tempVal == 16) {
-											*height -= 9;
-										}
-										*height -= 1;
-										valBak = 8;
-									}
-								}
-								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
-									if (pressed == 0) {
-										valBak = 19;
-									}
-									else {
-										if (tempVal == 16) {
-											*mineCount -= 9;
-										}
-										*mineCount -= 1;
-										valBak = 9;
-									}
-								}
-							}
-							else if (mouseValy - (termHeight / 2 - 15 / 2) == 13) {
-								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
-									if (pressed == 0) {
-										valBak = 31;
-									}
-									else {
-										if (tempVal == 16) {
-											*gameMode -= 9;
-										}
-										*gameMode -= 1;
-										valBak = 21;
-									}
-								}
-								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
-									if (pressed == 0) {
-										valBak = 32;
-									}
-									else {
-										if (tempVal == 16) {
-											*gameMode += 9;
-										}
-										*gameMode += 1;
-										valBak = 22;
-									}
+								else {
+									valBak = 0;
 								}
 							}
 							printSettingsMenu(valBak, width, height, mineCount, gameMode);
 						}
-						mouseValy++;
-						if (termHeight % 2 != 0) {
-							mouseValy--;
+						if (termHeight % 2 == 0) {
+							mouseValy++;
 						}
 						mouseValx -= (termWidth / 2) - *width;
 						mouseValx /= 2;		// emojis take 2 spaces horizontally
@@ -1144,8 +1095,8 @@ void printSettingsMenu(short update, short *width, short *height, short *mineCou
 	cout << " < Back  ";
 	cout << "\e[48;5;233m";
 	short temp = 0;
-	for (short i = 0; i < 15; i++) {
-		cout << "\e[" << termHeight / 2 - 15 / 2 + i + temp << ";" << termWidth / 2 - 36 / 2 + 1 << "H";
+	for (short i = 0; i < 16; i++) {
+		cout << "\e[" << termHeight / 2 - 16 / 2 + i + temp << ";" << termWidth / 2 - 36 / 2 + 1 << "H";
 		if (i == 1) {
 			for (short k = 0; k < 6; k++) {
 				cout << " ";
@@ -1172,7 +1123,7 @@ void printSettingsMenu(short update, short *width, short *height, short *mineCou
 				cout << " ";
 			}
 			temp = 1;
-			cout <<  "\e[" << termHeight / 2 - 15 / 2 + i + 1 << ";" << termWidth / 2 - 36 / 2 + 1 << "H";
+			cout <<  "\e[" << termHeight / 2 - 16 / 2 + i + 1 << ";" << termWidth / 2 - 36 / 2 + 1 << "H";
 		}
 		for (short j = 0; j < 36; j++) {
 			cout << " ";
@@ -1183,13 +1134,13 @@ void printSettingsMenu(short update, short *width, short *height, short *mineCou
 	cout << "\e[38;5;16m";
 	cout << "\e[48;5;15m";
 	for (short i = 0; i < 4; i++) {
-		cout << "\e[" << termHeight / 2 - 15 / 2 + 3 + i * 4 << ";" << termWidth / 2 - 36 / 2 + 2 << "H";
+		cout << "\e[" << termHeight / 2 - 16 / 2 + 3 + i * 4 << ";" << termWidth / 2 - 36 / 2 + 2 << "H";
 		for (short j = 0; j < 3; j++) {
 			if (update != 0) {
 				if (update < 10 && update == (j + 3 * i) + 1) {
 					cout << "\e[48;5;82m";
 				}
-				else if (update > 10 && update < 20 && (update - 10) == (j + 3 * i) + 1) {
+				else if (update > 20 && update < 30 && (update - 20) == (j + 3 * i) + 1) {
 					cout << "\e[48;5;28m";
 				}
 			}
@@ -1282,12 +1233,11 @@ void printSettingsMenu(short update, short *width, short *height, short *mineCou
 			cout << "\e[48;5;15m";
 		}
 		if (i == 3) {
-			cout << "\e[A";
 			cout << "\e[6C";
-			if (update == 21) {
+			if (update == 10) {
 				cout << "\e[48;5;82m";
 			}
-			else if (update == 31) {
+			else if (update == 30) {
 				cout << "\e[48;5;28m";
 			}
 			else {
@@ -1312,7 +1262,7 @@ void printSettingsMenu(short update, short *width, short *height, short *mineCou
 				cout << " ";
 			}
 			cout << " ";
-			if (update == 22) {
+			if (update == 12) {
 				cout << "\e[48;5;82m";
 			}
 			else if (update == 32) {
@@ -1350,11 +1300,6 @@ void sigtstp_handler(int sig) {
 void sigint_handler(int sig) {
 	cleanup();
 	consoleMutex.lock();
-	sigset_t mask;
-	sigemptyset(&mask);
-	sigaddset(&mask, SIGINT);
-	sigprocmask(SIG_UNBLOCK, &mask, NULL);
-	signal(SIGINT, SIG_DFL);
-	cout << flush;
-	raise(SIGINT);
+	cout << endl;
+	exit(EXIT_SUCCESS);
 }

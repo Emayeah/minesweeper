@@ -87,7 +87,7 @@ un emoji arancione viene usata per indicare che l'utente ha il tasto cliccato, h
 
 quando gameMode è diverso da 0, certi elementi come la quantità di bandiere e altro vengono stampati in modi diversi, per esempio al posto di stampare bandiere, numeri vengono stampati (perchè non esistono emoji contenenti 3 o più bandiere)
 
-ho usato una array associata che contiene gli id dei colori per stampare i colori dei numeri, originariamente avevo una catena di switch case lunga quasi 160 righe ma mi son reso conto che forse avere un'array associata e usando il valore del numero è l'idea migliore, rendendo il codice più pulito e facendo meno controlli di eguaglianza
+ho usato una array associata che contiene gli id dei colori per stampare i colori dei numeri, originariamente avevo una catena di switch case lunga quasi 120 righe ma mi son reso conto che forse avere un'array associata e usando il valore del numero è l'idea migliore, rendendo il codice più pulito e facendo meno controlli di eguaglianza
 
 usando le dimensioni del terminale la tavola viene posta al centro (non ho voluto fare il hard-code, questo permette il gioco di rispondere correttamente casomai ci siano eventuali ridimensionamenti del terminale)
 

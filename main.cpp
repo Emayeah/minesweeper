@@ -952,16 +952,16 @@ void printSettingsMenu(short update, short *width, short *height, short *mineCou
 	for (short i = 0; i < 16; i++) {
 		cout << "\e[" << termHeight / 2 - 16 / 2 + i + temp << ";" << termWidth / 2 - 36 / 2 + 1 << "H";
 		if (i == 1) {
-			for (short k = 0; k < 5; k++) {
+			for (short k = 0; k < 4; k++) {
 				cout << " ";
 			}
 			cout << "\e[38;5;16m";
 			cout << "\e[48;5;15m";
-			cout << " Width   ";
-			cout << "Height  ";
+			cout << "  Width   ";
+			cout << "Height ";
 			cout << "Mine count ";
 			cout << "\e[48;5;233m";
-			for (short k = 0; k < 3; k++) {
+			for (short k = 0; k < 4; k++) {
 				cout << " ";
 			}
 			temp = 1;
@@ -996,7 +996,7 @@ void printSettingsMenu(short update, short *width, short *height, short *mineCou
 				*height = 3;
 			}
 			else if (*height > termHeight - 7) {
-				*height = termHeight - 5;
+				*height = termHeight - 7;
 			}
 			if (*width * *height - 1 < *mineCount) {
 				*mineCount = *width * *height - 1;

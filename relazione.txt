@@ -22,6 +22,9 @@ questa modalità forza l'utente a pensare di più, perchè il significato dei nu
 
 la titlebar in cima è pure animata, e se la si clicca allora viene iniziata una nuova partita, accanto ci sono il timer e la quantità di bandiere rimanenti, opzioni stilistiche per renderlo simile all'implementazione originale
 
+la tavola sta nel heap (con new, non malloc) così posso ridimensionare la tavola. potrei usare malloc ma...	troppo difficile
+ho usato dei short ovunque per l'utilizzo della memoria dimezzata (il numero più grande che mi serve è tipo 300, byte non è abbastanza ma int è overkill)
+
 
 i codici (ovvero quale numero equivale a quale casella)
 0 scoperto
@@ -52,7 +55,7 @@ i codici sono piuttosto stupidi e si potrebbero migliorare, per esempio trasform
 (in poche parole non avevo tantissimo tempo)
 
 
-non ho usato un'array associata per le bombe, usarne una PUÒ rendeere il compito più semplice se si parla di 100 righe ma sto programma ha superato la soglia dei 1400.
+non ho usato un'array associata per le bombe, usarne una PUÒ rendeere il compito più semplice se si parla di 100 righe ma sto programma ha superato la soglia dei 1400. (update, leggere ottimizzazioni lo hanno portato a 1380)
 avevo iniziato senza un'array associata, non aveva alcun senso aggiungerne una perchè potrebbe introdurre desync tra le due tavole e l'uso della ram è pure duplicato.
 le array associate in generale sono stupidi, o c'è un vero motivo per usarne una (quando NON avere un array associata è la decision più stupida) o non la si usa.
 
@@ -237,12 +240,16 @@ getMouseVal invece è la funzione che si occupa del parsing dell'input del mouse
 ritorna un numero e serve per recuperare le coordinate del mouse, la modalità e l'evento del click
 ha una variabile passata per riferimento, serve come un secondo return (per ritornare al chiamante un altro valore)
 
+piuttosto che avere userInput che fa il parsing (creando casini e rendendo il codice difficile da leggere), ho spostato il tutto in una funzione, rendendo il codice più snello e semplice da leggere
+
 l'input del mouse è strutturato così: esc[<z;x;ym ; devo in qualche modo separare i 3 numeri (e la m)
 
 si ferma quando incontra un carattere che non è un numero (ascii non compreso tra 48 e 57)
 però se incontra una M o una m allora pressed (l'unico parametro, utilizzato come un 2o return) viene modificato
 m vuol dire che l'utente non ha premuto il tasto o lo ha lasciato andare (dipende dal 1o numero, ovvero 'z')
 M vuol dire che l'utente ha cliccato il tasto (destro o sinistro anche quello dipende da 'z')
+
+visto che l'input ha più di un carattere, quello che faccio è leggere il primo numero e metterlo nella somma, se c'è un altro numero dopo il primo numero allora la somma è moltiplicata per 10 e il nuovo munero è aggiunto, se c'è un terzo numero allora la somma viene moltiplicata per 10 e il risultato aggiunto alla somma...
 
 vorrei precisare che M e m non sono due "cliccato o non cliccato" ma sono 2 eventi, ovvero m quando l'utente ha lasciato andare il tasto, M quando l'utente lo ha appena premuto (quando senti il click). se però l'utente muove il mouse quando il tasto è premuto la M sarà maiuscola, ma la lettera M/m non è mai ambigua, perchè possibile capire (in base al primo numero 'z') se il tasto non è premuto o se è premuto, anche se non accade nessun evento
 se z == 34 allora vuol dire che il tasto destro è premuto e l'utente ha eseguito un movimento con il mouse, ma la M sarà maiuscola indicando che il mouse non è stato premuto (se invece il tasto non è premuto allora z == 35)
@@ -257,25 +264,9 @@ prima di tutto "flag" viene passato e serve per cambiare il flow del programma, 
 x e y indicano la casella che deve essere controllata, e board... credo tutti sappiamo perchè board viene passata
 vengono passati anche flagPlaced, width e height, 2 parametri necessari per il corretto funzionamento di expandBoard
 
+se clickLogic rileva che l'utente ha cliccato una bomba o ha tentato di fare il chording accanto ad una bomba non flaggata allora ritorna automaticamente 1, segnalando una sconfitta. non ha senso procedere a fare altri controlli, perchè l'utente ha perso
 
-se flag == 0
-prima di tutto controlla se hai cliccato un numero o meno per verificare se l'utente sta cercando di fare il chording.
-se non è stato cliccato un numero, dei controlli vengono eseguiti per vedere se hai appena cliccato una bomba o meno
-se si allora viene automaticamente ritornato un 1 indicando una sconfitta, altrimenti un 3 viene ritornato indicando un "niente di importante è successo, proceda pure"
-
-altrimenti, se l'utente ha cliccato su un numero, vengono effettuati diversi controlli
-calcAdjacent (con modalità 2) viene chiamata per verificare se accanto alla casella cliccata è presente la quantità corretta di bandiere
-se il check passa allora calcAdjacent (con modalità 3) viene chiamata per verificare se accanto alla casella è presente una bomba senza una bandiera, se si allora viene ritornato automaticamente un 1 indicando una sconfitta
-
-altrimenti tutti i posti accanto alla casella con un area 3x3 vengono "scoperti" (controllando la quantità di bombe affianco alle caselle) e expandBoard viene chiamata nell'eventuale caso ci sia una casella di valore 0 (per iniziare la reazione a catena)
-
-
-se flag == 1 allora l'utente sta cercando di piazzare una bandiera
-se la posizione della bandiera è valida (non puoi mettere bandiere su caselle scoperte etc), allora clickLogic controlla se la bandiera deve essere tolta o aggiunta (incrementando la quantità di bandiere se il limite di bandiere (gestito da gameMode) non è stato raggiunto, altrimenti rimuovendo le bandiere)
-clickLogic ritorna un valore diverso da 0 se una bandiera è stata correttamente piazzata / rimossa, e userInput ritornerà a main lo stesso valore che è stato ritornato da clickLogic. se il valore ritornato da clickLogic è uguale a 0, allora userInput continua
-
-clickLogic calcola anche se il click sinistro è valido, se non è valido allora al posto di ritornare 0 ritorna 3
-
+calcola anche se l'azione è su una cella valida, ovvero non puoi bandierare una cella vuota (valore 0)
 
 
 wordArt: è una funzione asincrona
@@ -312,6 +303,8 @@ tavola (che si trova in 0x0ef0) -> 0xf0f0
 tavola2 -> 0x0ef0
 wordArt punta a 0x0ef0 che a sua volta punta a 0xf0f0
 
+
+è forse possibile passare la posizione della tavola senza tavola2, non ho provato e non voglio testarlo ora
 
 trueMineCount viene utilizzato per stampare la quantità di bandiere rimanenti, e il motivo perchè uso trueMineCount è perchè se la gameMode non è 0, allora la quantità di bombe effettive sarà diverso da mineCount. trueMineCount contiene la vera quantità di bombe
 flagPlaced invece conta la quantità di bandiere piazzate (sempre usato dall'elemento che mostra la quantità di bandiere mancanti)

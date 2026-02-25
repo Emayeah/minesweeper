@@ -844,22 +844,22 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 
 short calcAdjacent(short x, short y, short board[], short mode, short width, short height) {
 	short count = 0;
-	short *temp;
+	short *cellVal;
 	for (short i = -1; i < 2; i++) {
 		for (short j = -1; j < 2; j++) {
 			if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) { // check for out of bounds
-				temp = &board[(y + j) * width + (x + i)];
-				if (*temp < 100) {		// to avoid checking numbers
-					if (mode == 0 && *temp / 10 >= 5 && *temp / 10 <= 7) {// this is to check the amount of mines nearby (to place a number)
-						count += (*temp / 10 - 4);
+				cellVal = &board[(y + j) * width + (x + i)];
+				if (*cellVal < 100) {		// to avoid checking numbers
+					if (mode == 0 && *cellVal / 10 >= 5 && *cellVal / 10 <= 7) {// this is to check the amount of mines nearby (to place a number)
+						count += (*cellVal / 10 - 4);
 					}
-					else if (mode == 1 && *temp == 0) {								// this is to check if there's a nearby blank square, used by expandBoard
+					else if (mode == 1 && *cellVal == 0) {								// this is to check if there's a nearby blank square, used by expandBoard
 						return 1; // i know, i know, jacopini... va bene che compiler optimization tolgono le altre condizioni ma questo è più semplice da leggere
 					}
-					else if (mode == 2 && *temp % 10 >= 2 && *temp % 10 <= 5) {		// this is used to check if there's the right amount of flags where you're chording
-						count += *temp % 10 - 1;
+					else if (mode == 2 && *cellVal % 10 >= 2 && *cellVal % 10 <= 5) {		// this is used to check if there's the right amount of flags where you're chording
+						count += *cellVal % 10 - 1;
 					}
-					else if (mode == 3 && *temp % 10 == 1) {							// if you're chording and there's an unflagged mine nearby then you lose
+					else if (mode == 3 && *cellVal % 10 == 1) {							// if you're chording and there's an unflagged mine nearby then you lose
 						count++;
 					}
 				}

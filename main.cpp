@@ -95,7 +95,7 @@ int main() {
 			blockPrintMutex.lock();
 			printSettingsMenu(0, &width, &height, &mineCount, &gameMode);
 			win = userInput(&x, &y, board, blockOutput, 1, &width, &height, &mineCount, &gameMode, &flagPlaced);
-			if (win == 6) {
+			if (win == 6 || win == 5) {
 				arrayChangeMutex.lock();						// done by me! learned something new
 				delete[] board;
 				//width += 10;

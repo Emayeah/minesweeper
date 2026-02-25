@@ -20,6 +20,8 @@ normalmente ogni singola cella può contenere o 0 bombe o 1 bomba, ma ho impleme
 questa modalità forza l'utente a pensare di più, perchè il significato dei numeri diventa ambiguo. normalmente, se un "3" affianca 3 celle, ogni singola cella ha una bomba; se invece si attiva la modalità "3 bombe", non è più garantito che ci sia una bomba in 3 celle diverse, potrebbe essere che ci siano 3 bombe in una singola cella o 2 bombe in una e 3 in un altra
 
 
+la titlebar in cima è pure animata, e se la si clicca allora viene iniziata una nuova partita, accanto ci sono il timer e la quantità di bandiere rimanenti, opzioni stilistiche per renderlo simile all'implementazione originale
+
 
 i codici (ovvero quale numero equivale a quale casella)
 0 scoperto

@@ -521,28 +521,72 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 					 * m if mouse IS pressed down
 					 */
 					tempVal = getMouseVal(&pressed);
-					if (tempVal == 35 || tempVal == 51) {	// unpressed || unpressed + ctrl
+					if (tempVal == 0 || tempVal == 16 || tempVal == 35 || tempVal == 51 || tempVal == 2 || tempVal == 34 || tempVal == 32) {	// unpressed || unpressed + ctrl
 						mouseValx = getMouseVal(&pressed) - 1;
 						mouseValy = getMouseVal(&pressed) - 1; // for some reason the menu settings does not want to play ball unless i do this jankery
+						if (mouseValy == 0 && pressed == 1 && (tempVal == 0 || tempVal == 16)) {
+							if (mouseValx >= 9) {
+								return 5;
+							}
+							else {
+								return 6;
+							}
+						}
 						if (openSettings == 1) {
 							valBak = 0;
 							if (mouseValy - (termHeight / 2 - 16 / 2) == 2) {
 								valBak = 1;
+								plusOrMinus = 1;
 							}
 							else if (mouseValy - (termHeight / 2 - 16 / 2) == 10) {
 								valBak = 7;
+								plusOrMinus = -1;
 							}
 							else if (mouseValy - (termHeight / 2 - 16 / 2) == 14) {
 								valBak = 10;
+								plusOrMinus = 1;
 							}
 							if (valBak != 0) {
-								if (mouseValx - (termWidth / 2 - 36 / 2) >= 16 && mouseValx - (termWidth / 2 - 36 / 2) < 19) {
+								if ((tempVal == 0 || tempVal == 16) && pressed == 0) {
+									valBak += 20;
+								}
+								if (mouseValx - (termWidth / 2 - 36 / 2) > 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
+									if ((tempVal == 0 || tempVal == 16) && pressed == 0) {
+										if (valBak == 10 || valBak == 30) {
+											*gameMode -= 1;
+										}
+										else {
+											if (tempVal == 16) {
+												*width += 9 * plusOrMinus;
+											}
+											*width += 1 * plusOrMinus;
+										}
+									}
+								}
+								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 16 && mouseValx - (termWidth / 2 - 36 / 2) < 19) {
+									if ((valBak != 10 && valBak != 30) && (tempVal == 0 || tempVal == 16) && pressed == 0) {
+										if (tempVal == 16) {
+											*height += 9 * plusOrMinus;
+										}
+										*height += 1 * plusOrMinus;
+									}
 									valBak += 1;
 								}
 								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
+									if ((tempVal == 0 || tempVal == 16) && pressed == 0) {
+										if (valBak == 10 || valBak == 30) {
+											*gameMode += 1;
+										}
+										else {
+											if (tempVal == 16) {
+												*mineCount += 9 * plusOrMinus;
+											}
+											*mineCount += 1 * plusOrMinus;
+										}
+									}
 									valBak += 2;
 								}
-								else if (mouseValx - (termWidth / 2 - 36 / 2) < 7 || mouseValx - (termWidth / 2 - 36 / 2) >= 10){
+								else {
 									valBak = 0;
 								}
 								printSettingsMenu(valBak, width, height, mineCount, gameMode);
@@ -579,193 +623,19 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 								*y = *height - 1;
 							}
 						}
-						pressed = 1;
-					}
-					else if (tempVal == 0 || tempVal == 16) {		// left click || left click + ctrl
-						mouseValx = getMouseVal(&pressed) - 1;
-						mouseValy = getMouseVal(&pressed) - 1;
-						if (mouseValy == 0 && pressed == 1) {
-							if (mouseValx >= 9) {
-								return 5;
-							}
-							else {
-								return 6;
-							}
-						}
-						if (openSettings == 1) {
-							valBak = 0;
-							if (mouseValy - (termHeight / 2 - 16 / 2) == 2) {
-								plusOrMinus = 1;
-							}
-							else if (mouseValy - (termHeight / 2 - 16 / 2) == 10) {
-								valBak = 6;
-								plusOrMinus = -1;
-							}
-							else if (mouseValy - (termHeight / 2 - 16 / 2) == 14) {
-								valBak = 9;
-								plusOrMinus = 1;
-							}
-							else {
-								plusOrMinus = 0;
-							}
-							if (plusOrMinus != 0) {
-								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
-									if (pressed == 0) {
-										valBak += 21;
-									}
-									else {
-										if (valBak == 9) {
-											*gameMode -= 1;
-										}
-										else {
-											if (tempVal == 16) {
-												*width += 9 * plusOrMinus;
-											}
-											*width += 1 * plusOrMinus;
-										}
-										valBak += 1;
-									}
-								}
-								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 16 && mouseValx - (termWidth / 2 - 36 / 2) < 19) {
-									if (pressed == 0) {
-										valBak += 22;
-									}
-									else if (valBak != 9) {
-										if (tempVal == 16) {
-											*height += 9 * plusOrMinus;
-										}
-										*height += 1 * plusOrMinus;
-										valBak += 2;
-									}
-								}
-								else if (mouseValx - (termWidth / 2 - 36 / 2) >= 25 && mouseValx - (termWidth / 2 - 36 / 2) < 28) {
-									if (pressed == 0) {
-										valBak += 23;
-									}
-									else {
-										if (valBak == 9) {
-											*gameMode += 1;
-										}
-										else {
-											if (tempVal == 16) {
-												*mineCount += 9 * plusOrMinus;
-											}
-											*mineCount += 1 * plusOrMinus;
-										}
-										valBak += 3;
-									}
-								}
-								else {
-									valBak = 0;
-								}
-							}
-							printSettingsMenu(valBak, width, height, mineCount, gameMode);
-						}
-						if (termHeight % 2 == 0) {
-							mouseValy++;
-						}
-						mouseValx -= (termWidth / 2) - *width;
-						mouseValx /= 2;		// emojis take 2 spaces horizontally
-						mouseValy -= termHeight / 2 - *height / 2;
-						if (mouseValx >= 0 && mouseValx < *width) {
-							*x = mouseValx;
-						}
-						else {
-							if (mouseValx < 0) {
-								*x = 0;
-							}
-							else {
-								*x = *width - 1;
-							}
-						}
-						if (mouseValy >= 0 && mouseValy < *height) {
-							*y = mouseValy;
-						}
-						else {
-							if (mouseValy < 0) {
-								*y = 0;
-							}
-							else {
-								*y = *height - 1;
-							}
-						}
 						if (pressed == 1 && lose == 0) {
-							valBak = clickLogic(x, y, board, 0, *width, *height, *gameMode, flagPlaced);
+							if (tempVal == 0 || tempVal == 16) {
+								valBak = clickLogic(x, y, board, 0, *width, *height, *gameMode, flagPlaced);
+							}
+							else if (tempVal == 2) {
+								valBak = clickLogic(x, y, board, 1, *width, *height, *gameMode, flagPlaced);
+							}
 							if (valBak != 3) {
 								return valBak;
 							}
 						}
-					}
-					else if (tempVal == 2) { // right click
-						mouseValx = getMouseVal(&pressed);
-						mouseValx--;
-						mouseValx -= (termWidth / 2) - *width;
-						mouseValx /= 2;		// emojis take 2 spaces horizontally
-						mouseValy = getMouseVal(&pressed);
-						if (termHeight % 2 != 0) {
-							mouseValy--;		// but not vertically! although there is a small offset
-						}
-						mouseValy -= termHeight / 2 - *height / 2;
-						if (mouseValx >= 0 && mouseValx < *width) {
-							*x = mouseValx;
-						}
-						else {
-							if (mouseValx < 0) {
-								*x = 0;
-							}
-							else {
-								*x = *width - 1;
-							}
-						}
-						if (mouseValy >= 0 && mouseValy < *height) {
-							*y = mouseValy;
-						}
-						else {
-							if (mouseValy < 0) {
-								*y = 0;
-							}
-							else {
-								*y = *height - 1;
-							}
-						}
-						if (pressed == 1 && lose == 0) {
-							valBak = clickLogic(x, y, board, 1, *width, *height, *gameMode, flagPlaced);
-							if (valBak != 0) {
-								return valBak;
-							}
-						}
-					}
-					else if (tempVal == 34 || tempVal == 32) { // pressed down and moving
-						mouseValx = getMouseVal(&pressed);
-						mouseValx--;
-						mouseValx -= (termWidth / 2) - *width;
-						mouseValx /= 2;		// emojis take 2 spaces horizontally
-						mouseValy = getMouseVal(&pressed);
-						if (termHeight % 2 != 0) {
-							mouseValy--;		// but not vertically! although there is a small offset
-						}
-						mouseValy -= termHeight / 2 - *height / 2;
-						if (mouseValx >= 0 && mouseValx < *width) {
-							*x = mouseValx;
-						}
-						else {
-							if (mouseValx < 0) {
-								*x = 0;
-							}
-							else {
-								*x = *width - 1;
-							}
-						}
-						if (mouseValy >= 0 && mouseValy < *height) {
-							*y = mouseValy;
-						}
-						else {
-							if (mouseValy < 0) {
-								*y = 0;
-							}
-							else {
-								*y = *height - 1;
-							}
+						if (tempVal == 35 || tempVal == 51) {
+							pressed = 1;
 						}
 					}
 				}
@@ -955,7 +825,7 @@ short clickLogic(short *x, short *y, short board[], short flag, short width, sho
 				*cellVal = 42;
 			}
 			else {
-				return 0;						// just in case
+				return 3;						// just in case
 			}
 		}
 		*flagPlaced += 1;

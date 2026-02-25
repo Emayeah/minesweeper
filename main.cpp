@@ -67,7 +67,6 @@ int main() {
 	short win, x = 0, y = 0;
 	short adjacent;
 	short *board = new short[width * height];						// straight into the heap and not the stack, i need to free the heap to change the size (gemini aided)
-	short **board2 = &board;
 	short trueMineCount = 0;
 	short flagPlaced = 0;
 	initBoard(board, width, height, mineCount, gameMode, &trueMineCount);
@@ -78,7 +77,7 @@ int main() {
 	short termWidth;
 	short termHeight;
 	struct winsize w;											// gemini
-	std::future<void> idkman = std::async(std::launch::async, wordArt, board2, &width, &height, &mineCount, &gameMode, &win2, &trueMineCount, &flagPlaced, &timer); // gemini aided
+	std::future<void> idkman = std::async(std::launch::async, wordArt, &board, &width, &height, &mineCount, &gameMode, &win2, &trueMineCount, &flagPlaced, &timer); // gemini aided
 	while (true) {
 		win = userInput(&x, &y, board, blockOutput, 0, &width, &height, &mineCount, &gameMode, &flagPlaced); // win == 1 that means you lose because it's the game that wins against the player lol
 		ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);						// gemini
@@ -1018,7 +1017,7 @@ short clickLogic(short *x, short *y, short board[], short flag, short width, sho
 	return 3;									// can't flag
 }
 
-void wordArt(short** board, short *width, short *height, short *mineCount, short *gameMode, short *win, short *trueMineCount, short *flagPlaced, short *timer) {
+void wordArt(short **board, short *width, short *height, short *mineCount, short *gameMode, short *win, short *trueMineCount, short *flagPlaced, short *timer) {
 	char word[] = "minesweeper";
 	short Art = 0, termWidth, termHeight, flip = 0, oldWidth = 0, oldHeight = 0;
 	while (true) {

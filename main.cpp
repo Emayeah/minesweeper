@@ -76,12 +76,12 @@ int main() {
 	short firstInputFlag;
 	short termWidth;
 	short termHeight;
-	struct winsize w;											// gemini
+	struct winsize w;								// gemini
 	std::future<void> idkman = std::async(std::launch::async, wordArt, &board, &width, &height, &mineCount, &gameMode, &win2, &trueMineCount, &flagPlaced, &timer); // gemini aided
 	while (true) {
 		win = userInput(&x, &y, board, blockOutput, 0, &width, &height, &mineCount, &gameMode, &flagPlaced); // win == 1 that means you lose because it's the game that wins against the player lol
-		ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);						// gemini
-		termWidth = w.ws_col;									 	// gemini aided
+		ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);		// gemini
+		termWidth = w.ws_col;					 	// gemini aided
 		termHeight = w.ws_row;
 		blockPrintMutex.unlock();
 		cout << "\e[1m";				// bold
@@ -348,42 +348,42 @@ void printBoard(short board[], short lose, short width, short height, short game
 			else {
 				if ((board[i * width + j] > 100 && board[i * width + j] <= 200)) {
 					board[i * width + j] -= 100;
-					cout << "\e[3";							// foreground
+					cout << "\e[38;";							// foreground
 				}
 				else if (board[i * width + j] > 200) {
 					board[i * width + j] -= 200;
 					if (board[i * width + j] >= 10) {
-						cout << "\e[38;5;232m";					// white on white is unreadable, but for some reason setting the color to 16m (pitch black) doesn't work
+						cout << "\e[38;5;232m";			// white on white is unreadable, but for some reason setting the color to 16m (pitch black) doesn't work
 					}
-					cout << "\e[4";							// background
+					cout << "\e[48;";					// background
 				}
-				switch (board[i * width + j]) {				// print with colors, filled in colors for selected (background)
+				switch (board[i * width + j]) {			// print with colors, filled in colors for selected (background)
 					case 1:	
-						cout << "8;5;4m";					// light blue
+						cout << "5;4m";					// light blue
 						break;
 					case 2:
-						cout << "8;5;2m";					// green
+						cout << "5;2m";					// green
 						break;
 					case 3:
-						cout << "8;5;196m";				// red
+						cout << "5;196m";				// red
 						break;
 					case 4:
-						cout << "8;5;21m";				// blue, deep blue on the purplish side
+						cout << "5;21m";				// blue, deep blue on the purplish side
 						break;
 					case 5:
-						cout << "8;5;88m";				// maroon red
+						cout << "5;88m";				// maroon red
 						break;
 					case 6:
-						cout << "8;5;6m";					// light blue
+						cout << "5;6m";					// light blue
 						break;
 					case 7:
-						cout << "8;5;240m";				// black			
+						cout << "5;240m";				// black			
 						break;
 					case 8:
-						cout << "8;5;245m";				// gray
+						cout << "5;245m";				// gray
 						break;
 					default:
-						cout << "8;5;15m";				// white
+						cout << "5;15m";				// white
 						break;
 				}
 				cout << board[i * width + j];
@@ -392,18 +392,15 @@ void printBoard(short board[], short lose, short width, short height, short game
 				}
 				cout << "\e[0;0m";
 				board[i * width + j] += 100;
-//				cout << board[i * width + j] << " ";
 			}
 		}
 		cout << "🟩";
-		cout << "\r" << endl;
+		cout << "\r\n";
 	}
 	cout << "\e[" << (termWidth / 2) - width << "C"; // move to the center, again, an emoji takes up 2 spaces!
 	for (short i = 0; i < width; i++) {
 		cout << "🟩";
 	}
-	cout << "\e[H";
-	cout << "\e[" << ((termHeight - 1) / 2) - (height / 2) << "A"; // move to the enter
 	consoleMutex.unlock();
 }
 
@@ -745,7 +742,7 @@ short getMouseVal(short *pressed) {
 	char input;
 	do {
 		cin >> input;
-		if ((short)(input - 48) >= 0 && (short)(input - 48) <= 9) {
+		if (input >= 48 && input <= 57) {		// ascii codes for 0 to 9, 48 being 0 and 57 being 9
 			tempVal *= 10;
 			tempVal += (short)(input - 48);
 		}
@@ -766,7 +763,7 @@ short clickLogic(short *x, short *y, short board[], short flag, short width, sho
 	short *cellVal;
 	cellVal = &board[*y * width + *x];
 	if (flag == 0) {														// are you trying to place a flag? flag = 0 -> no (either that is chording or normal clicking), flag = 1 -> flagging
-		if (*cellVal != 0 && *cellVal < 100) {									// are you trying to chord? if you're trying to chord then *cellVal would be > 100
+		if (*cellVal != 0 && *cellVal < 100) {								// are you trying to chord? if you're trying to chord then *cellVal would be > 100
 			if (*cellVal % 10 == 1 && *cellVal / 10 >= 5 && *cellVal / 10 <= 7) {			
 				return 1;													// whoops, you just clicked on a bomb!
 			}
@@ -775,7 +772,7 @@ short clickLogic(short *x, short *y, short board[], short flag, short width, sho
 			}
 			return 0;
 		}
-		else if (*cellVal > 100 && *cellVal <= 200) {								// chording!
+		else if (*cellVal > 100 && *cellVal <= 200) {						// chording!
 			validChord = calcAdjacent(*x, *y, board, 2, width, height);
 			if (validChord != 0) {
 				validChord += 100;
@@ -804,7 +801,7 @@ short clickLogic(short *x, short *y, short board[], short flag, short width, sho
 			return 0;
 		}
 	}
-	else if (flag == 1 && *cellVal < 100) {							// flagging
+	else if (flag == 1 && *cellVal < 100) {			// flagging
 		if (*cellVal / 10 >= 4 && *cellVal / 10 <= 7) {
 			*cellVal += 1;
 			if (*cellVal % 10 > gameMode + 2) {		// if you try to add 1 flag while you're at the max, that means you're trying to deflag
@@ -825,13 +822,13 @@ short clickLogic(short *x, short *y, short board[], short flag, short width, sho
 				*cellVal = 42;
 			}
 			else {
-				return 3;						// just in case
+				return 3;	// just in case
 			}
 		}
 		*flagPlaced += 1;
-		return 2;								// flagged succesfully
+		return 2;			// flagged succesfully
 	}
-	return 3;									// can't flag
+	return 3;				// can't flag
 }
 
 void wordArt(short **board, short *width, short *height, short *mineCount, short *gameMode, short *win, short *trueMineCount, short *flagPlaced, short *timer) {

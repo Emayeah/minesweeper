@@ -647,9 +647,9 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 				return valBak;
 			}
 		}
-		else if (input == 'f' && !(board[*y * *width + *x] >= 100 && board[*y * *width + *x] <= 200) && lose == 0) {
+		else if (input == 'f' && lose == 0) {
 			valBak = clickLogic(x, y, board, 1, *width, *height, *gameMode, flagPlaced);
-			if (valBak != 0) {
+			if (valBak != 3) {
 				return valBak;
 			}
 		}

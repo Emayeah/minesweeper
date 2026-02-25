@@ -544,7 +544,7 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 								plusOrMinus = 1;
 							}
 							if (valBak != 0) {
-								if (mouseValx - (termWidth / 2 - 36 / 2) > 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
+								if (mouseValx - (termWidth / 2 - 36 / 2) >= 7 && mouseValx - (termWidth / 2 - 36 / 2) < 10) {
 									if ((tempVal == 0 || tempVal == 16) && pressed == 0) {
 										if (valBak == 10) {
 											*gameMode -= 1;
@@ -965,28 +965,16 @@ void printSettingsMenu(short update, short *width, short *height, short *mineCou
 	for (short i = 0; i < 16; i++) {
 		cout << "\e[" << termHeight / 2 - 16 / 2 + i + temp << ";" << termWidth / 2 - 36 / 2 + 1 << "H";
 		if (i == 1) {
-			for (short k = 0; k < 6; k++) {
+			for (short k = 0; k < 5; k++) {
 				cout << " ";
 			}
 			cout << "\e[38;5;16m";
 			cout << "\e[48;5;15m";
-			cout << "Width";
+			cout << " Width   ";
+			cout << "Height  ";
+			cout << "Mine count ";
 			cout << "\e[48;5;233m";
 			for (short k = 0; k < 3; k++) {
-				cout << " ";
-			}
-			cout << "\e[38;5;16m";
-			cout << "\e[48;5;15m";
-			cout << "Height";
-			cout << "\e[48;5;233m";
-			for (short k = 0; k < 2; k++) {
-				cout << " ";
-			}
-			cout << "\e[38;5;16m";
-			cout << "\e[48;5;15m";
-			cout << "Mine count";
-			cout << "\e[48;5;233m";
-			for (short k = 0; k < 4; k++) {
 				cout << " ";
 			}
 			temp = 1;
@@ -1004,143 +992,86 @@ void printSettingsMenu(short update, short *width, short *height, short *mineCou
 		cout << "\e[" << termHeight / 2 - 16 / 2 + 3 + i * 4 << ";" << termWidth / 2 - 36 / 2 + 2 << "H";
 		for (short j = 0; j < 3; j++) {
 			if (update != 0) {
-				if (update < 10 && update == (j + 3 * i) + 1) {
+				if (update < 20 && update == (j + 3 * i) + 1) {
 					cout << "\e[48;5;82m";
 				}
-				else if (update > 20 && update < 30 && (update - 20) == (j + 3 * i) + 1) {
+				else if (update >= 20 && update < 40 && (update - 20) == (j + 3 * i) + 1) {
 					cout << "\e[48;5;28m";
 				}
 			}
 			if (*width < 3) {
 				*width = 3;
 			}
+			else if (*width > (termWidth / 2) - 10) {
+				*width = (termWidth / 2) - 10;
+			}
 			if (*height < 3) {
 				*height = 3;
+			}
+			else if (*height > termHeight - 7) {
+				*height = termHeight - 5;
 			}
 			if (*width * *height - 1 < *mineCount) {
 				*mineCount = *width * *height - 1;
 			}
-			if (*mineCount < 1) {
+			else if (*mineCount < 1) {
 				*mineCount = 1;
 			}
-			if (i == 1) {
-				if (j == 0) {			// all of this is way more complex than it should be
-					tempNum = *width;
-					divCount = 0;
-					do {
-						tempNum /= 10;
-						divCount++;
-					} while (tempNum > 0);
-					cout << "\e[6C";
-					cout << "\e[" << (divCount / 2) - 1 << "D";
-					if (divCount > 3) {
-						cout << "\e[" << (divCount / 2) - 1 << "D";
-					}
-					if (divCount % 2 != 0) {
-						cout << " ";
-					}
-					else {
-						cout << "\e[C";
-					}
-					cout << *width;
-					cout << " ";
-					cout << "\e[" << 6 - (divCount - 1) / 2 << "C";
-				}
-				else if (j == 1) {
-					tempNum = *height;
-					divCount = 0;
-					do {
-						tempNum /= 10;
-						divCount++;
-					} while (tempNum > 0);
-					cout << "\e[" << (divCount / 2) - 1 << "D";
-					if (divCount > 3) {
-						cout << "\e[" << (divCount / 2) - 1 << "D";
-					}
-					if (divCount % 2 != 0) {
-						cout << " ";
-					}
-					else {
-						cout << "\e[C";
-					}
-					cout << *height;
-					cout << " ";
-					cout << "\e[" << 6 - (divCount - 1) / 2 << "C";
-				}
-				else if (j == 2) {
-					tempNum = *mineCount;
-					divCount = 0;
-					do {
-						tempNum /= 10;
-						divCount++;
-					} while (tempNum > 0);
-					cout << "\e[" << (divCount / 2) - 1 << "D";
-					if (divCount > 3) {
-						cout << "\e[" << (divCount / 2) - 1 << "D";
-					}
-					if (divCount % 2 != 0) {
-						cout << " ";
-					}
-					else {
-						cout << "\e[C";
-					}
-					cout << *mineCount;
-					cout << " ";
-					cout << "\e[" << 6 - (divCount - 1) / 2 - 1 << "C";
-				}
-			}
-			else if (i == 0) {
-				cout << "\e[6C";
-				cout << " + ";
-			}
-			else if (i == 2) {
-				cout << "\e[6C";
-				cout << " - ";
-			}
-			cout << "\e[48;5;15m";
-		}
-		if (i == 3) {
-			cout << "\e[6C";
-			if (update == 10) {
-				cout << "\e[48;5;82m";
-			}
-			else if (update == 30) {
-				cout << "\e[48;5;28m";
-			}
-			else {
-				cout << "\e[38;5;16m";
-				cout << "\e[48;5;15m";
-			}
-			cout << " - ";
-			cout << "\e[3C";
-			cout << "\e[38;5;16m";
-			cout << "\e[48;5;15m";
 			if (*gameMode < 0) {
 				*gameMode = 0;
 			}
 			else if (*gameMode > 2) {
 				*gameMode = 2;
 			}
-			cout << " " << *gameMode + 1 << " mine";
-			if (*gameMode != 0) {
-				cout << "s";
-			}
-			else {
+			cout << "\e[6C";
+			if (i == 1) {
+				if (j == 0) {
+					tempNum = *width;
+				}
+				else if (j == 1) {
+					tempNum = *height;
+				}
+				else if (j == 2) {
+					tempNum = *mineCount;
+				}
+				if (tempNum > 99) {
+					cout << "\e[D ";
+				}
+				else if (tempNum < 10) {
+					cout << " ";
+				}
+				cout << tempNum;
 				cout << " ";
+				if (tempNum > 99) {
+					cout << "\e[D";
+				}
 			}
-			cout << " ";
-			if (update == 12) {
-				cout << "\e[48;5;82m";
+			else if (i == 0) {
+				cout << " + ";
 			}
-			else if (update == 32) {
-				cout << "\e[48;5;28m";
+			else if (i == 2) {
+				cout << " - ";
 			}
-			else {
-				cout << "\e[38;5;16m";
-				cout << "\e[48;5;15m";
+			else if (i == 3) {
+				if (j == 0) {
+					cout << " - ";
+				}
+				else if (j == 1) {
+					cout << "\e[3D";
+					cout << " " << *gameMode + 1 << " mine";
+					if (*gameMode != 0) {
+						cout << "s ";
+					}
+					else {
+						cout << "  ";
+					}
+				}
+				else if (j == 2) {
+					cout << "\e[3D";
+					cout << " + ";
+				}
 			}
-			cout << "\e[3C";
-			cout << " + ";
+			cout << "\e[48;5;15m";
 		}
 		cout << "\r\e[4B";
 	}

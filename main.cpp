@@ -83,6 +83,7 @@ int main() {
 		win = userInput(&x, &y, board, blockOutput, 0, &width, &height, &mineCount, &gameMode, &flagPlaced); // win == 1 that means you lose because it's the game that wins against the player lol
 		ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);						// gemini
 		termWidth = w.ws_col;									 	// gemini aided
+		termHeight = w.ws_row;
 		blockPrintMutex.unlock();
 		cout << "\e[1m";				// bold
 		cout << "\e[48;5;15m";

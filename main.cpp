@@ -852,13 +852,14 @@ short calcAdjacent(short x, short y, short board[], short mode, short width, sho
 					if (mode == 0 && *cellVal / 10 >= 5 && *cellVal / 10 <= 7) {// this is to check the amount of mines nearby (to place a number)
 						count += (*cellVal / 10 - 4);
 					}
-					else if (mode == 1 && *cellVal == 0) {								// this is to check if there's a nearby blank square, used by expandBoard
-						return 1; // i know, i know, jacopini... va bene che compiler optimization tolgono le altre condizioni ma questo è più semplice da leggere
-					}
 					else if (mode == 2 && *cellVal % 10 >= 2 && *cellVal % 10 <= 5) {		// this is used to check if there's the right amount of flags where you're chording
 						count += *cellVal % 10 - 1;
 					}
-					else if (mode == 3 && *cellVal % 10 == 1) {							// if you're chording and there's an unflagged mine nearby then you lose
+					else if ((mode == 3 && *cellVal % 10 == 1) || (mode == 1 && *cellVal == 0)) {
+						/*
+						 * mode 3 = if you're chording and there's an unflagged mine nearby then you lose
+						 * mode 1 = this is to check if there's a nearby blank square, used by expandBoard
+						 */
 						count++;
 					}
 				}
@@ -878,7 +879,7 @@ void expandBoard(short x, short y, short board[], short width, short height, sho
 				if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) { // check for out of bounds blah blah
 					cellVal = &board[(y + j) * width + (x + i)];
 					adjacent = calcAdjacent(x + i, y + j, board, 1, width, height);
-					if (adjacent == 1) {
+					if (adjacent != 0) {
 						if (*cellVal == 10 || *cellVal / 10 == 4) {				// if you flag a white spot, that flagged spot is overridden when board expansion
 							flag = 1;
 						}

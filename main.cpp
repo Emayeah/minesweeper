@@ -79,11 +79,11 @@ int main() {
 		flag = w.ws_col;					 		// gemini aided, reusing vars
 		termHeight = w.ws_row;
 		blockPrintMutex.unlock();
-		cout << "\e[1m";				// bold
-		cout << "\e[48;5;15m";
-		cout << "\e[38;5;16m";
-		cout << "\e[0;" << flag / 4 << "H" << trueMineCount - flagPlaced;		// why print here if it's printed in wordArt? to avoid the very small delay
-		cout << "\e[0;0m";
+		cout << "\e[1m"			// bold
+			 << "\e[48;5;15m"
+			 << "\e[38;5;16m"
+			 << "\e[0;" << flag / 4 << "H" << trueMineCount - flagPlaced		// why print here if it's printed in wordArt? to avoid the very small delay
+			 << "\e[0;0m";
 		if (win == 6) {
 			blockOutput = 1;
 			blockPrintMutex.lock();
@@ -169,11 +169,11 @@ int main() {
 			blockPrintMutex.lock();
 			printBoard(board, 0, width, height, gameMode);
 			consoleMutex.lock();								// gemini aided
-			cout << "\e[" << termHeight / 2 - 1 << ";" << flag / 2 - 4 << "H";
-			cout << " YOU WIN!";
-			cout << "\e[2B";
-			cout << "\e[" << flag / 2 - 21 << "G";
-			cout << " Click titlebar for new game or ^C to exit!";
+			cout << "\e[" << termHeight / 2 - 1 << ";" << flag / 2 - 4 << "H"
+				 << " YOU WIN!"
+				 << "\e[2B"
+				 << "\e[" << flag / 2 - 21 << "G"
+				 << " Click titlebar for new game or ^C to exit!";
 			blockOutput = 1;
 			consoleMutex.unlock();								// gemini aided
 		}
@@ -182,11 +182,11 @@ int main() {
 			blockPrintMutex.lock();
 			printBoard(board, 1, width, height, gameMode);
 			consoleMutex.lock();								// gemini aided
-			cout << "\e[" << termHeight / 2 - 1 << ";" << flag / 2 - 12 << "H";
-			cout << " YOU LOSE!!!!!!!!!!!!!!!!";
-			cout << "\e[2B";
-			cout << "\e[" << flag / 2 - 21 << "G";
-			cout << " Click titlebar for new game or ^C to exit!";
+			cout << "\e[" << termHeight / 2 - 1 << ";" << flag / 2 - 12 << "H"
+				 << " YOU LOSE!!!!!!!!!!!!!!!!"
+				 << "\e[2B"
+				 << "\e[" << flag / 2 - 21 << "G"
+				 << " Click titlebar for new game or ^C to exit!";
 			blockOutput = 1;
 			consoleMutex.unlock(); 								// gemini aided
 		}
@@ -241,8 +241,8 @@ void printBoard(short board[], short lose, short width, short height, short game
 	}
 	cout << "\r\n";
 	for (short i = 0; i < height; i++) {
-		cout << "\e[" << (termWidth / 2) - width - 2 << "C";	// move to the center, again, an emoji takes up 2 spaces!
-		cout << "🟩";	// board perimeter, otherwise it's hard to understand what the border is when the board is mostly uncovered
+		cout << "\e[" << (termWidth / 2) - width - 2 << "C"		// move to the center, again, an emoji takes up 2 spaces!
+			 << "🟩";	// board perimeter, otherwise it's hard to understand what the border is when the board is mostly uncovered
 		for (short j = 0; j < width; j++) {
 			cellVal = &board[i * width + j];
 			if (*cellVal == 10 || ((devBit != 1 && lose != 1) && *cellVal < 100 && *cellVal % 10 == 1)) {
@@ -295,20 +295,20 @@ void printBoard(short board[], short lose, short width, short height, short game
 							cout << "\e[48;5;255m";
 						}
 					}
-					cout << "🚩";
-					cout << "\e[0;0m";
+					cout << "🚩"
+						 << "\e[0;0m";
 				}
 				else {
 					if (lose == 1) {
-						cout << "\e[48;5;88m";
-						cout << "\e[38;5;250m";
+						cout << "\e[48;5;88m"
+							 << "\e[38;5;250m";
 					}
 					else {
-						cout << "\e[48;5;250m";
-						cout << "\e[38;5;1m";
+						cout << "\e[48;5;250m"
+							 << "\e[38;5;1m";
 					}
-					cout << *cellVal % 10 - 1 << "F";
-					cout << "\e[0;0m";
+					cout << *cellVal % 10 - 1 << "F"
+						 << "\e[0;0m";
 					if (showInfoBit == 1) {	// debugging purposes
 						cout << *cellVal;
 					}
@@ -322,12 +322,12 @@ void printBoard(short board[], short lose, short width, short height, short game
 			}
 			else if (*cellVal <= 9 && *cellVal >= 2) {
 				if (gameMode == 0) {
-					cout << "\e[48;5;220m";	// white background
-					cout << "🚩";
+					cout << "\e[48;5;220m"	// white background
+						 << "🚩";
 				}
 				else {
-					cout << "\e[48;5;220m";
-					cout << *cellVal - 1 << "F";	// for multiflag because there are no multi flag emojis
+					cout << "\e[48;5;220m"
+						 << *cellVal - 1 << "F";	// for multiflag because there are no multi flag emojis
 				}
 				cout << "\e[0;0m";
 			}
@@ -355,8 +355,8 @@ void printBoard(short board[], short lose, short width, short height, short game
 				else {
 					cout << "15";					// white fallback for undefined colors
 				}
-				cout << "m";
-				cout << *cellVal;
+				cout << "m"
+					 << *cellVal;
 				if (*cellVal < 10) {
 					cout << " ";
 				}
@@ -364,8 +364,8 @@ void printBoard(short board[], short lose, short width, short height, short game
 				*cellVal += 100;
 			}
 		}
-		cout << "🟩";
-		cout << "\r\n";
+		cout << "🟩"
+			 << "\r\n";
 	}
 	cout << "\e[" << (termWidth / 2) - width << "C"; // move to the center, again, an emoji takes up 2 spaces hence the div by 2!
 	for (short i = 0; i < width; i++) {
@@ -689,24 +689,24 @@ void expandBoard(short x, short y, short board[], short width, short height, sho
 
 void cleanup() {
 	consoleMutex.lock();
-	cout << "\e[?1003l\e[?1006l";
-	cout << "\e[?1049l";
-	cout << "\e[?25h";
+	cout << "\e[?1003l\e[?1006l"
+		 << "\e[?1049l"
+		 << "\e[?25h"
+		 << "\e[A" << flush;
 	disable_raw_mode();
-	cout << "\e[A" << flush;
 	consoleMutex.unlock();
 }
 
 void resume() {
 	consoleMutex.lock();
-	cout << "\e[?1003h\e[?1006h";
-	cout << "\e[?1049h";
-	cout << "\e[?25l";
-	cout << "\e[H";				// set cursor to home position
-	cout << "\e[48;5;15m";
-	cout << "\e[38;5;16m";
-	cout << " Settings";
-	cout << "\e[0;0m";
+	cout << "\e[?1003h\e[?1006h"
+		 << "\e[?1049h"
+		 << "\e[?25l"
+		 << "\e[H"				// set cursor to home position
+		 << "\e[48;5;15m"
+		 << "\e[38;5;16m"
+		 << " Settings"
+		 << "\e[0;0m";
 	enable_raw_mode();
 	consoleMutex.unlock();
 }
@@ -829,23 +829,23 @@ void wordArt(short **board, short *width, short *height, short *mineCount, short
 			back_from_sigtstp = 0;
 		}
 		consoleMutex.lock();
-		cout << "\e[0;10H";	// to not overlap the "settings"
-		cout << "\e[48;5;15m";
-		cout << "\e[38;5;16m";
+		cout << "\e[0;10H"	// to not overlap the "settings"
+			 << "\e[48;5;15m"
+			 << "\e[38;5;16m";
 		for (short i = 0; i < termWidth - 9; i++) {
 			cout << " ";
 		}
-		cout << "\e[0;" << (termWidth / 2) - (11 / 2) /* 11 is the length of the word "minesweeper" */ << "H";
-		cout << "\e[1m\e[38;5;16m";
+		cout << "\e[0;" << (termWidth / 2) - (11 / 2) /* 11 is the length of the word "minesweeper" */ << "H"
+			 << "\e[1m\e[38;5;16m";
 		if (Art == 11 || Art == 13 || Art == 26 || Art == 28) {
 			cout << "           ";	// that's 11 spaces
 		}
 		else {
 			cout << word;
 		}
-		cout << "\e[0;" << termWidth / 4 << "H" << *trueMineCount - *flagPlaced; // why is it also printed here if it's printed in main? to avoid displacements if the terminal is resized
-		cout << "\e[0;" << termWidth - (termWidth / 4) << "H" << *timer;
-		cout << "\e[0;0m\e[22m\r" << endl;
+		cout << "\e[0;" << termWidth / 4 << "H" << *trueMineCount - *flagPlaced // why is it also printed here if it's printed in main? to avoid displacements if the terminal is resized
+			 << "\e[0;" << termWidth - (termWidth / 4) << "H" << *timer
+			 << "\e[0;0m\e[22m\r" << endl;
 		consoleMutex.unlock();
 		if (Art < 11) {
 			word[Art] += 32;
@@ -897,25 +897,25 @@ void flushBuffer(short **board, short *width, short *height, short *mineCount, s
 		}
 		consoleMutex.lock();
 		if (*win == 0) {
-			cout << "\e[" << termHeight / 2 << ";" << termWidth / 2 - 4 << "H";
-			cout << " YOU WIN!";
-			cout << "\e[2B";
-			cout << "\r\e[" << termWidth / 2 - 22 << "C";
-			cout << " Click titlebar for new game or ^C to exit!";
+			cout << "\e[" << termHeight / 2 << ";" << termWidth / 2 - 4 << "H"
+				 << " YOU WIN!"
+				 << "\e[2B"
+				 << "\r\e[" << termWidth / 2 - 22 << "C"
+				 << " Click titlebar for new game or ^C to exit!";
 		}
 		else if (*win == 1) {
-			cout << "\e[" << termHeight / 2 << ";" << termWidth / 2 - 12 << "H";
-			cout << " YOU LOSE!!!!!!!!!!!!!!!!";
-			cout << "\e[2B";
-			cout << "\r\e[" << termWidth / 2 - 22 << "C";
-			cout << " Click titlebar for new game or ^C to exit!";
+			cout << "\e[" << termHeight / 2 << ";" << termWidth / 2 - 12 << "H"
+				 << " YOU LOSE!!!!!!!!!!!!!!!!"
+				 << "\e[2B"
+				 << "\r\e[" << termWidth / 2 - 22 << "C"
+				 << " Click titlebar for new game or ^C to exit!";
 		}
 		else if (*win == 6 || *win == 5) {
-			cout << "\e[H";
-			cout << "\e[48;5;15m";
-			cout << "\e[38;5;16m";
-			cout << " < Back  ";
-			cout << "\e[0;0m";
+			cout << "\e[H"
+				 << "\e[48;5;15m"
+				 << "\e[38;5;16m"
+				 << " < Back  "
+				 << "\e[0;0m";
 			consoleMutex.unlock();
 			printSettingsMenu(0, width, height, mineCount, gameMode);
 			consoleMutex.lock();
@@ -933,11 +933,11 @@ void printSettingsMenu(short update, short *width, short *height, short *mineCou
 	short termHeight = w.ws_row;
 	// menu wide 36 and tall 16
 	consoleMutex.lock();
-	cout << "\e[H";
-	cout << "\e[48;5;15m";
-	cout << "\e[38;5;16m";
-	cout << " < Back  ";
-	cout << "\e[48;5;233m";
+	cout << "\e[H"
+		 << "\e[48;5;15m"
+		 << "\e[38;5;16m"
+		 << " < Back  "
+		 << "\e[48;5;233m";
 	short temp = 0;
 	for (short i = 0; i < 16; i++) {
 		cout << "\e[" << termHeight / 2 - 16 / 2 + i + temp << ";" << termWidth / 2 - 36 / 2 + 1 << "H";
@@ -957,8 +957,8 @@ void printSettingsMenu(short update, short *width, short *height, short *mineCou
 			cout << "      "; // that's 6 spaces, 6 * 6 = 36. can't fully unroll because that would be messy
 		}
 	}
-	cout << "\e[38;5;16m";
-	cout << "\e[48;5;15m";
+	cout << "\e[38;5;16m"
+		 << "\e[48;5;15m";
 	for (short i = 0; i < 4; i++) {
 		cout << "\e[" << termHeight / 2 - 16 / 2 + 3 + i * 4 << ";" << termWidth / 2 - 36 / 2 + 2 << "H";
 		for (short j = 0; j < 3; j++) {
@@ -1014,8 +1014,8 @@ void printSettingsMenu(short update, short *width, short *height, short *mineCou
 				else if (temp < 10) {
 					cout << " ";
 				}
-				cout << temp;
-				cout << " ";
+				cout << temp
+					 << " ";
 				if (temp > 99) {
 					cout << "\e[D";
 				}
@@ -1028,8 +1028,8 @@ void printSettingsMenu(short update, short *width, short *height, short *mineCou
 					cout << " - ";
 				}
 				else if (j == 1) {
-					cout << "\e[3D";
-					cout << " " << *gameMode + 1 << " mine";
+					cout << "\e[3D"
+						 << " " << *gameMode + 1 << " mine";
 					if (*gameMode != 0) {
 						cout << "s ";
 					}
@@ -1038,8 +1038,8 @@ void printSettingsMenu(short update, short *width, short *height, short *mineCou
 					}
 				}
 				else if (j == 2) {
-					cout << "\e[3D";
-					cout << " + ";
+					cout << "\e[3D"
+						 << " + ";
 				}
 			}
 			cout << "\e[48;5;15m";

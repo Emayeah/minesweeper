@@ -99,6 +99,7 @@ usando le dimensioni del terminale la tavola viene posta al centro (non ho volut
 printBoard stampa il perimetro della tavola con delle emoji verdi, mente stavo facendo il playtest della tavola centrata ho immediatamente scoperto che era difficile capire quale era il perimetro quando gran parte della tavola era scoperta, avendo un perimetro verde fa in modo tale che questo non succede mai
 
 
+
 cosa fa userInput (il vero main)
 userInput gestisce l'input dell'utente, facendo il parsing delle sequenza di escape ANSI per l'input mouse E tastiera
 ho impostato il any event tracking e il SGR (esc[?1003 e esc[?1006) a high, il primo per ricevere in input lo stato del mouse (click e non click) e altri eventi, il secondo per impostare le sequenze con un formato diverso (usando numeri leggibili tipo 12, 35 piuttosto che caratteri ASCII con il valore corrispondente che si fermano a 255).
@@ -126,6 +127,7 @@ userInput esegue le azioni (tipo mettere una bandiera, cliccare...) quando l'ute
 
 la logica per il menù delle impostazioni aveva tantissime condizioni, le ho condensate in una sola. ho aggiunto il plusOrMinus per indicare se bisogna aggiungere o togliere 1
 era molto molto non ottimizzato, c'era una condizione per ogni singola cosa, molte molte condizioni ridondanti
+
 
 
 calcAdjacent:

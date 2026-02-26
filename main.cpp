@@ -941,27 +941,21 @@ void printSettingsMenu(short update, short *width, short *height, short *mineCou
 	for (short i = 0; i < 16; i++) {
 		cout << "\e[" << termHeight / 2 - 16 / 2 + i + temp << ";" << termWidth / 2 - 36 / 2 + 1 << "H";
 		if (i == 1) {
-			for (short k = 0; k < 4; k++) {
-				cout << " ";
-			}
-			cout << "\e[38;5;16m";
-			cout << "\e[48;5;15m";
-			cout << "  Width   ";
-			cout << "Height ";
-			cout << "Mine count ";
-			cout << "\e[48;5;233m";
-			for (short k = 0; k < 4; k++) {
-				cout << " ";
-			}
+			cout << "    "
+				 << "\e[38;5;16m"
+				 << "\e[48;5;15m"
+				 << "  Width   "
+				 << "Height "
+				 << "Mine count "
+				 << "\e[48;5;233m"
+				 << "    "
+				 <<  "\e[" << termHeight / 2 - 16 / 2 + i + 1 << ";" << termWidth / 2 - 36 / 2 + 1 << "H";
 			temp = 1;
-			cout <<  "\e[" << termHeight / 2 - 16 / 2 + i + 1 << ";" << termWidth / 2 - 36 / 2 + 1 << "H";
 		}
-		for (short j = 0; j < 36; j++) {
-			cout << " ";
+		for (short j = 0; j < 6; j++) {
+			cout << "      "; // that's 6 spaces, 6 * 6 = 36. can't fully unroll because that would be messy
 		}
 	}
-	short tempNum;
-	short divCount;
 	cout << "\e[38;5;16m";
 	cout << "\e[48;5;15m";
 	for (short i = 0; i < 4; i++) {
@@ -1000,30 +994,30 @@ void printSettingsMenu(short update, short *width, short *height, short *mineCou
 				*gameMode = 4;
 			}
 			cout << "\e[6C";
-			if (i == 1) {
+			if (i == 0) {
+				cout << " + ";
+			}
+			else if (i == 1) {		// print the numbers
 				if (j == 0) {
-					tempNum = *width;
+					temp = *width;
 				}
 				else if (j == 1) {
-					tempNum = *height;
+					temp = *height;
 				}
 				else if (j == 2) {
-					tempNum = *mineCount;
+					temp = *mineCount;
 				}
-				if (tempNum > 99) {
+				if (temp > 99) {
 					cout << "\e[D ";
 				}
-				else if (tempNum < 10) {
+				else if (temp < 10) {
 					cout << " ";
 				}
-				cout << tempNum;
+				cout << temp;
 				cout << " ";
-				if (tempNum > 99) {
+				if (temp > 99) {
 					cout << "\e[D";
 				}
-			}
-			else if (i == 0) {
-				cout << " + ";
 			}
 			else if (i == 2) {
 				cout << " - ";

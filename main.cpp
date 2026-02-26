@@ -124,21 +124,20 @@ int main() {
 		}
 		if (firstInput == 1 && win == 1) {			// first input is always safe
 			srand(time(NULL));
-			short tempx, tempy;
+			short tempx;
 			do {
-				tempx = rand() % width;
-				tempy = rand() % height;
-			} while (board[tempy * width + tempx] / 10 >= 5 && board[tempy * width + tempx] / 10 <= 9 || (tempx == x && tempy == y));
-			if (board[tempy * width + tempx] / 10 == 4) {
-				firstInputFlag = board[tempy * width + tempx] % 10; // we somehow gotta move the mine without overwriting the flag amount
+				tempx = rand() % (width * height);
+			} while (board[tempx] / 10 >= 5 && board[tempx] / 10 <= 9);
+			if (board[tempx] / 10 == 4) {
+				firstInputFlag = board[tempx] % 10; // we somehow gotta move the mine without overwriting the flag amount
 			}
 			else {
 				firstInputFlag = 0;
 			}
-			board[tempy * width + tempx] = board[y * width + x];
+			board[tempx] = board[y * width + x];
 			board[y * width + x] = 10;
 			if (firstInputFlag != 0) {
-				board[tempy * width + tempx] += firstInputFlag;
+				board[tempx] += firstInputFlag;
 			}
 			win = 0;
 			firstInput = 0;
@@ -206,27 +205,24 @@ int main() {
 }
 
 void initBoard(short board[], short width, short height, short mineCount, short gameMode, short *trueMineCount) {
-	short x, y, flag;
+	short x, flag;
 	*trueMineCount = mineCount;
-	for (short i = 0; i < height; i++) {
-		for (short j = 0; j < width; j++) {
-			board[i * width + j] = 10;
-		}
+	for (short i = 0; i < height * width; i++) {
+		board[i] = 10;
 	}
 	srand(time(NULL));
 	for (short i = 0; i < mineCount; i++) {						// this assumes that mineCount < height * width
 		flag = 1;
 		do {
-			x = rand() % width;
-			y = rand() % height;
-			if (board[y * width + x] - (gameMode * 10) == 51) {
+			x = rand() % (width * height);
+			if (board[x] - (gameMode * 10) == 51) {
 				flag = 1;
 			}
-			else if (board[y * width + x] == 10) {
-				board[y * width + x] = 51;
+			else if (board[x] == 10) {
+				board[x] = 51;
 				flag = rand() % (gameMode + 1);
 				*trueMineCount += flag;
-				board[y * width + x] += flag * 10;
+				board[x] += flag * 10;
 				flag = 0;
 			}
 		} while (flag == 1);

@@ -297,7 +297,6 @@ void printBoard(short board[], short lose, short width, short height, short game
 				if (gameMode == 0) {
 					if (lose != 1) {
 						cout << "\e[48;5;255m";
-						cout << "🚩";
 					}
 					else {
 						if (*cellVal % 10 - 1 == *cellVal / 10 - 4) {
@@ -306,8 +305,8 @@ void printBoard(short board[], short lose, short width, short height, short game
 						else {
 							cout << "\e[48;5;255m";
 						}
-						cout << "🚩";
 					}
+					cout << "🚩";
 					cout << "\e[0;0m";
 				}
 				else {
@@ -336,13 +335,12 @@ void printBoard(short board[], short lose, short width, short height, short game
 				if (gameMode == 0) {
 					cout << "\e[48;5;220m";	// white background
 					cout << "🚩";
-					cout << "\e[0;0m";
 				}
 				else {
 					cout << "\e[48;5;220m";
 					cout << *cellVal - 1 << "F";	// for multiflag because there are no multi flag emojis
-					cout << "\e[0;0m";
 				}
+				cout << "\e[0;0m";
 			}
 			else if (*cellVal == 50) {
 				cout << "🟧";				// highlighted but clicked

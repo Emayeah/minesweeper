@@ -91,6 +91,7 @@ ho usato una array associata che contiene gli id dei colori per stampare i color
 
 usando le dimensioni del terminale la tavola viene posta al centro (non ho voluto fare il hard-code, questo permette il gioco di rispondere correttamente casomai ci siano eventuali ridimensionamenti del terminale)
 
+printBoard stampa il perimetro della tavola con delle emoji verdi, mente stavo facendo il playtest della tavola centrata ho immediatamente scoperto che era difficile capire quale era il perimetro quando gran parte della tavola era scoperta, avendo un perimetro verde fa in modo tale che questo non succede mai
 
 
 cosa fa userInput (il vero main)

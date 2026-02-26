@@ -248,17 +248,17 @@ void printBoard(short board[], short lose, short width, short height, short game
 	termWidth = w.ws_col;									 	// gemini aided
 	termHeight = w.ws_row;										// gemini aided	
 	consoleMutex.lock(); // gemini
-	cout << "\e[" << ((termHeight - 1) / 2) - (height / 2) + 1 << ";" << (termWidth / 2) - width + 1 << "H";						// move to the center, again, an emoji takes up 2 spaces!
+	cout << "\e[" << ((termHeight - 1) / 2) - (height / 2) + 1 << ";" << (termWidth / 2) - width + 1 << "H";	// move to the center, again, an emoji takes up 2 spaces!
 	for (short i = 0; i < width; i++) {
 		cout << "🟩";
 	}
 	cout << "\r\n";
 	for (short i = 0; i < height; i++) {
-		cout << "\e[" << (termWidth / 2) - width - 2 << "C";				// move to the center, again, an emoji takes up 2 spaces!
+		cout << "\e[" << (termWidth / 2) - width - 2 << "C";	// move to the center, again, an emoji takes up 2 spaces!
 		for (short j = 0; j < width; j++) {
 			cellVal = &board[i * width + j];
 			if (j == 0) {
-				cout << "🟩";
+				cout << "🟩";	// board perimeter, otherwise it's hard to understand what the border is when the board is mostly uncovered
 			}
 			if (*cellVal == 10 || ((devBit != 1 && lose != 1) && *cellVal < 100 && *cellVal % 10 == 1)) {
 				cout << "⬜";
@@ -273,16 +273,16 @@ void printBoard(short board[], short lose, short width, short height, short game
 				else {
 					cout << "\e[38;5;255m";
 					if (*cellVal / 10 == 5) {
-						cout << "\e[48;5;196m";
+						cout << "\e[48;5;196m";	// bright red
 					}
 					else if (*cellVal / 10 == 6) {
-						cout << "\e[48;5;160m";
+						cout << "\e[48;5;160m";	// not so bright red
 					}
 					else if (*cellVal / 10 == 7) {
-						cout << "\e[48;5;88m";
+						cout << "\e[48;5;88m";	// dim, blood red
 					}
 					else {
-						cout << "\e[48;5;0m";
+						cout << "\e[48;5;0m";	// black
 					}
 					cout << *cellVal / 10 - 4 << " " << "\e[0;0m";
 				}
@@ -325,52 +325,52 @@ void printBoard(short board[], short lose, short width, short height, short game
 					}
 					cout << *cellVal % 10 - 1 << "F";
 					cout << "\e[0;0m";
-					if (showInfoBit == 1) {
+					if (showInfoBit == 1) {	// debugging purposes
 						cout << *cellVal;
 					}
 				}
 			}
-			else if (*cellVal == 20) {
+			else if (*cellVal == 20) {		// highlighted a cell
 				cout << "🟨";
 			}
-			else if (*cellVal == 30) {
+			else if (*cellVal == 30) {		// highlighted a blank square
 				cout << "⬛";
 			}
 			else if (*cellVal <= 9 && *cellVal >= 2) {
 				if (gameMode == 0) {
-					cout << "\e[48;5;220m";
+					cout << "\e[48;5;220m";	// white background
 					cout << "🚩";
 					cout << "\e[0;0m";
 				}
 				else {
 					cout << "\e[48;5;220m";
-					cout << *cellVal - 1 << "F";
+					cout << *cellVal - 1 << "F";	// for multiflag because there are no multi flag emojis
 					cout << "\e[0;0m";
 				}
 			}
 			else if (*cellVal == 50) {
-				cout << "🟧";
+				cout << "🟧";				// highlighted but clicked
 			}
 			else {
 				if ((*cellVal > 100 && *cellVal <= 200)) {
 					*cellVal -= 100;
-					cout << "\e[38;5;";							// foreground
+					cout << "\e[38;5;";				// foreground
 				}
 				else if (*cellVal > 200) {
 					*cellVal -= 200;
 					if (*cellVal > 40) {
-						cout << "\e[38;5;202m";			// white on white is unreadable, but for some reason setting the color to 16m (pitch black) doesn't work
+						cout << "\e[38;5;202m";		// fallback, white on white is unreadable, but for some reason setting the color to 16m (pitch black) doesn't work (202 = vivid orange)
 					}
 					else {
 						cout << "\e[38;5;16m";
 					}
-					cout << "\e[48;5;";					// background
+					cout << "\e[48;5;";				// background
 				}
 				if (*cellVal <= 40) {
 					cout << colors[*cellVal - 1];
 				}
 				else {
-					cout << "15";
+					cout << "15";					// white fallback for undefined colors
 				}
 				cout << "m";
 				cout << *cellVal;
@@ -384,7 +384,7 @@ void printBoard(short board[], short lose, short width, short height, short game
 		cout << "🟩";
 		cout << "\r\n";
 	}
-	cout << "\e[" << (termWidth / 2) - width << "C"; // move to the center, again, an emoji takes up 2 spaces!
+	cout << "\e[" << (termWidth / 2) - width << "C"; // move to the center, again, an emoji takes up 2 spaces hence the div by 2!
 	for (short i = 0; i < width; i++) {
 		cout << "🟩";
 	}
@@ -405,9 +405,8 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 	struct winsize w;												// disclosing the same lines as gemini is very redundant
 	while (true) {
 		ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);						// just know that the code that gets the terminal size is not done by me
-		// The ioctl call returns 0 on success, -1 on error			// but if i need to get the terminal size in a future project
 		termWidth = w.ws_col;										// i won't have to use gemini because i learned how to do so
-		termHeight = w.ws_row;
+		termHeight = w.ws_row;										// but if i need to get the terminal size in a future project
 		if (lose == 0) {
 			valBak = board[*y * *width + *x];
 			cellPos = &board[*y * *width + *x];
@@ -458,7 +457,7 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 					}
 				}
 				else if (input == '5') {	// page up, +5 spaces
-					cin >> input; // discard extra tilde from the escape sequence (^[[5~)
+					cin >> input;	// discard extra tilde from the escape sequence (^[[5~)
 					if (*y >= 5) {
 						*y -= 5;
 					}
@@ -467,7 +466,7 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 					}
 				}
 				else if (input == '6') {	// page down, -5 spaces
-					cin >> input; // discard extra tilde from the escape sequence (^[[6~)
+					cin >> input;	// discard extra tilde from the escape sequence (^[[6~)
 					if (*y <= *height - 6) {
 						*y += 5;
 					}
@@ -501,11 +500,16 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 					 * z = 23 if movement while left click is pressed
 					 * x denotes the x coordinates (horizontal) (absolute value)
 					 * y denotes the y coordinates (vertical) also absolute
-					 * M if mouse NOT pressed down
-					 * m if mouse IS pressed down
+					 * M if mouse IS pressed down (or if there is no event change)
+					 * m if mouse is NOT pressed down (released)
 					 */
 					tempVal = getMouseVal(&pressed);
-					if (tempVal == 0 || tempVal == 16 || tempVal == 35 || tempVal == 51 || tempVal == 2 || tempVal == 34 || tempVal == 32) {	// unpressed || unpressed + ctrl
+					if (
+							tempVal == 0 || tempVal == 16 ||		// lclick || lclick + ctrl
+							tempVal == 35 || tempVal == 51 ||		// unpressed || unpressed + ctrl
+							tempVal == 2 || tempVal == 34 ||		// rclick || mouse movement while rclick is held
+							tempVal == 32							// movement while lclick is held
+						) {
 						mouseValx = getMouseVal(&pressed) - 1;
 						mouseValy = getMouseVal(&pressed); // for some reason the menu settings does not want to play ball unless i do this jankery
 						if (mouseValy == 1 && pressed == 1 && (tempVal == 0 || tempVal == 16)) {
@@ -795,7 +799,7 @@ short clickLogic(short *x, short *y, short board[], short flag, short width, sho
 				if (*cellVal / 10 >= 5 && *cellVal / 10 <= 9) {
 					*cellVal /= 10;
 					*cellVal *= 10;
-					*cellVal += 1;
+					*cellVal += 1;					// reset the amount of flags by deleting the least significant digit and setting it to 1
 					*flagPlaced -= gameMode + 1;
 				}
 				else if (*cellVal / 10 == 4) {
@@ -845,7 +849,7 @@ void wordArt(short **board, short *width, short *height, short *mineCount, short
 		for (short i = 0; i < termWidth - 9; i++) {
 			cout << " ";
 		}
-		cout << "\e[0;" << (termWidth / 2) - (11 / 2)	/* 11 is the length of the word "minesweeper" */ << "H";
+		cout << "\e[0;" << (termWidth / 2) - (11 / 2) /* 11 is the length of the word "minesweeper" */ << "H";
 		cout << "\e[1m\e[38;5;16m";
 		if (Art == 11 || Art == 13 || Art == 26 || Art == 28) {
 			cout << "           ";					// that's 11 spaces

@@ -119,6 +119,8 @@ lo ho implementato in questo modo per evitare casini e per prevenire che, per co
 
 userInput esegue le azioni (tipo mettere una bandiera, cliccare...) quando l'utente lascia andare il tasto, non quando lo preme, non riesco a sopportare tasti o eventi che si attivano quando si preme il tasto e non quando lo si lascia andare
 
+la logica per il menù delle impostazioni aveva tantissime condizioni, le ho condensate in una sola. ho aggiunto il plusOrMinus per indicare se bisogna aggiungere o togliere 1
+era molto molto non ottimizzato, c'era una condizione per ogni singola cosa, molte molte condizioni ridondanti
 
 
 calcAdjacent:

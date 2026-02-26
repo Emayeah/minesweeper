@@ -541,7 +541,7 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 											*gameMode -= 1;
 										}
 										else {
-											if (tempVal == 16) {
+											if (tempVal == 16) {	// pressed control, add or remove 10 (9 + 1)
 												*width += 9 * plusOrMinus;
 											}
 											*width += 1 * plusOrMinus;

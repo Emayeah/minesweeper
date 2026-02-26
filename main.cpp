@@ -8,7 +8,6 @@
 #include <sys/ioctl.h>		// for terminal size
 #include <future>			// for async
 #include <mutex>			// race condition! i was experimenting with the async stuff but of course i got a race condition
-#include <thread>	
 using namespace std;
 /*
  * 0 = uncovered (nothing)

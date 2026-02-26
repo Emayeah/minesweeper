@@ -236,6 +236,7 @@ void initBoard(short board[], short width, short height, short mineCount, short 
 void printBoard(short board[], short lose, short width, short height, short gameMode) {
 	short termWidth;
 	short termHeight;
+	short *cellVal;
 	short colors[40] = { // color associative array
 		4, 2, 196, 21, 88, 6, 240, 245, 56, 154,
 		116, 202, 111, 5, 201, 214, 30, 77, 199, 171,
@@ -255,44 +256,44 @@ void printBoard(short board[], short lose, short width, short height, short game
 	for (short i = 0; i < height; i++) {
 		cout << "\e[" << (termWidth / 2) - width - 2 << "C";				// move to the center, again, an emoji takes up 2 spaces!
 		for (short j = 0; j < width; j++) {
-			// cout << board[i * width + j] << " ";
+			cellVal = &board[i * width + j];
 			if (j == 0) {
 				cout << "🟩";
 			}
-			if (board[i * width + j] == 10 || ((devBit != 1 && lose != 1) && board[i * width + j] < 100 && board[i * width + j] % 10 == 1)) {
+			if (*cellVal == 10 || ((devBit != 1 && lose != 1) && *cellVal < 100 && *cellVal % 10 == 1)) {
 				cout << "⬜";
 			}
 			else if (
-					(board[i * width + j] / 10 >= 5 && board[i * width + j] / 10 <= 9) && (devBit == 1 || lose == 1) &&
-					board[i * width + j] < 100 && board[i * width + j] % 10 == 1
+					(*cellVal / 10 >= 5 && *cellVal / 10 <= 9) && (devBit == 1 || lose == 1) &&
+					*cellVal < 100 && *cellVal % 10 == 1
 					) {
 				if (gameMode == 0) {
 					cout << "🟥";
 				}
 				else {
 					cout << "\e[38;5;255m";
-					if (board[i * width + j] / 10 == 5) {
+					if (*cellVal / 10 == 5) {
 						cout << "\e[48;5;196m";
 					}
-					else if (board[i * width + j] / 10 == 6) {
+					else if (*cellVal / 10 == 6) {
 						cout << "\e[48;5;160m";
 					}
-					else if (board[i * width + j] / 10 == 7) {
+					else if (*cellVal / 10 == 7) {
 						cout << "\e[48;5;88m";
 					}
 					else {
 						cout << "\e[48;5;0m";
 					}
-					cout << board[i * width + j] / 10 - 4 << " " << "\e[0;0m";
+					cout << *cellVal / 10 - 4 << " " << "\e[0;0m";
 				}
 				if (showInfoBit == 1) {
-					cout << board[i * width + j];
+					cout << *cellVal;
 				}
 			}
-			else if (board[i * width + j] == 0) {
+			else if (*cellVal == 0) {
 				cout << "  ";
 			}
-			else if (board[i * width + j] % 10 >= 2 && board[i * width + j] < 100 && board[i * width + j] % 10 <= 6 && (board[i * width + j] > 9 || board[i * width + j] < 2)) {
+			else if (*cellVal % 10 >= 2 && *cellVal < 100 && *cellVal % 10 <= 6 && (*cellVal > 9 || *cellVal < 2)) {
 				/*
 				 * basically all of the (non clicked / hovered) flags
 				 * the hovered flags are printed below (together with the yellow background)
@@ -303,7 +304,7 @@ void printBoard(short board[], short lose, short width, short height, short game
 						cout << "🚩";
 					}
 					else {
-						if (board[i * width + j] % 10 - 1 == board[i * width + j] / 10 - 4) {
+						if (*cellVal % 10 - 1 == *cellVal / 10 - 4) {
 							cout << "\e[48;5;88m";
 						}
 						else {
@@ -322,20 +323,20 @@ void printBoard(short board[], short lose, short width, short height, short game
 						cout << "\e[48;5;250m";
 						cout << "\e[38;5;1m";
 					}
-					cout << board[i * width + j] % 10 - 1 << "F";
+					cout << *cellVal % 10 - 1 << "F";
 					cout << "\e[0;0m";
 					if (showInfoBit == 1) {
-						cout << board[i * width + j];
+						cout << *cellVal;
 					}
 				}
 			}
-			else if (board[i * width + j] == 20) {
+			else if (*cellVal == 20) {
 				cout << "🟨";
 			}
-			else if (board[i * width + j] == 30) {
+			else if (*cellVal == 30) {
 				cout << "⬛";
 			}
-			else if (board[i * width + j] <= 9 && board[i * width + j] >= 2) {
+			else if (*cellVal <= 9 && *cellVal >= 2) {
 				if (gameMode == 0) {
 					cout << "\e[48;5;220m";
 					cout << "🚩";
@@ -343,21 +344,21 @@ void printBoard(short board[], short lose, short width, short height, short game
 				}
 				else {
 					cout << "\e[48;5;220m";
-					cout << board[i * width + j] - 1 << "F";
+					cout << *cellVal - 1 << "F";
 					cout << "\e[0;0m";
 				}
 			}
-			else if (board[i * width + j] == 50) {
+			else if (*cellVal == 50) {
 				cout << "🟧";
 			}
 			else {
-				if ((board[i * width + j] > 100 && board[i * width + j] <= 200)) {
-					board[i * width + j] -= 100;
+				if ((*cellVal > 100 && *cellVal <= 200)) {
+					*cellVal -= 100;
 					cout << "\e[38;5;";							// foreground
 				}
-				else if (board[i * width + j] > 200) {
-					board[i * width + j] -= 200;
-					if (board[i * width + j] > 40) {
+				else if (*cellVal > 200) {
+					*cellVal -= 200;
+					if (*cellVal > 40) {
 						cout << "\e[38;5;202m";			// white on white is unreadable, but for some reason setting the color to 16m (pitch black) doesn't work
 					}
 					else {
@@ -365,19 +366,19 @@ void printBoard(short board[], short lose, short width, short height, short game
 					}
 					cout << "\e[48;5;";					// background
 				}
-				if (board[i * width + j] <= 40) {
-					cout << colors[board[i * width + j] - 1];
+				if (*cellVal <= 40) {
+					cout << colors[*cellVal - 1];
 				}
 				else {
 					cout << "15";
 				}
 				cout << "m";
-				cout << board[i * width + j];
-				if (board[i * width + j] < 10) {
+				cout << *cellVal;
+				if (*cellVal < 10) {
 					cout << " ";
 				}
 				cout << "\e[0;0m";
-				board[i * width + j] += 100;
+				*cellVal += 100;
 			}
 		}
 		cout << "🟩";
@@ -795,11 +796,11 @@ short clickLogic(short *x, short *y, short board[], short flag, short width, sho
 					*cellVal /= 10;
 					*cellVal *= 10;
 					*cellVal += 1;
-					*flagPlaced -= gameMode + 2;
+					*flagPlaced -= gameMode + 1;
 				}
 				else if (*cellVal / 10 == 4) {
 					*cellVal = 10;
-					*flagPlaced -= gameMode + 2;
+					*flagPlaced -= gameMode + 1;
 				}
 			}
 		}

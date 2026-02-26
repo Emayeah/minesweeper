@@ -209,6 +209,22 @@ board non è un riferimento alla tavola, ma è un riferimento ad un riferimento 
 quando il heap viene ripulito e una nuova regione del heap viene allocata, insieme ad esso ci sta anche un nuovo pointer. anche se il pointer della tavola viene cambiato, wordArt ha ancora il pointer della regione della memoria dove ci stAVA la tavola, risultando in un UAF.
 invece, se passo un riferimento (che è garantito di stare nella stessa parte della memoria) che punta all'indirizzo di memoria di board, è possibile recuperare l'indirizzo aggiornato della tavola tramite il riferimento
 
+board (0x0ff0) -> tavola (0x00f0)
+wordArt -> tavola (0x00f0)
+
+tavola viene liberata e una nuova allocata in 0xe0f0
+board(0x0ff0) -> tavola (0xe0f0)
+wordArt -> tavola (0x00f0) !!!!!
+
+fix
+
+board(0x0ff0) -> tavola (0x00f0)
+wordArt -> board (0x0ff0) -> tavola (0x00f0)
+
+tavola viene liberata e una nuova allocata in 0xe0f0
+board(0x0ff0) -> tavola (0xe0f0)
+wordArt -> board (0x0ff0) -> tavola (0xe0f0)
+
 trueMineCount viene utilizzato per stampare la quantità di bandiere rimanenti, motivi puramente estetici
 flagPlaced invece conta la quantità di bandiere piazzate (sempre usato dall'elemento che mostra la quantità di bandiere mancanti)
 invece timer è... un timer. è un riferimento a una variabile in main perchè se una nuova partita viene iniziata allora in qualche modo devo resettare sto timer. anche questo esiste per scopi estetici

@@ -1,6 +1,8 @@
 relazione
 
-le tre costanti (devBit, debugBit e showInfoBit) scopo debugging
+come si compila: (compiler) ./main.cpp
+compiler agnostic, non è necessario includere librerie oltre a quelle standard, main.cpp automaticamente include i header locali (rawmode.h e prototype.h)
+le due costanti (devBit e showInfoBit) scopo debugging
 
 decisioni prese e perchè
 ho usato un'array monodimensionale e non bidimensionale perchè non volevo usare dei vettori per fare la tavola e mi serviva un modo per ridimensionare la tavola, cosa che non si può fare con le array bidimensionali (il compiler deve sapere al compile time la dimensione)

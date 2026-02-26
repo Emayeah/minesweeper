@@ -9,7 +9,6 @@
 #include <future>			// for async
 #include <mutex>			// race condition! i was experimenting with the async stuff but of course i got a race condition
 #include <thread>	
-#include <chrono>			// i guess i'll have to use chrono since usleep won't work for ranges < 1s
 using namespace std;
 /*
  * 0 = uncovered (nothing)
@@ -810,6 +809,10 @@ short clickLogic(short *x, short *y, short board[], short flag, short width, sho
 void wordArt(short **board, short *width, short *height, short *mineCount, short *gameMode, short *win, short *trueMineCount, short *flagPlaced, short *timer) {
 	char word[] = "minesweeper";
 	short Art = 0, termWidth, termHeight, flip = 0, oldWidth = 0, oldHeight = 0;
+	struct winsize w;
+	struct timespec ts;		// gemini aided
+	ts.tv_sec = 0;
+	ts.tv_nsec = 125000000;	// that's 125ms
 	while (true) {
 		if (Art < 11) {
 			word[Art] -= 32;
@@ -817,7 +820,6 @@ void wordArt(short **board, short *width, short *height, short *mineCount, short
 		else if (Art >= 15 && Art < 26) {
 			word[10 - (Art - 15)] -= 32; 
 		}
-		struct winsize w;
 		ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 		termWidth = w.ws_col;
 		termHeight = w.ws_row;
@@ -861,7 +863,7 @@ void wordArt(short **board, short *width, short *height, short *mineCount, short
 		if (Art >= 30) {
 			Art = 0;
 		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(125));	// gemini aided
+		nanosleep(&ts, NULL);	// gemini aided, that's 125ms
 	}
 }
 
@@ -872,14 +874,14 @@ void flushBuffer(short **board, short *width, short *height, short *mineCount, s
 	short termHeight = w.ws_row;
 	arrayChangeMutex.lock();
 	consoleMutex.lock();
-	cout << "\e[H";
-	cout << "\e[48;5;15m";
-	cout << "\e[38;5;16m";
-	cout << " Settings";
-	cout << "\e[0;0m";
-	cout << "\e[2;0H\e[0J";
+	cout << "\e[H"
+		 << "\e[48;5;15m"
+		 << "\e[38;5;16m"
+		 << " Settings"
+		 << "\e[0;0m"
+		 << "\e[2;0H\e[0J";	// clear everything below the cursor, to not overlap the titlebar
 	consoleMutex.unlock();
-	if (blockPrintMutex.try_lock()) {							// gemini aided
+	if (blockPrintMutex.try_lock()) {	// gemini aided
 		printBoard(*board, 0, *width, *height, *gameMode);
 		blockPrintMutex.unlock();
 	}
@@ -897,15 +899,15 @@ void flushBuffer(short **board, short *width, short *height, short *mineCount, s
 		consoleMutex.lock();
 		if (*win == 0) {
 			cout << "\e[" << termHeight / 2 << ";" << termWidth / 2 - 4 << "H";
-			cout << " YOU WIN!\r" << endl;
-			cout << "\e[B";
+			cout << " YOU WIN!";
+			cout << "\e[2B";
 			cout << "\r\e[" << termWidth / 2 - 22 << "C";
 			cout << " Click titlebar for new game or ^C to exit!";
 		}
 		else if (*win == 1) {
 			cout << "\e[" << termHeight / 2 << ";" << termWidth / 2 - 12 << "H";
-			cout << " YOU LOSE!!!!!!!!!!!!!!!!\r" << endl;
-			cout << "\e[B";
+			cout << " YOU LOSE!!!!!!!!!!!!!!!!";
+			cout << "\e[2B";
 			cout << "\r\e[" << termWidth / 2 - 22 << "C";
 			cout << " Click titlebar for new game or ^C to exit!";
 		}

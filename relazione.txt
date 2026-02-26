@@ -28,6 +28,8 @@ la tavola sta nel heap (con new, non malloc) così posso ridimensionare la tavol
 ho usato dei short ovunque per l'utilizzo della memoria dimezzata (il numero più grande che mi serve è tipo 300, byte non è abbastanza ma int è overkill)
 
 
+originariamente usavo std::this_thread::sleep_for() per mettere in pausa un thread, ma ho provato ad usare nanosleep (con il leggero aiuto da parte di gemini) e in effetti questo risulta in un eseguibile di dimensione ridotta con -Os (-100B) e con -O0 (quasi -3KiB)
+
 i codici (ovvero quale numero equivale a quale casella)
 0 scoperto
 10 coperto

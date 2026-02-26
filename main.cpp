@@ -112,13 +112,13 @@ int main() {
 			termHeight = w.ws_row;									// gemini aided	
 			blockPrintMutex.unlock();
 			blockOutput = 0;
-			flushBuffer(board, &width, &height, &mineCount, &gameMode, &win2);
+			flushBuffer(&board, &width, &height, &mineCount, &gameMode, &win2);
 		}
 		else if (win == 5) {
 			initBoard(board, width, height, mineCount, gameMode, &trueMineCount);
 			flagPlaced = 0;
 			timer = 0;
-			flushBuffer(board, &width, &height, &mineCount, &gameMode, &win2);
+			flushBuffer(&board, &width, &height, &mineCount, &gameMode, &win2);
 			blockOutput = 0;
 			firstInput = 1;
 		}
@@ -835,7 +835,7 @@ void wordArt(short **board, short *width, short *height, short *mineCount, short
 		if (termWidth != oldWidth || termHeight != oldHeight || back_from_sigtstp == 1) {
 			oldWidth = termWidth;
 			oldHeight = termHeight;
-			flushBuffer(*board, width, height, mineCount, gameMode, win);
+			flushBuffer(board, width, height, mineCount, gameMode, win);
 			back_from_sigtstp = 0;
 		}
 		consoleMutex.lock();
@@ -876,7 +876,7 @@ void wordArt(short **board, short *width, short *height, short *mineCount, short
 	}
 }
 
-void flushBuffer(short board[], short *width, short *height, short *mineCount, short *gameMode, short *win) {
+void flushBuffer(short **board, short *width, short *height, short *mineCount, short *gameMode, short *win) {
 	struct winsize w;
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 	short termWidth = w.ws_col;
@@ -891,7 +891,7 @@ void flushBuffer(short board[], short *width, short *height, short *mineCount, s
 	cout << "\e[2;0H\e[0J";
 	consoleMutex.unlock();
 	if (blockPrintMutex.try_lock()) {							// gemini aided
-		printBoard(board, 0, *width, *height, *gameMode);
+		printBoard(*board, 0, *width, *height, *gameMode);
 		blockPrintMutex.unlock();
 	}
 	else {
@@ -902,7 +902,7 @@ void flushBuffer(short board[], short *width, short *height, short *mineCount, s
 			 * instead of going for an extremely convoluted (and dumb) workaround, i just disabled the printing if the menu pane is open
 			 */
 			if (*win != 6) {
-				printBoard(board, *win, *width, *height, *gameMode);
+				printBoard(*board, *win, *width, *height, *gameMode);
 			}
 		}
 		consoleMutex.lock();

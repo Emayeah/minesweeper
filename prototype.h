@@ -8,7 +8,7 @@ void resume();
 short getMouseVal(short*);
 short clickLogic(short*, short*, short[], short, short, short, short, short*);
 void wordArt(short**, short*, short*, short*, short*, short*, short*, short*, short*);
-void flushBuffer(short[], short*, short*, short*, short*, short*);
+void flushBuffer(short**, short*, short*, short*, short*, short*);
 void printSettingsMenu(short, short*, short*, short*, short*);
 void sigtstp_handler(int sig);
 void sigint_handler(int sig);

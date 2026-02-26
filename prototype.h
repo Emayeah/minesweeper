@@ -1,4 +1,4 @@
-void initBoard(short[], short, short, short, short, short*);
+void initBoard(short[], short, short, short, short*);
 void printBoard(short[], short, short, short, short);
 short userInput(short*, short*, short[], short, short, short*, short*, short*, short*, short*);
 short calcAdjacent(short, short, short[], short, short, short);

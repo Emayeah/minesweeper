@@ -76,6 +76,7 @@ ha come parametro trueMineCount: anche se mineCount == 30, se gameMode != 0 allo
 
 trueMineCount serve a wordArt per stampare la quantità di bandiere rimanenti
 se io voglio stampare la quantità di bandiere rimanenti da posizionare, devo in qualche modo trovare il vero numero delle bombe, initBoard automaticamente aggiorna trueMineCount durante l'inizializzazione della tavola
+uso un singolo ciclo per pulire la tavola e piazzare le bombe perchè sto usando un'array monodimensionale, risultando in leggere ottimizzazioni
 
 
 

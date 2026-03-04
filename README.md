@@ -15,3 +15,5 @@ Features:
 6. handling of ^C and ^Z
 7. multi mine mode, where each spot can either have 0, 1 and 2 (or even 3 mines) instead of the usual 0 and 1, numbers will respond accordingly and it's a harder mode requiring a lot more attention
 8. extremely minimal use of ai (gemini), used only in: getting the terminal size, doing async threads, enabling non canonical (raw) mode and mutex (to avoid async race conditions). the use of ai is properly disclosed with comments and all the rest is done by me! gemini has never seen a line of code as input (for example, i had no clue what mutex was, now i learned what it is and how it can be used. that's called learning!)
+
+update: 95%! (grades go in steps of 5%, but this one is a very high 95%, bordering 100%. not 100% because that implies that i'm unable of making mistakes)

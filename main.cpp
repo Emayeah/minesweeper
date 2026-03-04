@@ -327,6 +327,7 @@ void printBoard(short board[], short lose, short width, short height, short game
 				}
 				else {
 					cout << "\e[48;5;220m"
+						 << "\e[38;5;16m"
 						 << *cellVal - 1 << "F";	// for multiflag because there are no multi flag emojis
 				}
 				cout << "\e[0;0m";
@@ -423,20 +424,32 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 					if (*y > 0) {
 						*y -= 1;
 					}
+					else {
+						cout << '\a';
+					}
 				}
 				else if (input == 'B') {	// down
 					if (*y < *height - 1) {
 						*y += 1;
+					}
+					else {
+						cout << '\a';
 					}
 				}
 				else if (input == 'C') {	// right
 					if (*x < *width - 1) {
 						*x += 1;
 					}
+					else {
+						cout << '\a';
+					}
 				}
 				else if (input == 'D'){		// left
 					if (*x > 0) {
 						*x -= 1;
+					}
+					else {
+						cout << '\a';
 					}
 				}
 				else if (input == '5') {	// page up, +5 spaces
@@ -445,6 +458,9 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 						*y -= 5;
 					}
 					else {
+						if (*y == 0) {
+							cout << '\a';
+						}
 						*y = 0;
 					}
 				}
@@ -454,6 +470,9 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 						*y += 5;
 					}
 					else {
+						if (*y == *height - 1) {
+							cout << '\a';
+						}
 						*y = *height - 1;
 					}
 				}
@@ -462,6 +481,9 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 						*x -= 5;
 					}
 					else {
+						if (*x == 0) {
+							cout << '\a';
+						}
 						*x = 0;
 					}
 				}
@@ -470,6 +492,9 @@ short userInput(short *x, short *y, short board[], short lose, short openSetting
 						*x += 5;
 					}
 					else {
+						if (*x == *width - 1) {
+							cout << '\a';
+						}
 						*x = *width - 1;
 					}
 				}
